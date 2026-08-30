@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "bookshelf-galaxy/catalog-v1",
+  "generatedAt": "2026-08-23T00:00:00.000Z",
+  "snapshotAt": "2026-08-23T00:00:00.000Z",
+  "source": "Project Gutenberg Offline Catalog (pg_catalog.csv)",
+  "sourceUrl": "https://www.gutenberg.org/ebooks/offline_catalogs.html",
+  "sourceDownloadUrl": "https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz",
+  "sourceLicense": "Project Gutenberg catalog metadata; see data-sources.md for attribution and redistribution notes.",
+  "generator": "scripts/build-catalog.mjs",
+  "sourceBytes": 21188767,
+  "catalogRows": 78001,
+  "uniqueWorksAvailable": 77291,
+  "bookCount": 20000,
+  "relationCount": 60000,
+  "catalogFile": "catalog.json",
+  "catalogSha256": "55b5bc0a2d99875e8cfcda42e5ddedef31625c0344491c189de302a2995c1b5f",
+  "downloadsField": "null: pg_catalog.csv does not publish download counts"
+}

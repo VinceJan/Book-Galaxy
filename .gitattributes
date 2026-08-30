@@ -1,0 +1,4 @@
+* text=auto eol=lf
+public/data/catalog.json -diff linguist-generated=true
+public/data/manifest.json linguist-generated=true
+*.png binary
