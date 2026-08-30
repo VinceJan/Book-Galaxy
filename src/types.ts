@@ -1,5 +1,9 @@
 export type RelationKind = '回声' | '镜像' | '暗河' | '裂隙' | '余烬' | '潮汐'
 
+export type BookPosition = readonly [number, number, number]
+
+export type BookShape = 'soft' | 'cross' | 'double-halo' | 'ring' | 'eccentric'
+
 export interface Book {
   id: string
   title: string
@@ -14,6 +18,16 @@ export interface Book {
   sourceUrl?: string
   source?: string
   downloads?: number
+
+  /** Precomputed semantic coordinates. Older catalogs may omit all visual fields. */
+  position?: BookPosition
+  localDensity?: number
+  outlierScore?: number
+  magnitude?: number
+  halo?: number
+  shape?: BookShape | number
+  temperature?: number
+  clusterWeights?: Record<string, number> | readonly number[]
 }
 
 export interface BookRelation {

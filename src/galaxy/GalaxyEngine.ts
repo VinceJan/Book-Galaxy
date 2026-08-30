@@ -28,7 +28,13 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import type { Book } from '../types'
-import { hashString, positionForBook, seededRandom } from '../lib/galaxyMath'
+import {
+  gaussianRandom,
+  hashString,
+  positionForBook,
+  seededRandom,
+  visualAttributesForBook,
+} from '../lib/galaxyMath'
 import {
   nebulaFragmentShader,
   nebulaVertexShader,
@@ -58,6 +64,13 @@ const BOOK_JADE = new Color('#8aa49f')
 const BOOK_GOLD = new Color('#b1a276')
 const BOOK_COOL = new Color('#8293a0')
 
+function colorForTemperature(temperature: number): Color {
+  const stops = [BOOK_WHITE, BOOK_JADE, BOOK_COOL, BOOK_GOLD]
+  const scaled = Math.max(0, Math.min(0.999999, temperature)) * (stops.length - 1)
+  const index = Math.floor(scaled)
+  return stops[index].clone().lerp(stops[index + 1], scaled - index)
+}
+
 export class GalaxyEngine {
   private readonly container: HTMLElement
   private readonly books: Book[]
@@ -67,6 +80,7 @@ export class GalaxyEngine {
   private readonly timer = new Timer()
   private readonly raycaster = new Raycaster()
   private readonly pointer = new Vector2(2, 2)
+  private readonly pointerClient = new Vector2(-10_000, -10_000)
   private readonly positions = new Map<string, Vector3>()
   private readonly indexById = new Map<string, number>()
   private readonly renderer: WebGLRenderer
@@ -85,6 +99,7 @@ export class GalaxyEngine {
   private flight?: Flight
   private needsPick = false
   private hoveredIndex = -1
+  private pointerType: string = 'mouse'
   private reducedMotion = false
   private disposed = false
   private elapsed = 0
@@ -128,6 +143,7 @@ export class GalaxyEngine {
     this.controls.enablePan = false
     this.controls.rotateSpeed = 0.32
     this.controls.zoomSpeed = 0.52
+    this.controls.zoomToCursor = true
     this.controls.minDistance = 14
     this.controls.maxDistance = 420
 
@@ -163,6 +179,12 @@ export class GalaxyEngine {
     const sizes = new Float32Array(this.books.length)
     const seeds = new Float32Array(this.books.length)
     const emphasis = new Float32Array(this.books.length)
+    const magnitudes = new Float32Array(this.books.length)
+    const densities = new Float32Array(this.books.length)
+    const outliers = new Float32Array(this.books.length)
+    const halos = new Float32Array(this.books.length)
+    const shapes = new Float32Array(this.books.length)
+    const temperatures = new Float32Array(this.books.length)
 
     this.books.forEach((book, index) => {
       const [x, y, z] = positionForBook(book, index, this.books.length)
@@ -173,13 +195,19 @@ export class GalaxyEngine {
       positions[index * 3 + 1] = y
       positions[index * 3 + 2] = z
 
-      const selector = hashString(book.themes[0] ?? book.language ?? book.id) % 11
-      const color = selector < 2 ? BOOK_GOLD : selector < 4 ? BOOK_JADE : selector === 5 ? BOOK_COOL : BOOK_WHITE
+      const visual = visualAttributesForBook(book, index)
+      const color = colorForTemperature(visual.temperature)
       colors[index * 3] = color.r
       colors[index * 3 + 1] = color.g
       colors[index * 3 + 2] = color.b
-      sizes[index] = book.summary ? 5.6 : 1.65 + Math.min(1.2, Math.log10((book.downloads ?? 0) + 1) * 0.26)
-      seeds[index] = (hashString(book.id) % 1000) / 1000
+      sizes[index] = visual.size
+      seeds[index] = visual.seed
+      magnitudes[index] = visual.magnitude
+      densities[index] = visual.density
+      outliers[index] = visual.outlier
+      halos[index] = visual.halo
+      shapes[index] = visual.shape
+      temperatures[index] = visual.temperature
     })
 
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
@@ -187,12 +215,19 @@ export class GalaxyEngine {
     geometry.setAttribute('aSize', new BufferAttribute(sizes, 1))
     geometry.setAttribute('aSeed', new BufferAttribute(seeds, 1))
     geometry.setAttribute('aEmphasis', new BufferAttribute(emphasis, 1))
+    geometry.setAttribute('aMagnitude', new BufferAttribute(magnitudes, 1))
+    geometry.setAttribute('aDensity', new BufferAttribute(densities, 1))
+    geometry.setAttribute('aOutlier', new BufferAttribute(outliers, 1))
+    geometry.setAttribute('aHalo', new BufferAttribute(halos, 1))
+    geometry.setAttribute('aShape', new BufferAttribute(shapes, 1))
+    geometry.setAttribute('aTemperature', new BufferAttribute(temperatures, 1))
     geometry.computeBoundingSphere()
 
     const material = new ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uPixelRatio: { value: Math.min(window.devicePixelRatio, 1.5) },
+        uLayer: { value: 0 },
       },
       vertexShader: starVertexShader,
       fragmentShader: starFragmentShader,
@@ -218,8 +253,9 @@ export class GalaxyEngine {
   }
 
   private createDust(): Points | undefined {
-    const count = Math.min(7_000, Math.max(1_800, Math.floor(this.books.length * 0.35)))
-    if (this.reducedMotion) return undefined
+    if (this.reducedMotion || this.books.length === 0) return undefined
+    const count = Math.min(9_000, Math.max(2_400, Math.floor(this.books.length * 0.36)))
+    const localCount = Math.floor(count * 0.8)
     const random = seededRandom(0x5eedb00c)
     const geometry = new BufferGeometry()
     const positions = new Float32Array(count * 3)
@@ -227,16 +263,86 @@ export class GalaxyEngine {
     const sizes = new Float32Array(count)
     const seeds = new Float32Array(count)
     const emphasis = new Float32Array(count)
+    const magnitudes = new Float32Array(count)
+    const densities = new Float32Array(count)
+    const outliers = new Float32Array(count)
+    const halos = new Float32Array(count)
+    const shapes = new Float32Array(count)
+    const temperatures = new Float32Array(count)
+
+    const cumulativeDensity = new Float64Array(this.books.length)
+    let densityTotal = 0
+    this.books.forEach((book, index) => {
+      const visual = visualAttributesForBook(book, index)
+      densityTotal += 0.08 + visual.density ** 1.65 * 1.92
+      cumulativeDensity[index] = densityTotal
+    })
+
+    const weightedBookIndex = (): number => {
+      if (densityTotal <= 0) return Math.floor(random() * this.books.length)
+      const needle = random() * densityTotal
+      let lower = 0
+      let upper = cumulativeDensity.length - 1
+      while (lower < upper) {
+        const middle = Math.floor((lower + upper) / 2)
+        if (cumulativeDensity[middle] < needle) lower = middle + 1
+        else upper = middle
+      }
+      return lower
+    }
+
     for (let index = 0; index < count; index += 1) {
-      const radius = 45 + random() * 190
-      const angle = random() * Math.PI * 2
-      positions[index * 3] = Math.cos(angle) * radius + (random() - 0.5) * 34
-      positions[index * 3 + 1] = (random() - 0.5) * 58 + Math.sin(angle * 3) * 8
-      positions[index * 3 + 2] = Math.sin(angle) * radius * 0.65 + (random() - 0.5) * 34
-      colors[index * 3] = 0.36
-      colors[index * 3 + 1] = 0.4
-      colors[index * 3 + 2] = 0.39
-      sizes[index] = 0.75 + random() * 0.7
+      const local = index < localCount
+      const anchorIndex = local ? weightedBookIndex() : -1
+      const anchorBook = anchorIndex >= 0 ? this.books[anchorIndex] : undefined
+      const visual = anchorBook ? visualAttributesForBook(anchorBook, index) : undefined
+      if (visual) {
+        const anchor = anchorBook ? this.positions.get(anchorBook.id) : undefined
+        const spread = (1.05 + (1 - visual.density) * 6.6 + visual.outlier * 2.4) * (0.55 + random() * 0.85)
+        if (anchor) {
+          positions[index * 3] = anchor.x + gaussianRandom(random) * spread
+          positions[index * 3 + 1] = anchor.y + gaussianRandom(random) * spread * 0.58
+          positions[index * 3 + 2] = anchor.z + gaussianRandom(random) * spread * 0.78
+        } else {
+          positions[index * 3] = gaussianRandom(random) * 80
+          positions[index * 3 + 1] = gaussianRandom(random) * 24
+          positions[index * 3 + 2] = gaussianRandom(random) * 80
+        }
+        const color = colorForTemperature(visual.temperature)
+        const colorScale = 0.22 + visual.density * 0.11
+        colors[index * 3] = color.r * colorScale
+        colors[index * 3 + 1] = color.g * colorScale
+        colors[index * 3 + 2] = color.b * colorScale
+        sizes[index] = 0.26 + random() * 0.34
+        magnitudes[index] = 0.12 + visual.magnitude * 0.1
+        densities[index] = visual.density * 0.45
+        outliers[index] = visual.outlier * 0.35
+        halos[index] = visual.halo * 0.38
+        shapes[index] = 0.18
+        temperatures[index] = visual.temperature
+      } else {
+        const direction = new Vector3(
+          gaussianRandom(random),
+          gaussianRandom(random) * 0.42,
+          gaussianRandom(random),
+        ).normalize()
+        const radius = 175 + random() * 430
+        positions[index * 3] = direction.x * radius
+        positions[index * 3 + 1] = direction.y * radius
+        positions[index * 3 + 2] = direction.z * radius
+        const farColor = BOOK_COOL.clone().lerp(BOOK_JADE, random() * 0.55)
+        const colorScale = 0.1 + random() * 0.06
+        colors[index * 3] = farColor.r * colorScale
+        colors[index * 3 + 1] = farColor.g * colorScale
+        colors[index * 3 + 2] = farColor.b * colorScale
+        sizes[index] = 0.16 + random() * 0.2
+        magnitudes[index] = 0.08
+        densities[index] = 0.12
+        outliers[index] = 0.08
+        halos[index] = 0.08
+        shapes[index] = 0.18
+        temperatures[index] = 0.44
+      }
       seeds[index] = random()
     }
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
@@ -244,17 +350,25 @@ export class GalaxyEngine {
     geometry.setAttribute('aSize', new BufferAttribute(sizes, 1))
     geometry.setAttribute('aSeed', new BufferAttribute(seeds, 1))
     geometry.setAttribute('aEmphasis', new BufferAttribute(emphasis, 1))
+    geometry.setAttribute('aMagnitude', new BufferAttribute(magnitudes, 1))
+    geometry.setAttribute('aDensity', new BufferAttribute(densities, 1))
+    geometry.setAttribute('aOutlier', new BufferAttribute(outliers, 1))
+    geometry.setAttribute('aHalo', new BufferAttribute(halos, 1))
+    geometry.setAttribute('aShape', new BufferAttribute(shapes, 1))
+    geometry.setAttribute('aTemperature', new BufferAttribute(temperatures, 1))
+    geometry.computeBoundingSphere()
     const material = this.starMaterial.clone()
     material.uniforms = {
       uTime: { value: 0 },
       uPixelRatio: { value: Math.min(window.devicePixelRatio, 1.5) },
+      uLayer: { value: 1 },
     }
-    material.opacity = 0.28
     return new Points(geometry, material)
   }
 
   private bindEvents(): void {
     this.renderer.domElement.addEventListener('pointermove', this.handlePointerMove)
+    this.renderer.domElement.addEventListener('pointerdown', this.handlePointerDown)
     this.renderer.domElement.addEventListener('pointerleave', this.handlePointerLeave)
     this.renderer.domElement.addEventListener('click', this.handleClick)
     this.renderer.domElement.addEventListener('webglcontextlost', this.handleContextLost)
@@ -264,18 +378,27 @@ export class GalaxyEngine {
   }
 
   private handlePointerMove = (event: PointerEvent): void => {
+    this.pointerType = event.pointerType || 'mouse'
     this.updatePointer(event.clientX, event.clientY)
     this.needsPick = true
   }
 
+  private handlePointerDown = (event: PointerEvent): void => {
+    this.pointerType = event.pointerType || 'mouse'
+    this.updatePointer(event.clientX, event.clientY)
+  }
+
   private updatePointer(clientX: number, clientY: number): void {
     const bounds = this.renderer.domElement.getBoundingClientRect()
+    this.pointerClient.set(clientX, clientY)
     this.pointer.x = ((clientX - bounds.left) / bounds.width) * 2 - 1
     this.pointer.y = -((clientY - bounds.top) / bounds.height) * 2 + 1
   }
 
   private handlePointerLeave = (): void => {
     this.pointer.set(2, 2)
+    this.pointerClient.set(-10_000, -10_000)
+    this.pointerType = 'mouse'
     this.needsPick = false
     this.hoveredIndex = -1
     this.renderer.domElement.style.cursor = ''
@@ -285,8 +408,7 @@ export class GalaxyEngine {
   private handleClick = (event: MouseEvent): void => {
     if (this.flight) return
     this.updatePointer(event.clientX, event.clientY)
-    this.raycaster.setFromCamera(this.pointer, this.camera)
-    const index = this.raycaster.intersectObject(this.stars, false)[0]?.index ?? -1
+    const index = this.findPickedIndex(this.pointerType === 'touch' ? 34 : 20)
     if (index < 0) return
     this.hoveredIndex = index
     const book = this.books[index]
@@ -302,11 +424,25 @@ export class GalaxyEngine {
     if (event.key === 'Escape' && this.flight) this.cancelFlight()
   }
 
-  private pick(): void {
-    this.needsPick = false
+  private findPickedIndex(maxScreenDistance: number): number {
+    this.raycaster.params.Points.threshold = this.pointerType === 'touch' ? 3.5 : 1.7
     this.raycaster.setFromCamera(this.pointer, this.camera)
     const intersection = this.raycaster.intersectObject(this.stars, false)[0]
-    const nextIndex = intersection?.index ?? -1
+    const index = intersection?.index ?? -1
+    if (index < 0) return -1
+    const book = this.books[index]
+    const worldPosition = book ? this.positions.get(book.id) : undefined
+    if (!worldPosition) return -1
+    const projected = worldPosition.clone().project(this.camera)
+    const bounds = this.renderer.domElement.getBoundingClientRect()
+    const screenX = bounds.left + (projected.x * 0.5 + 0.5) * bounds.width
+    const screenY = bounds.top + (-projected.y * 0.5 + 0.5) * bounds.height
+    return Math.hypot(screenX - this.pointerClient.x, screenY - this.pointerClient.y) <= maxScreenDistance ? index : -1
+  }
+
+  private pick(): void {
+    this.needsPick = false
+    const nextIndex = this.findPickedIndex(this.pointerType === 'touch' ? 34 : 20)
     if (nextIndex === this.hoveredIndex) return
     this.hoveredIndex = nextIndex
     this.renderer.domElement.style.cursor = nextIndex >= 0 ? 'pointer' : ''
@@ -317,9 +453,10 @@ export class GalaxyEngine {
     const book = this.books[nextIndex]
     const screen = this.positions.get(book.id)?.clone().project(this.camera)
     if (screen) {
+      const bounds = this.renderer.domElement.getBoundingClientRect()
       this.callbacks.onHover(book, {
-        x: (screen.x * 0.5 + 0.5) * this.container.clientWidth,
-        y: (-screen.y * 0.5 + 0.5) * this.container.clientHeight,
+        x: (screen.x * 0.5 + 0.5) * bounds.width,
+        y: (-screen.y * 0.5 + 0.5) * bounds.height,
       })
     }
   }
@@ -346,7 +483,6 @@ export class GalaxyEngine {
     if (this.dust) {
       const dustMaterial = this.dust.material as ShaderMaterial
       dustMaterial.uniforms.uTime.value = visualTime
-      if (!this.reducedMotion) this.dust.rotation.y += delta * 0.0016
     }
     this.updateFlight(performance.now())
     this.updateRelationBeacon()
@@ -485,6 +621,7 @@ export class GalaxyEngine {
     this.resizeObserver?.disconnect()
     window.removeEventListener('keydown', this.handleKeyDown)
     this.renderer.domElement.removeEventListener('pointermove', this.handlePointerMove)
+    this.renderer.domElement.removeEventListener('pointerdown', this.handlePointerDown)
     this.renderer.domElement.removeEventListener('pointerleave', this.handlePointerLeave)
     this.renderer.domElement.removeEventListener('click', this.handleClick)
     this.renderer.domElement.removeEventListener('webglcontextlost', this.handleContextLost)
