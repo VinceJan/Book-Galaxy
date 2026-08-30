@@ -226,11 +226,11 @@ export function BookObservatory({
   )
 }
 
-const directionCopy = [
-  ['沿着近处的回声', '先看见它们共享的问题'],
-  ['穿过一条隐秘暗河', '跨过时代与类型的边界'],
-  ['去最远但仍说得通', '让陌生抵达，但不让意义断裂'],
-]
+function directionCopy(relation: BookRelation): [string, string] {
+  if (relation.surprise < 0.52) return ['沿着近处的回声', '先看见它们共享的问题']
+  if (relation.surprise < 0.8) return ['穿过一条隐秘暗河', '跨过时代与类型的边界']
+  return ['去最远但仍说得通', '让陌生抵达，但不让意义断裂']
+}
 
 export function DetourCompass({
   relations,
@@ -249,14 +249,17 @@ export function DetourCompass({
       </div>
       <h2 id="detour-title">你愿意离熟悉多远？</h2>
       <div className="direction-list">
-        {relations.map((relation, index) => (
-          <button key={`${relation.source}:${relation.target}`} type="button" autoFocus={index === 0} onClick={() => onChoose(relation)}>
-            <small>0{index + 1} / {relation.kind}</small>
-            <strong>{directionCopy[index]?.[0] ?? '沿着另一种回答'}</strong>
-            <span>{directionCopy[index]?.[1] ?? relation.sentence}</span>
-            <Icon name="arrow" />
-          </button>
-        ))}
+        {relations.map((relation, index) => {
+          const copy = directionCopy(relation)
+          return (
+            <button key={`${relation.source}:${relation.target}`} type="button" autoFocus={index === 0} onClick={() => onChoose(relation)}>
+              <small>0{index + 1} / {relation.kind}</small>
+              <strong>{copy[0]}</strong>
+              <span>{copy[1]}</span>
+              <Icon name="arrow" />
+            </button>
+          )
+        })}
       </div>
     </section>
   )
@@ -343,26 +346,29 @@ export function LibrarianBand({
         <button type="button" onClick={() => { setAnswer(undefined); setMode('basis') }}>显示依据</button>
       </div>
       {onlineAvailable && onAskOnline && (
-        <form
-          className="signal-question"
-          onSubmit={async (event) => {
-            event.preventDefault()
-            if (!question.trim() || loading) return
-            setLoading(true)
-            const next = await onAskOnline(question.trim())
-            setAnswer(next ?? '远方波段暂时没有回应，本地引力解释仍然有效。')
-            setLoading(false)
-          }}
-        >
-          <input
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            maxLength={240}
-            placeholder="继续追问这条关系"
-            aria-label="向馆员波段继续追问"
-          />
-          <button type="submit" disabled={loading}>{loading ? '接收中' : '发送'}</button>
-        </form>
+        <>
+          <form
+            className="signal-question"
+            onSubmit={async (event) => {
+              event.preventDefault()
+              if (!question.trim() || loading) return
+              setLoading(true)
+              const next = await onAskOnline(question.trim())
+              setAnswer(next ?? '远方波段暂时没有回应，本地引力解释仍然有效。')
+              setLoading(false)
+            }}
+          >
+            <input
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              maxLength={240}
+              placeholder="继续追问这条关系"
+              aria-label="向馆员波段继续追问"
+            />
+            <button type="submit" disabled={loading}>{loading ? '接收中' : '发送'}</button>
+          </form>
+          <small className="signal-disclosure">发送时仅会离开浏览器：当前问题、两本书、关系依据与最近五站航迹。</small>
+        </>
       )}
     </section>
   )

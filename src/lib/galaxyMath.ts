@@ -67,11 +67,15 @@ export function chooseRelations(
   })
 
   const selected: BookRelation[] = []
+  const selectedTargets = new Set<string>()
   for (const desired of directions) {
     const next = candidates
-      .filter((candidate) => !selected.includes(candidate))
+      .filter((candidate) => !selected.includes(candidate) && !selectedTargets.has(otherBookId(candidate, bookId)))
       .sort((left, right) => scoreRelation(right, desired) - scoreRelation(left, desired))[0]
-    if (next) selected.push(next)
+    if (next) {
+      selected.push(next)
+      selectedTargets.add(otherBookId(next, bookId))
+    }
     if (selected.length >= limit) break
   }
   return selected

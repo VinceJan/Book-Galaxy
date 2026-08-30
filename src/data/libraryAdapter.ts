@@ -77,12 +77,12 @@ function normalizeIsbn(value: string): string | undefined {
 }
 
 function stableHash(value: string): string {
-  let hash = 2166136261
+  let hash = 14695981039346656037n
   for (const character of value) {
-    hash ^= character.codePointAt(0) ?? 0
-    hash = Math.imul(hash, 16777619)
+    hash ^= BigInt(character.codePointAt(0) ?? 0)
+    hash = BigInt.asUintN(64, hash * 1099511628211n)
   }
-  return (hash >>> 0).toString(36)
+  return hash.toString(36)
 }
 
 function stableId(record: LibraryRecord, title: string, author: string, isbn?: string, callNumber?: string): { id: string; recordId?: string } {

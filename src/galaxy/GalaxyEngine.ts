@@ -348,7 +348,6 @@ export class GalaxyEngine {
       dustMaterial.uniforms.uTime.value = visualTime
       if (!this.reducedMotion) this.dust.rotation.y += delta * 0.0016
     }
-    if (!this.reducedMotion) this.stars.rotation.y += delta * 0.00022
     this.updateFlight(performance.now())
     this.updateRelationBeacon()
     this.controls.update()

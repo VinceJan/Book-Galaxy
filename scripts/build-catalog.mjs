@@ -5,7 +5,7 @@
  * Project Gutenberg machine-readable catalog.
  *
  * No third-party packages are required. The downloaded source is kept under
- * public/data/raw/ (ignored by git) and is never copied into the demo bundle.
+ * data/raw/ (ignored by git) and is never copied into the demo bundle.
  */
 
 import { createHash } from 'node:crypto'
@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DATA_DIR = resolve(ROOT, 'public/data')
-const RAW_DIR = resolve(DATA_DIR, 'raw')
+const RAW_DIR = resolve(ROOT, 'data/raw')
 const DEFAULT_SOURCE_URL = 'https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz'
 const DEFAULT_LIMIT = 20_000
 const DEFAULT_RELATIONS = 60_000

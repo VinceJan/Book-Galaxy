@@ -50,7 +50,11 @@ export async function askOnlineCurator(
       signal: timeout.signal,
     })
     if (!response.ok) return undefined
-    const payload = await response.json() as { answer?: unknown }
+    const declaredLength = Number(response.headers.get('content-length') ?? 0)
+    if (declaredLength > 20_000) return undefined
+    const responseText = await response.text()
+    if (responseText.length > 20_000) return undefined
+    const payload = JSON.parse(responseText) as { answer?: unknown }
     return typeof payload.answer === 'string' ? payload.answer.slice(0, 900) : undefined
   } catch {
     return undefined

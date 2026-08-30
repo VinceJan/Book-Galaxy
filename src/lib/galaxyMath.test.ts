@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Book, BookRelation } from '../types'
-import { chooseRelations, hashString, positionForBook } from './galaxyMath'
+import { chooseRelations, hashString, otherBookId, positionForBook } from './galaxyMath'
 
 const book: Book = {
   id: 'three-body-problem',
@@ -25,10 +25,11 @@ describe('galaxyMath', () => {
       confidence: 0.9,
       surprise,
     }))
+    relations.push({ ...relations[0], source: 'book-0', target: 'three-body-problem' })
     const selected = chooseRelations(relations, 'three-body-problem', new Set(['book-3']))
     expect(selected).toHaveLength(3)
     expect(selected.some((relation) => relation.target === 'book-3')).toBe(false)
-    expect(new Set(selected.map((relation) => relation.target)).size).toBe(3)
+    expect(new Set(selected.map((relation) => otherBookId(relation, 'three-body-problem'))).size).toBe(3)
     expect(selected[0].surprise).toBeGreaterThanOrEqual(0.2)
     expect(selected[0].surprise).toBeLessThanOrEqual(0.45)
     expect(selected[1].surprise).toBeGreaterThanOrEqual(0.55)

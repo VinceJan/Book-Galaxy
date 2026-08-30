@@ -8,6 +8,6 @@ dist/
 coverage/
 tmp/
 *.tsbuildinfo
-public/data/raw/
+data/raw/
 .DS_Store
 Thumbs.db

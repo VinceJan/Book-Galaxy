@@ -1,6 +1,6 @@
 # 书架星系数据来源
 
-`public/data/catalog.json` 是由 `scripts/build-catalog.mjs` 从 Project Gutenberg 的官方机器可读离线目录构建的静态快照。原始下载文件只保存在 `public/data/raw/`，该目录已被 `.gitignore` 排除，不随仓库提交。
+`public/data/catalog.json` 是由 `scripts/build-catalog.mjs` 从 Project Gutenberg 的官方机器可读离线目录构建的静态快照。原始下载文件只保存在 `data/raw/`，该目录已被 `.gitignore` 排除，也不会被 Vite 复制进线上 Demo。
 
 ## 目录来源
 

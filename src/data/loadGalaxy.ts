@@ -118,6 +118,15 @@ export function makeRelationResolver(data: GalaxyData): {
       潮汐: `“${shared}”让两本相距遥远的书在同一次潮汐里靠近。`,
     }
     const confidence = Math.min(0.98, Math.max(0.55, edge.weight ?? 0.72))
+    const surprise = basis.some((item) => item.startsWith('作者'))
+      ? 0.28
+      : basis.some((item) => item.startsWith('主题'))
+        ? 0.46
+        : basis.some((item) => item.startsWith('年代'))
+          ? 0.7
+          : basis.some((item) => item.startsWith('语言'))
+            ? 0.88
+            : 0.66
     return {
       source: bookId,
       target: targetId,
@@ -125,20 +134,17 @@ export function makeRelationResolver(data: GalaxyData): {
       sentence: sentences[kind],
       basis,
       confidence,
-      surprise: Math.min(0.96, Math.max(0.34, 1.08 - confidence * 0.52)),
+      surprise,
       provenance: 'catalog',
     }
   }
 
   return {
     optionsFor(bookId, visited) {
-      const curated = chooseRelations(data.curatedRelations, bookId, visited)
-      if (curated.length >= 3) return curated
       const catalog = (adjacency.get(bookId) ?? [])
         .filter((edge) => !visited.has(otherBookId(edge, bookId)))
-        .slice(0, 12)
         .map((edge) => enrich(edge, bookId))
-      return [...curated, ...catalog].slice(0, 3)
+      return chooseRelations([...data.curatedRelations, ...catalog], bookId, visited)
     },
   }
 }
