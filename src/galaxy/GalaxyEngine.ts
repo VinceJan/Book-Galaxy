@@ -610,6 +610,7 @@ export class GalaxyEngine {
     this.renderer.domElement.addEventListener('click', this.handleClick)
     this.renderer.domElement.addEventListener('webglcontextlost', this.handleContextLost)
     window.addEventListener('keydown', this.handleKeyDown)
+    document.addEventListener('visibilitychange', this.handleVisibility)
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(this.container)
   }
@@ -841,6 +842,22 @@ export class GalaxyEngine {
     attribute.needsUpdate = true
   }
 
+  private handleVisibility = (): void => {
+    if (typeof document === 'undefined') return
+    if (document.hidden) {
+      if (this.frame) {
+        cancelAnimationFrame(this.frame)
+        this.frame = undefined
+      }
+      return
+    }
+    if (!this.disposed && this.frame === undefined) {
+      this.lastRenderedAt = -Infinity
+      this.timer.update(performance.now())
+      this.frame = requestAnimationFrame(this.animate)
+    }
+  }
+
   private resize(): void {
     const width = Math.max(1, this.container.clientWidth)
     const height = Math.max(1, this.container.clientHeight)
@@ -852,6 +869,10 @@ export class GalaxyEngine {
 
   private animate = (timestamp = performance.now()): void => {
     if (this.disposed) return
+    if (typeof document !== 'undefined' && document.hidden) {
+      this.frame = undefined
+      return
+    }
     this.frame = requestAnimationFrame(this.animate)
     const frameInterval = this.reducedMotion ? 1000 / 30 : this.lowPower ? 1000 / 45 : 0
     if (frameInterval > 0 && timestamp - this.lastRenderedAt < frameInterval) return
@@ -922,6 +943,7 @@ export class GalaxyEngine {
   }
 
   async focusBook(id: string, duration = 1_350): Promise<boolean> {
+    if (this.disposed) return false
     const target = this.positions.get(id)
     if (!target) return false
     const index = this.indexById.get(id)
@@ -1028,6 +1050,7 @@ export class GalaxyEngine {
     this.disposed = true
     if (this.readyTimer) window.clearTimeout(this.readyTimer)
     if (this.frame) cancelAnimationFrame(this.frame)
+    this.frame = undefined
     this.timer.dispose()
     this.cancelFlight()
     this.clearRelation()
@@ -1039,6 +1062,7 @@ export class GalaxyEngine {
     this.semanticRegionLabels.length = 0
     this.resizeObserver?.disconnect()
     window.removeEventListener('keydown', this.handleKeyDown)
+    document.removeEventListener('visibilitychange', this.handleVisibility)
     this.renderer.domElement.removeEventListener('pointermove', this.handlePointerMove)
     this.renderer.domElement.removeEventListener('pointerdown', this.handlePointerDown)
     this.renderer.domElement.removeEventListener('pointerup', this.handlePointerUp)

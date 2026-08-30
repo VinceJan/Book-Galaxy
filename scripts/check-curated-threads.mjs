@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Gate the hand-written "冥冥书线" batches without executing their source.
+ * Gate the hand-written "引力书线" batches without executing their source.
  *
  * TypeScript 7 exposes its compiler scanner through unstable/ast rather than
  * the old JavaScript createSourceFile API.  The scanner is used to build a
@@ -666,7 +666,7 @@ async function main() {
   }
   const degreeValues = [...degree.values()]
   const missingBooks = [...degree].filter(([, count]) => count < 1).map(([id]) => id)
-  if (missingBooks.length) addError(errors, `${missingBooks.length} 本书没有任何冥冥书线：${missingBooks.slice(0, 20).join('、')}${missingBooks.length > 20 ? '……' : ''}`)
+  if (missingBooks.length) addError(errors, `${missingBooks.length} 本书没有任何引力书线：${missingBooks.slice(0, 20).join('、')}${missingBooks.length > 20 ? '……' : ''}`)
   if (uniquePairs.size < 3000) addError(errors, `有效无向书线仅 ${uniquePairs.size} 条，至少需要 3000 条`)
 
   const top10Hubs = [...degree.entries()]
@@ -768,7 +768,7 @@ async function main() {
   }
 
   if (errors.length) {
-    console.error(`冥冥书线门禁失败：${errors.length} 项`)
+    console.error(`引力书线门禁失败：${errors.length} 项`)
     console.log(JSON.stringify(stats, null, 2))
     process.exitCode = 1
     return

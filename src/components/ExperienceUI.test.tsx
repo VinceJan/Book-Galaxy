@@ -9,6 +9,15 @@ import {
   whyHereCopy,
 } from './ExperienceUI'
 import type { Book, BookRelation } from '../types'
+// @ts-ignore - node fs available in vitest
+import { readFileSync } from 'node:fs'
+// @ts-ignore - node path available in vitest
+import { dirname, resolve } from 'node:path'
+// @ts-ignore - node url available in vitest
+import { fileURLToPath } from 'node:url'
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+const readRepo = (path: string) => readFileSync(resolve(repoRoot, path), 'utf8')
 
 describe('safeExternalUrl', () => {
   it('accepts only the expected source records', () => {
@@ -159,5 +168,62 @@ describe('modal focus and mounted observatory', () => {
     expect(uiSource).toContain('[data-overlay-trigger="chart"]')
     // App must not steal focus when overlay is open: overlayOpen guards title focus
     expect(appSource).toContain('overlayOpen')
+  })
+})
+
+describe('product depth - whyHere', () => {
+  it('deduplicates whyHereCopy when location equals density', () => {
+    expect(whyHereCopy('书云交界处', '书云交界处')).not.toContain('“书云交界处”的书云交界处')
+    expect(whyHereCopy('书云交界处', '书云交界处')).toContain('它位于书云交界处')
+    expect(whyHereCopy('文学书云', '书云深处', { book: { id: 'x1', title: '邻星', author: 'a', themes: [] } as unknown as Book })).toContain('文学书云')
+    expect(whyHereCopy('书云交界处', '书云交界处', { book: { id: 'x1', title: '邻星', author: 'a', themes: [] } as unknown as Book })).toBe('它位于书云交界处。《邻星》是离这里最近的书星。')
+  })
+})
+
+describe('product depth - contract', () => {
+  it('locks terminology, order, humility and plumbing', () => {
+    const ui = readRepo('src/components/ExperienceUI.tsx')
+    const app = readRepo('src/App.tsx')
+    const readme = readRepo('README.md')
+    const dataSources = readRepo('data-sources.md')
+    const starChart = readRepo('src/lib/starChart.ts')
+    const css = readRepo('src/styles.css')
+
+    // terminology: no old term outside git history
+    expect(ui).toContain('引力书线')
+    expect(ui).not.toContain('冥冥书线')
+    expect(readme).toContain('引力书线')
+    expect(readme).not.toContain('冥冥书线')
+    expect(dataSources).toContain('引力书线')
+    expect(starChart).toContain('引力书线')
+
+    // order within BookObservatory
+    const panelStart = ui.indexOf('export function BookObservatory')
+    const panel = panelStart >= 0 ? ui.slice(panelStart) : ui
+    expect(panel.indexOf('书页一瞥')).toBeGreaterThan(-1)
+    expect(panel.indexOf('引力书线')).toBeGreaterThan(panel.indexOf('书页一瞥'))
+    expect(panel.indexOf('为什么在这里')).toBeGreaterThan(panel.indexOf('引力书线'))
+    expect(panel.indexOf('附近书星')).toBeGreaterThan(panel.indexOf('为什么在这里'))
+
+    // humility
+    expect(ui).toContain('逐书策展 · 阅读假说')
+    expect(ui).toContain('一种读法，并非定论')
+    expect(ui).toContain('点击一条书线，星海将显影这段相遇的航迹')
+    expect(ui).toContain('如何阅读它的位置')
+    expect(ui).toContain('再偏航一次，馆员便能说说两本书为何相遇')
+
+    // plumbing: curated counts, journey rail conditional, aria-current, intro guard, aria-busy, imprint and chart personalization
+    expect(ui).toContain('curatedRelationCount')
+    expect(app).toContain("state.status === 'exploring' ? selectBook : undefined")
+    expect(ui).toContain("aria-current={isCurrent ? 'step' : undefined}")
+    expect(ui).toContain('ready && curatedRelationCount > 0 ? curatedRelationCount')
+    expect(ui).toContain('aria-busy={!ready}')
+    expect(ui).toContain('另起一段航迹')
+    expect(ui).toContain('将清空当前航迹，从此书重开')
+    expect(ui).toContain('journeyLength')
+    expect(css).toContain('min(720px, 46vw)')
+    expect(css).toContain('min(520px, 52vw)')
+    expect(css).toContain('gravity-thread-record')
+    expect(app).toContain('journey.steps.length === journeyBooks.length')
   })
 })

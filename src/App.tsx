@@ -23,7 +23,7 @@ import {
 } from './data/loadGalaxy'
 import { demoJourneys } from './data/demoJourneys'
 import { otherBookId } from './lib/galaxyMath'
-import { Soundscape } from './lib/soundscape'
+import { getIntroLoadingPhase, Soundscape, syncSoundscapeVisibility } from './lib/soundscape'
 import { downloadStarChart, renderStarChart } from './lib/starChart'
 import { askOnlineCurator, hasOnlineCurator } from './ai/curator'
 import type { Book, BookRelation } from './types'
@@ -152,18 +152,35 @@ export default function App() {
   useEffect(() => observeReducedMotion(setReducedMotion), [])
 
   useEffect(() => {
+    const handleVisibility = () => syncSoundscapeVisibility(document.hidden, soundRef.current, soundEnabled)
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [soundEnabled])
+
+  useEffect(() => {
     const controller = new AbortController()
+    let timedOut = false
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, 28_000)
     void loadGalaxyData(controller.signal)
       .then((loaded) => {
+        window.clearTimeout(timeoutId)
+        if (controller.signal.aborted) return
         setEngineReady(false)
         setData(loaded)
         setCatalogState('ready')
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        reportFailure('catalog', error)
+        window.clearTimeout(timeoutId)
+        if (controller.signal.aborted && !timedOut) return
+        reportFailure('catalog', timedOut ? new Error('Catalog load timed out') : error)
       })
-    return () => controller.abort()
+    return () => {
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [reportFailure])
 
   const booksById = useMemo(() => new Map(data.books.map((book) => [book.id, book])), [data.books])
@@ -330,13 +347,18 @@ export default function App() {
     if (journeyBooks.length < 3) return
     const demo = demoJourneys.find((journey) => (
       journey.entryBookId === journeyBooks[0]?.id
+      && journey.steps.length === journeyBooks.length
       && journeyBooks.every((book, index) => journey.steps[index]?.bookId === book.id)
     ))
+    const first = journeyBooks[0]
+    const last = journeyBooks.at(-1)
+    const title = demo?.title ?? (first && last ? `《${first.title}》到《${last.title}》的迷路` : '一次有意义的偏航')
+    const subtitle = demo?.closingLine ?? `共 ${journeyBooks.length} 本书，${journeyBooks.length - 1} 段航迹`
     const dataUrl = renderStarChart({
       books: journeyBooks,
       relations: state.journeyRelations,
-      title: demo?.title ?? '一次有意义的偏航',
-      subtitle: demo?.closingLine ?? '你没有找到答案，但带回了一条此前不存在的路。',
+      title,
+      subtitle,
     })
     soundRef.current?.imprint()
     dispatch({ type: 'SHOW_CHART', dataUrl })
@@ -372,6 +394,7 @@ export default function App() {
   if (state.error) return <ErrorFallback message={state.error} onReset={() => window.location.reload()} />
 
   const ready = engineReady && catalogState === 'ready'
+  const loadingPhase = getIntroLoadingPhase(catalogState, engineReady)
   return (
     <main className={`app-shell status-${state.status}${reducedMotion ? ' reduced-motion' : ''}`} aria-label="书架星系 · 暗物质图书馆">
       <GalaxyCanvas
@@ -393,6 +416,7 @@ export default function App() {
           bookCount={data.books.length}
           relationCount={data.relationCount}
           curatedRelationCount={curatedRelationCount}
+          loadingPhase={loadingPhase}
           onStart={startFrom}
         />
       ) : (
@@ -400,6 +424,7 @@ export default function App() {
           <ObservatoryHeader
             bookCount={data.books.length}
             relationCount={data.relationCount}
+            curatedRelationCount={curatedRelationCount}
             soundEnabled={soundEnabled}
             reducedMotion={reducedMotion}
             onToggleSound={toggleSound}
@@ -407,7 +432,7 @@ export default function App() {
             onReset={reset}
           />
           {state.status === 'exploring' && <HoverLabel book={hovered?.book ?? null} position={hovered?.position} />}
-          <JourneyRail books={journeyBooks} />
+          <JourneyRail books={journeyBooks} onSelect={state.status === 'exploring' ? selectBook : undefined} />
           {selected && state.status !== 'travelling' && (
             <BookObservatory
               book={selected}
@@ -420,6 +445,8 @@ export default function App() {
               canImprint={journeyBooks.length >= 3 && selectedIsJourneyHead}
               canDetour={selectedIsJourneyHead}
               hasRelationship={Boolean(observedRelation)}
+              journeyLength={journeyBooks.length}
+              isAtOrigin={selectedJourneyIndex === 0}
               onClose={() => {
                 keyboardSelectionRef.current = false
                 dispatch({ type: 'CLEAR_SELECTION' })

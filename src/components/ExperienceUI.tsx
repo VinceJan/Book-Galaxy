@@ -21,6 +21,7 @@ interface IntroProps {
   bookCount: number
   relationCount: number
   curatedRelationCount: number
+  loadingPhase?: string
   onStart: (book: Book) => void
 }
 
@@ -134,7 +135,7 @@ function featuredBooks(books: Book[], limit = 5): Book[] {
     .slice(0, limit)
 }
 
-export function IntroScreen({ books, ready, bookCount, relationCount, curatedRelationCount, onStart }: IntroProps) {
+export function IntroScreen({ books, ready, bookCount, relationCount, curatedRelationCount, loadingPhase, onStart }: IntroProps) {
   const [query, setQuery] = useState('')
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
   const featured = useMemo(() => featuredBooks(books), [books])
@@ -209,7 +210,7 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
             aria-activedescendant={suggestionsOpen ? activeSuggestionId : undefined}
           />
           <span aria-hidden="true">》</span>
-          <button type="submit" disabled={!ready || books.length === 0 || noMatch}>
+          <button type="submit" disabled={!ready || books.length === 0 || noMatch} aria-busy={!ready}>
             {ready ? '开始偏航' : '星海显影中'}
             <Icon name="arrow" />
           </button>
@@ -245,8 +246,11 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
       <div className="intro-proof" aria-label="数据规模">
         <span><strong>{ready ? bookCount.toLocaleString('zh-CN') : '—'}</strong> 本真实书籍</span>
         <span><strong>{ready ? relationCount.toLocaleString('zh-CN') : '—'}</strong> 条书海暗线</span>
-        <span><strong>{ready ? curatedRelationCount.toLocaleString('zh-CN') : '—'}</strong> 条冥冥书线</span>
+        <span><strong>{ready && curatedRelationCount > 0 ? curatedRelationCount.toLocaleString('zh-CN') : '—'}</strong> 条引力书线</span>
       </div>
+      {loadingPhase && !ready && (
+        <p className="intro-loading-phase" role="status">{loadingPhase}</p>
+      )}
       <div className="intro-challenges">双题合流 · 02 × 03</div>
     </section>
   )
@@ -255,6 +259,7 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
 interface HeaderProps {
   bookCount: number
   relationCount: number
+  curatedRelationCount?: number
   soundEnabled: boolean
   reducedMotion: boolean
   onToggleSound: () => void
@@ -265,6 +270,7 @@ interface HeaderProps {
 export function ObservatoryHeader({
   bookCount,
   relationCount,
+  curatedRelationCount,
   soundEnabled,
   reducedMotion,
   onToggleSound,
@@ -303,6 +309,12 @@ export function ObservatoryHeader({
         <span>{bookCount.toLocaleString('zh-CN')} 颗书星</span>
         <i />
         <span>{relationCount.toLocaleString('zh-CN')} 条书海暗线</span>
+        {typeof curatedRelationCount === 'number' && curatedRelationCount > 0 && (
+          <>
+            <i aria-hidden="true" />
+            <span>{curatedRelationCount.toLocaleString('zh-CN')} 条引力书线</span>
+          </>
+        )}
       </div>
       <nav className="observatory-tools" aria-label="观测工具">
         <button type="button" onClick={onToggleMotion} aria-pressed={reducedMotion} title="稳定镜头">
@@ -458,7 +470,11 @@ export function whyHereCopy(
   densityWord: string,
   nearest?: SemanticNeighborView,
 ): string {
-  if (!nearest) return `它位于“${locationLabel}”的${densityWord}。附近暂未显出可命名的相遇。`
+  if (!nearest) {
+    if (locationLabel === densityWord) return `它位于${densityWord}。附近暂未显出可命名的相遇。`
+    return `它位于“${locationLabel}”的${densityWord}。附近暂未显出可命名的相遇。`
+  }
+  if (locationLabel === densityWord) return `它位于${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
   return `它位于“${locationLabel}”的${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
 }
 
@@ -473,6 +489,8 @@ interface BookPanelProps {
   canImprint: boolean
   canDetour: boolean
   hasRelationship: boolean
+  journeyLength?: number
+  isAtOrigin?: boolean
   onClose: () => void
   onObserveNearby: (book: Book) => void
   onFollowCuratedThread: (relation: BookRelation) => void
@@ -531,6 +549,8 @@ export function BookObservatory({
   canImprint,
   canDetour,
   hasRelationship,
+  journeyLength = 0,
+  isAtOrigin = false,
   onClose,
   onObserveNearby,
   onFollowCuratedThread,
@@ -558,8 +578,21 @@ export function BookObservatory({
         : '书云过渡带'
   const whyHere = whyHereCopy(locationLabel, densityWord, nearestSemantic)
 
+  const imprintDisabled = !canImprint
+  const imprintCopy = journeyLength < 3
+    ? `再走 ${3 - journeyLength} 本即可留下星图 · ${journeyLength}/3`
+    : !canDetour
+      ? '回到航迹尽头即可留下星图'
+      : '留下这次迷路'
+  const handlePanelKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      onClose()
+    }
+  }
+
   return (
-    <aside className="book-observatory" aria-labelledby="observed-book-title">
+    <aside className="book-observatory" aria-labelledby="observed-book-title" onKeyDown={handlePanelKeyDown}>
       <div className="panel-heading">
         <span>观测对象 {String(index + 1).padStart(2, '0')} / {total.toLocaleString('zh-CN')}</span>
         <button type="button" onClick={onClose} aria-label="收起书籍信息"><Icon name="close" /></button>
@@ -595,9 +628,37 @@ export function BookObservatory({
           </div>
         )}
       </div>
+      {curatedThreads.length > 0 && (
+        <div className="book-record gravity-thread-record hidden-thread-record" aria-labelledby="gravity-thread-title">
+           <span id="gravity-thread-title" className="book-record-label">引力书线</span>
+           <small className="gravity-thread-meta">逐书策展 · 阅读假说</small>
+          <ul className="hidden-thread-list gravity-thread-list">
+            {curatedThreads.map(({ relation, target }) => (
+              <li key={`${relation.source}:${relation.target}`}>
+                <button className="hidden-thread-item gravity-thread-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
+                  <small>{relation.kind}</small>
+                  <strong>《{target.title}》</strong>
+                  <span>{relation.sentence}</span>
+                  <Icon name="arrow" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <small className="gravity-thread-hint">点击一条书线，星海将显影这段相遇的航迹。</small>
+          <details className="hidden-thread-note">
+            <summary>关于这段相遇</summary>
+            <p>一种读法，并非定论。</p>
+          </details>
+        </div>
+      )}
       <div className="book-record" aria-label="星域定位">
          <span className="book-record-label">为什么在这里</span>
         <p className="book-summary">{whyHere}</p>
+        <details className="whyhere-legend">
+          <summary>如何阅读它的位置</summary>
+          <p>它在星海中的位置与光度来自共同气质、时代与地域；更亮的星代表更显眼的体量。偏航时，近处贴近熟悉，桥上换种目光，远处走向陌生但仍有依据的方向。</p>
+          <a className="source-link source-link-secondary" href={`${import.meta.env.BASE_URL}data-license.html`}>资料说明 ↗</a>
+        </details>
       </div>
       {nearbyBooks.length > 0 && (
         <div className="book-record nearby-record" aria-label="附近书星">
@@ -612,28 +673,7 @@ export function BookObservatory({
               </li>
             ))}
           </ul>
-          <small className="nearby-note">点开一颗书星，继续沿着它的光走。</small>
-        </div>
-      )}
-      {curatedThreads.length > 0 && (
-        <div className="book-record hidden-thread-record" aria-labelledby="hidden-thread-title">
-           <span id="hidden-thread-title" className="book-record-label">冥冥书线</span>
-          <ul className="hidden-thread-list">
-            {curatedThreads.map(({ relation, target }) => (
-              <li key={`${relation.source}:${relation.target}`}>
-                <button className="hidden-thread-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
-                  <small>{relation.kind}</small>
-                  <strong>《{target.title}》</strong>
-                  <span>{relation.sentence}</span>
-                  <Icon name="arrow" />
-                </button>
-              </li>
-            ))}
-          </ul>
-          <details className="hidden-thread-note">
-            <summary>关于这段相遇</summary>
-            <p>一种读法，并非定论。</p>
-          </details>
+          <small className="nearby-note">点开可先观测；偏航或引力书线才会写入航迹。</small>
         </div>
       )}
       <div className="book-source-row">
@@ -675,17 +715,18 @@ export function BookObservatory({
       </div>
       <div className="panel-actions">
         <button
-          className="primary-action"
+          className={canDetour ? 'primary-action' : 'restart-action'}
           type="button"
           disabled={!contentReady}
           data-overlay-trigger={contentReady && canDetour ? 'detour' : undefined}
           onClick={contentReady ? (canDetour ? onDetour : onRestart) : undefined}
         >
-          {contentReady ? (canDetour ? '从这里偏航' : '以此为新的出发星') : '内容尚未显影'} {contentReady && <Icon name="arrow" />}
+          {contentReady ? (canDetour ? '从这里偏航' : '另起一段航迹') : '内容尚未显影'} {contentReady && <Icon name="arrow" />}
         </button>
+        {!canDetour && contentReady && <small className="restart-disclosure">将清空当前航迹，从此书重开</small>}
         <button type="button" data-overlay-trigger="librarian" onClick={onAsk}><Icon name="signal" /> {hasRelationship ? '请馆员说说这段缘分' : '听听这颗书星'}</button>
-        {canImprint && <button type="button" data-overlay-trigger="chart" onClick={onImprint}>留下这次迷路</button>}
-        <button className="quiet-action" type="button" onClick={onReturn}>返回出发星</button>
+        <button type="button" data-overlay-trigger={canImprint ? 'chart' : undefined} onClick={canImprint ? onImprint : undefined} disabled={imprintDisabled}>{imprintCopy}</button>
+        <button className="quiet-action" type="button" onClick={isAtOrigin ? undefined : onReturn} disabled={isAtOrigin}>{isAtOrigin ? '已在出发星' : '返回出发星'}</button>
       </div>
     </aside>
   )
@@ -955,20 +996,30 @@ export function VoyageNarration({ relation, from, to }: { relation: BookRelation
   )
 }
 
-export function JourneyRail({ books }: { books: Book[] }) {
+export function JourneyRail({ books, onSelect }: { books: Book[]; onSelect?: (book: Book) => void }) {
   if (books.length === 0) return null
   const visibleBooks = books.slice(-6)
   const omitted = books.length - visibleBooks.length
+  const progress = books.length >= 3 ? '可留星图' : `再走 ${3 - books.length} 本可留星图`
   return (
     <aside className="journey-rail" aria-label="本次航迹">
-      <small>本次航迹</small>
+      <small>本次航迹 · {books.length}/3 · {progress}</small>
       <ol>
         {omitted > 0 && <li className="omitted"><span>此前 {omitted} 站 ···</span></li>}
-        {visibleBooks.map((book, index) => (
-          <li key={`${book.id}:${index}`} className={index === visibleBooks.length - 1 ? 'current' : ''}>
-            <i /><span>《{book.title}》</span>
-          </li>
-        ))}
+        {visibleBooks.map((book, index) => {
+          const isCurrent = index === visibleBooks.length - 1
+          const clickable = Boolean(onSelect) && !isCurrent
+          return (
+            <li key={`${book.id}:${index}`} className={isCurrent ? 'current' : ''} aria-current={isCurrent ? 'step' : undefined}>
+              <i />
+              {clickable ? (
+                <button type="button" onClick={() => onSelect?.(book)}>《{book.title}》</button>
+              ) : (
+                <span>《{book.title}》</span>
+              )}
+            </li>
+          )
+        })}
       </ol>
     </aside>
   )
@@ -1011,7 +1062,10 @@ export function LibrarianBand({
       <button className="signal-close" type="button" onClick={onClose} aria-label="关闭馆员来信"><Icon name="close" /></button>
       <h2 id="librarian-title" ref={headingRef} tabIndex={-1}>{relation ? '为什么是这一本？' : '这颗书星正在说什么？'}</h2>
       {answer ? <p>{answer}</p> : mode === 'basis' && relation ? null : (
-        <p>{relation ? relationReading(relation, from, to) : `你正在单独观测《${to.title}》。它还没有前一跳，先让它独自发光。`}</p>
+        <>
+          <p>{relation ? relationReading(relation, from, to) : `你正在单独观测《${to.title}》。它还没有前一跳，先让它独自发光。`}</p>
+          {!relation && <p className="signal-next">再偏航一次，馆员便能说说两本书为何相遇。</p>}
+        </>
       )}
       {mode === 'basis' && relation && (
         <div className="signal-evidence">

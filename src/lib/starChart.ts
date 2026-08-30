@@ -146,7 +146,7 @@ export function renderStarChart(input: StarChartInput): string {
     context.font = '500 22px "Noto Sans SC", "Microsoft YaHei", sans-serif'
     context.fillStyle = '#776d49'
     context.fillText(
-      relation.provenance === 'reading-hypothesis' ? `冥冥书线 · ${relation.kind}` : '偏航记录',
+      relation.provenance === 'reading-hypothesis' ? `引力书线 · ${relation.kind}` : '偏航记录',
       164,
       1410,
     )
@@ -178,9 +178,11 @@ export function renderStarChart(input: StarChartInput): string {
 
 export function downloadStarChart(dataUrl: string): void {
   const link = document.createElement('a')
-  const date = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const date = now.toISOString().slice(0, 10)
+  const time = now.toTimeString().slice(0, 8).replace(/:/gu, '')
   link.href = dataUrl
-  link.download = `书架星系-未刊星图-${date}.png`
+  link.download = `书架星系-未刊星图-${date}-${time}.png`
   link.style.display = 'none'
   document.body.append(link)
   link.click()

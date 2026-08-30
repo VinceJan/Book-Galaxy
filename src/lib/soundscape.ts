@@ -25,6 +25,19 @@ export class Soundscape {
     this.master?.gain.setTargetAtTime(0, this.context?.currentTime ?? 0, 0.12)
   }
 
+  suspend(): void {
+    if (this.context?.state === 'running') {
+      void this.context.suspend().catch(() => undefined)
+    }
+  }
+
+  resumeIfEnabled(): void {
+    if (!this.enabled || !this.context) return
+    if (this.context.state === 'suspended') {
+      void this.context.resume().catch(() => undefined)
+    }
+  }
+
   private startAmbient(): void {
     if (!this.context || !this.master) return
     this.ambient = this.context.createOscillator()
@@ -41,6 +54,7 @@ export class Soundscape {
 
   private tone(frequency: number, duration: number, volume: number): void {
     if (!this.enabled || !this.context || !this.master) return
+    if (this.context.state !== 'running') return
     this.master.gain.setTargetAtTime(0.16, this.context.currentTime, 0.08)
     const oscillator = this.context.createOscillator()
     const gain = this.context.createGain()
@@ -74,4 +88,23 @@ export class Soundscape {
     this.ambient?.stop()
     void this.context?.close()
   }
+}
+
+export function syncSoundscapeVisibility(
+  hidden: boolean,
+  sound: Pick<Soundscape, 'suspend' | 'resumeIfEnabled'> | undefined,
+  enabled: boolean,
+): void {
+  if (!sound) return
+  if (hidden) sound.suspend()
+  else if (enabled) sound.resumeIfEnabled()
+}
+
+export function getIntroLoadingPhase(
+  catalogState: 'loading' | 'ready',
+  engineReady: boolean,
+): string | undefined {
+  if (catalogState === 'loading') return '正在载入书目……'
+  if (!engineReady) return '正在编织星海……'
+  return undefined
 }
