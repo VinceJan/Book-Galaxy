@@ -15,6 +15,9 @@ export class Soundscape {
     }
     if (!this.ambient) this.startAmbient()
     this.enabled = true
+    const now = this.context.currentTime
+    this.master.gain.cancelScheduledValues(now)
+    this.master.gain.setTargetAtTime(0.16, now, 0.04)
   }
 
   disable(): void {

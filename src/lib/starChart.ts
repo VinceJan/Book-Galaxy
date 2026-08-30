@@ -40,6 +40,15 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
   return lines
 }
 
+/** Curated hops keep their authored sentence; navigation hops record only the route. */
+export function chartRelationLine(relation: BookRelation, departure?: Book, arrival?: Book): string {
+  const sentence = relation.sentence?.trim()
+  if (relation.provenance === 'reading-hypothesis' && sentence) return sentence
+  const from = departure ? `《${departure.title}》` : '出发星'
+  const to = arrival ? `《${arrival.title}》` : '远方书星'
+  return `从${from}抵达${to}。`
+}
+
 export function renderStarChart(input: StarChartInput): string {
   const canvas = document.createElement('canvas')
   canvas.width = WIDTH
@@ -132,11 +141,15 @@ export function renderStarChart(input: StarChartInput): string {
     context.textAlign = 'left'
     context.fillStyle = '#303432'
     context.font = '400 38px "Noto Serif SC", "SimSun", serif'
-    const lines = wrapText(context, `“${relation.sentence}”`, 1280).slice(0, 3)
+    const lines = wrapText(context, chartRelationLine(relation, input.books.at(-2), input.books.at(-1)), 1280).slice(0, 3)
     lines.forEach((line, index) => context.fillText(line, 160, 1450 + index * 56))
     context.font = '500 22px "Noto Sans SC", "Microsoft YaHei", sans-serif'
     context.fillStyle = '#776d49'
-    context.fillText(`${relation.kind} · ${relation.provenance === 'reading-hypothesis' ? '阅读联想' : '语义引力'}`, 164, 1410)
+    context.fillText(
+      relation.provenance === 'reading-hypothesis' ? `冥冥书线 · ${relation.kind}` : '偏航记录',
+      164,
+      1410,
+    )
   }
 
   const date = input.date ?? new Date()

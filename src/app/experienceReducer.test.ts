@@ -86,4 +86,32 @@ describe('experienceReducer', () => {
       travelling,
     )
   })
+
+  it('branches a curated detour from a historical node without stitching old tail pages', () => {
+    const semanticRelation = relation('origin', 'semantic-destination', 0.32)
+    const curatedRelation = relation('origin', 'curated-destination', 0.91)
+    const started = experienceReducer(initialExperienceState, { type: 'START', bookId: 'origin' })
+    const firstTravel = experienceReducer(started, { type: 'TRAVEL', relation: semanticRelation })
+    const firstArrival = experienceReducer(firstTravel, {
+      type: 'ARRIVE',
+      bookId: 'semantic-destination',
+      relation: semanticRelation,
+      sequence: firstTravel.travelSequence,
+    })
+
+    const returnedToOrigin = experienceReducer(firstArrival, { type: 'SELECT', bookId: 'origin' })
+    const curatedTravel = experienceReducer(returnedToOrigin, { type: 'TRAVEL', relation: curatedRelation })
+    expect(curatedTravel.journeyIds).toEqual(['origin'])
+    expect(curatedTravel.journeyRelations).toEqual([])
+
+    const curatedArrival = experienceReducer(curatedTravel, {
+      type: 'ARRIVE',
+      bookId: 'curated-destination',
+      relation: curatedRelation,
+      sequence: curatedTravel.travelSequence,
+    })
+    expect(curatedArrival.journeyIds).toEqual(['origin', 'curated-destination'])
+    expect(curatedArrival.journeyRelations).toEqual([curatedRelation])
+    expect(curatedArrival.journeyRelations[curatedArrival.journeyIds.lastIndexOf('curated-destination') - 1]).toEqual(curatedRelation)
+  })
 })

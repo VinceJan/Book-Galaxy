@@ -12,15 +12,20 @@ export const starVertexShader = /* glsl */ `
   attribute float aShape;
   attribute float aTemperature;
   varying vec3 vColor;
+  varying float vSeed;
+  varying float vEmphasis;
   varying float vPulse;
   varying float vMagnitude;
   varying float vDensity;
   varying float vOutlier;
   varying float vHalo;
   varying float vShape;
+  varying float vViewFade;
 
   void main() {
     vColor = color;
+    vSeed = aSeed;
+    vEmphasis = aEmphasis;
     vMagnitude = aMagnitude;
     vDensity = aDensity;
     vOutlier = aOutlier;
@@ -35,6 +40,12 @@ export const starVertexShader = /* glsl */ `
     float emphasis = 1.0 + aEmphasis * 1.65;
     float dustMin = mix(0.34, 1.15, 1.0 - uLayer);
     float dustMax = mix(4.8, 34.0, 1.0 - uLayer);
+    float viewDistance = length(mvPosition.xyz);
+    float nearFade = smoothstep(10.0, 28.0, viewDistance);
+    float farFade = 1.0 - smoothstep(280.0, 580.0, viewDistance);
+    // Keep a quiet trace of every book at the edge of the observatory. The
+    // selected star can raise this back to full strength in the fragment pass.
+    vViewFade = 0.2 + nearFade * farFade * 0.8;
     gl_PointSize = clamp(aSize * uPixelRatio * perspective * semanticScale * emphasis * pulse, dustMin, dustMax);
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -42,12 +53,15 @@ export const starVertexShader = /* glsl */ `
 
 export const starFragmentShader = /* glsl */ `
   varying vec3 vColor;
+  varying float vSeed;
+  varying float vEmphasis;
   varying float vPulse;
   varying float vMagnitude;
   varying float vDensity;
   varying float vOutlier;
   varying float vHalo;
   varying float vShape;
+  varying float vViewFade;
   uniform float uLayer;
 
   float ringMask(float radius, float center, float width) {
@@ -77,15 +91,44 @@ export const starFragmentShader = /* glsl */ `
     float doubleShape = step(0.73, vShape) * (1.0 - step(0.93, vShape));
     float ringShape = step(0.93, vShape);
     float softShape = 1.0 - crossShape - doubleShape - ringShape;
+    // Cross-family stars deliberately fork into three optical silhouettes.
+    // The seed is stable per book, so a rerender never changes its character.
+    float crossVariant = fract(sin(vSeed * 91.173) * 43758.5453);
+    float diamondVariant = step(0.34, crossVariant) * (1.0 - step(0.68, crossVariant));
+    float flareVariant = step(0.68, crossVariant);
+    float crossVariantWeight = 1.0 - diamondVariant - flareVariant;
+    float diamondRadius = abs(point.x) + abs(point.y);
+    float diamondBody = 1.0 - smoothstep(0.08, 0.48, diamondRadius);
+    float diamondEdge = 1.0 - smoothstep(0.16, 0.34, abs(diamondRadius - (0.24 + vHalo * 0.08)));
+    float diamond = max(diamondBody * 0.82, diamondEdge * 0.62);
+    float flare = max(
+      exp(-abs(point.x) * 34.0) * exp(-abs(point.y) * 7.0),
+      exp(-abs(point.y) * 34.0) * exp(-abs(point.x) * 7.0)
+    );
+    float crossFamily = crossVariantWeight * (softHalo * 0.44 + core * 0.9 + cross * (0.24 + vHalo * 0.4))
+      + diamondVariant * (diamond + core * 0.36)
+      + flareVariant * (softHalo * 0.32 + core * 0.9 + flare * (0.26 + vHalo * 0.48));
     float shapeMask = softShape * (softHalo * (0.38 + vHalo * 0.62) + core * 0.9)
-      + crossShape * (softHalo * 0.44 + core * 0.9 + cross * (0.24 + vHalo * 0.4))
+      + crossShape * crossFamily
       + doubleShape * doubleHalo
       + ringShape * eccentricRing;
 
+    float brilliance = clamp(vMagnitude * 0.5 + vDensity * 0.36 + vHalo * 0.14 + vEmphasis * 0.18, 0.0, 1.0);
+    float spikeGate = smoothstep(0.74, 0.9, brilliance);
+    float spikeReach = mix(0.34, 0.72, spikeGate);
+    float cardinalSpikes = max(
+      exp(-abs(point.x) * 30.0) * (1.0 - smoothstep(0.014, spikeReach, abs(point.y))),
+      exp(-abs(point.y) * 30.0) * (1.0 - smoothstep(0.014, spikeReach, abs(point.x)))
+    );
+    float diffractionHalo = (1.0 - smoothstep(0.05, 0.5, radius)) * spikeGate * 0.25;
+    shapeMask += cardinalSpikes * spikeGate * (0.3 + vHalo * 0.44) + diffractionHalo;
+
+    float selectedVisibility = smoothstep(0.02, 0.8, vEmphasis);
+    float visibility = max(vViewFade, selectedVisibility * 0.96);
     float semanticLight = 0.56 + vMagnitude * 0.5 + vDensity * 0.22 + vHalo * 0.26 - vOutlier * 0.08;
     float layerScale = mix(0.2, 1.0, 1.0 - uLayer);
-    float alpha = clamp(shapeMask * (0.62 + vHalo * 0.48) * layerScale * vPulse, 0.0, 1.0);
-    vec3 finalColor = vColor * semanticLight * (0.74 + core * 0.72 + vHalo * 0.18);
+    float alpha = clamp(shapeMask * (0.62 + vHalo * 0.48) * layerScale * vPulse * visibility, 0.0, 1.0);
+    vec3 finalColor = vColor * semanticLight * (0.74 + core * 0.72 + vHalo * 0.18) * mix(0.7, 1.08, visibility);
     gl_FragColor = vec4(finalColor, alpha);
   }
 `
@@ -147,8 +190,13 @@ export const nebulaFragmentShader = /* glsl */ `
     vec3 indigo = vec3(0.035, 0.066, 0.083);
     vec3 jade = vec3(0.075, 0.12, 0.115);
     vec3 ochre = vec3(0.12, 0.092, 0.056);
-    vec3 color = black + indigo * cloud * 0.78 + jade * cloud * milkyBand * 0.34 * darkLane;
-    color += ochre * warmDust * 0.08;
+    vec3 ember = vec3(0.105, 0.062, 0.052);
+    vec3 blueHaze = vec3(0.046, 0.082, 0.105);
+    vec3 color = black + indigo * cloud * 0.78;
+    color += blueHaze * cloud * milkyBand * 0.38 * darkLane;
+    color += jade * cloud * milkyBand * 0.28 * darkLane;
+    color += ochre * warmDust * 0.15;
+    color += ember * warmDust * (0.24 + 0.12 * milkyBand);
     gl_FragColor = vec4(color, 1.0);
   }
 `

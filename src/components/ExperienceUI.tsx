@@ -1,5 +1,6 @@
-import { useMemo, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import type { Book, BookRelation } from '../types'
+import { otherBookId } from '../lib/galaxyMath'
 
 function Icon({ name }: { name: 'sound' | 'mute' | 'expand' | 'motion' | 'close' | 'arrow' | 'signal' }) {
   const paths: Record<typeof name, React.ReactNode> = {
@@ -19,6 +20,7 @@ interface IntroProps {
   ready: boolean
   bookCount: number
   relationCount: number
+  curatedRelationCount: number
   onStart: (book: Book) => void
 }
 
@@ -26,28 +28,160 @@ function normalizeSearch(value: string): string {
   return value.normalize('NFKC').toLocaleLowerCase().replace(/[\s\p{P}\p{S}]+/gu, '')
 }
 
-export function IntroScreen({ books, ready, bookCount, relationCount, onStart }: IntroProps) {
+function chineseCharacterCount(value: string | undefined): number {
+  return (value?.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/gu) ?? []).length
+}
+
+function bookAliases(book: Book): string[] {
+  const runtime = book as Book & {
+    aliases?: unknown
+    alias?: unknown
+    wikipediaTitle?: unknown
+  }
+  const values = [runtime.wikipediaTitle, ...(Array.isArray(runtime.aliases) ? runtime.aliases : []), ...(Array.isArray(runtime.alias) ? runtime.alias : [])]
+  return values.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+}
+
+const familiarAnchorTitles = [
+  '三体',
+  '红楼梦',
+  '西游记',
+  '活着',
+  '百年孤独',
+  '哈姆雷特',
+  '罪与罚',
+  '安娜·卡列尼娜',
+  '基地',
+  '沙丘',
+]
+
+function matchesTitle(book: Book, query: string): boolean {
+  const candidates = [
+    book.title,
+    book.originalTitle,
+    book.foreignTitle,
+    ...bookAliases(book),
+  ]
+  return candidates.some((value) => value && normalizeSearch(value) === normalizeSearch(query))
+}
+
+function rankedMatch(book: Book, query: string): number {
+  const title = normalizeSearch(book.title)
+  const aliases = bookAliases(book).map(normalizeSearch)
+  const originalTitles = [book.originalTitle, (book as Book & { foreignTitle?: string }).foreignTitle]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeSearch)
+  const author = normalizeSearch(book.author)
+  if (title === query) return 0
+  if (title.startsWith(query)) return 1
+  if (title.includes(query)) return 2
+  if (aliases.some((value) => value === query)) return 3
+  if (aliases.some((value) => value.startsWith(query))) return 4
+  if (aliases.some((value) => value.includes(query))) return 5
+  if (originalTitles.some((value) => value === query)) return 6
+  if (originalTitles.some((value) => value.startsWith(query))) return 7
+  if (originalTitles.some((value) => value.includes(query))) return 8
+  if (author === query) return 9
+  if (author.startsWith(query)) return 10
+  if (author.includes(query)) return 11
+  return Number.POSITIVE_INFINITY
+}
+
+function searchBooks(books: Book[], query: string, limit = 5): Book[] {
+  const normalized = normalizeSearch(query)
+  if (!normalized) return []
+  return books
+    .map((book) => ({
+      book,
+      rank: rankedMatch(book, normalized),
+      chinese: chineseCharacterCount(book.title),
+      content: chineseCharacterCount(book.summary),
+      cover: book.coverUrl ? 1 : 0,
+    }))
+    .filter((item) => Number.isFinite(item.rank))
+    .sort((left, right) => (
+      left.rank - right.rank
+      || right.chinese - left.chinese
+      || right.content - left.content
+      || right.cover - left.cover
+      || left.book.title.localeCompare(right.book.title, 'zh-CN')
+      || left.book.id.localeCompare(right.book.id)
+    ))
+    .slice(0, limit)
+    .map((item) => item.book)
+}
+
+function featuredBooks(books: Book[], limit = 5): Book[] {
+  const score = (book: Book) => (
+    chineseCharacterCount(book.summary) * 2
+    + book.themes.length * 16
+    + (book.coverUrl ? 50 : 0)
+    + (book.originalTitle ? 12 : 0)
+    + (Number.isFinite(book.magnitude) ? (book.magnitude as number) * 8 : 0)
+  )
+  const qualityOrdered = [...books]
+    .sort((left, right) => {
+      return score(right) - score(left)
+        || left.title.localeCompare(right.title, 'zh-CN')
+        || left.id.localeCompare(right.id)
+    })
+  const anchors = familiarAnchorTitles
+    .map((title) => books.find((book) => matchesTitle(book, title)))
+    .filter((book): book is Book => Boolean(book))
+  const seen = new Set<string>()
+  return [...anchors, ...qualityOrdered]
+    .filter((book) => !seen.has(book.id) && seen.add(book.id))
+    .slice(0, limit)
+}
+
+export function IntroScreen({ books, ready, bookCount, relationCount, curatedRelationCount, onStart }: IntroProps) {
   const [query, setQuery] = useState('')
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
+  const featured = useMemo(() => featuredBooks(books), [books])
   const suggestions = useMemo(() => {
     const normalized = normalizeSearch(query.trim())
-    if (!normalized) return books.slice(0, 5)
-    return books
-      .filter((book) => normalizeSearch(`${book.title}${book.originalTitle ?? ''}${book.author}`).includes(normalized))
-      .slice(0, 5)
-  }, [books, query])
+    return normalized ? searchBooks(books, normalized) : featured
+  }, [books, featured, query])
+  const suggestionsOpen = Boolean(query.trim()) && suggestions.length > 0
+  const safeActiveSuggestionIndex = suggestions.length > 0
+    ? Math.min(activeSuggestionIndex, suggestions.length - 1)
+    : -1
+  const activeSuggestion = safeActiveSuggestionIndex >= 0 ? suggestions[safeActiveSuggestionIndex] : undefined
+  const activeSuggestionId = activeSuggestion ? `departure-option-${activeSuggestion.id}` : undefined
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const hasQuery = Boolean(query.trim())
-    const selected = hasQuery ? suggestions[0] : books[0]
+    const selected = hasQuery ? activeSuggestion : featured[0]
     if (selected && ready) onStart(selected)
+  }
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+      event.preventDefault()
+      event.currentTarget.form?.requestSubmit()
+      return
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (suggestions.length === 0) return
+      event.preventDefault()
+      const direction = event.key === 'ArrowDown' ? 1 : -1
+      setActiveSuggestionIndex((current) => (current + direction + suggestions.length) % suggestions.length)
+      return
+    }
+    if (event.key === 'Escape') {
+      if (!query && !suggestionsOpen) return
+      event.preventDefault()
+      setQuery('')
+      setActiveSuggestionIndex(0)
+    }
   }
 
   const noMatch = Boolean(query.trim()) && suggestions.length === 0
 
   return (
     <section className="intro" aria-labelledby="intro-title">
-      <div className="intro-kicker">LIBRARY / AFTER SEARCH</div>
+      <div className="intro-kicker">图书馆 · 搜索之后</div>
       <h1 id="intro-title">
         下一代图书馆，<br />
         <span>不只帮你找到书。</span>
@@ -60,9 +194,19 @@ export function IntroScreen({ books, ready, bookCount, relationCount, onStart }:
           <input
             id="departure"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setActiveSuggestionIndex(0)
+            }}
+            onKeyDown={handleSearchKeyDown}
             placeholder="输入书名或作者"
             autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-haspopup="listbox"
+            aria-expanded={suggestionsOpen}
+            aria-controls="departure-suggestions"
+            aria-activedescendant={suggestionsOpen ? activeSuggestionId : undefined}
           />
           <span aria-hidden="true">》</span>
           <button type="submit" disabled={!ready || books.length === 0 || noMatch}>
@@ -71,11 +215,20 @@ export function IntroScreen({ books, ready, bookCount, relationCount, onStart }:
           </button>
         </div>
         {query && suggestions.length > 0 && (
-          <div className="search-suggestions" role="listbox" aria-label="书籍建议">
-            {suggestions.map((book) => (
-              <button key={book.id} type="button" disabled={!ready} onClick={() => ready && onStart(book)} role="option">
+          <div id="departure-suggestions" className="search-suggestions" role="listbox" aria-label="书籍建议">
+            {suggestions.map((book, index) => (
+              <button
+                key={book.id}
+                id={`departure-option-${book.id}`}
+                type="button"
+                disabled={!ready}
+                onClick={() => ready && onStart(book)}
+                onMouseEnter={() => setActiveSuggestionIndex(index)}
+                role="option"
+                aria-selected={index === safeActiveSuggestionIndex}
+              >
                 <span>《{book.title}》</span>
-                <small>{book.author}</small>
+                <small>{book.author}{book.originalTitle ? ` · ${book.originalTitle}` : ''}</small>
               </button>
             ))}
           </div>
@@ -83,17 +236,18 @@ export function IntroScreen({ books, ready, bookCount, relationCount, onStart }:
         {noMatch && <div className="search-empty" role="status">这片星海中暂未找到它。试试书名的一部分，或从下方熟悉的书出发。</div>}
       </form>
       <div className="intro-presets" aria-label="推荐出发点">
-        {books.slice(0, 4).map((book) => (
-          <button key={book.id} type="button" onClick={() => ready && onStart(book)}>
+        {featured.slice(0, 4).map((book) => (
+          <button key={book.id} type="button" disabled={!ready} onClick={() => ready && onStart(book)}>
             《{book.title}》
           </button>
         ))}
       </div>
       <div className="intro-proof" aria-label="数据规模">
-        <span><strong>{bookCount.toLocaleString('zh-CN')}</strong> 本真实书籍</span>
-        <span><strong>{relationCount.toLocaleString('zh-CN')}</strong> 条潜在引力</span>
+        <span><strong>{ready ? bookCount.toLocaleString('zh-CN') : '—'}</strong> 本真实书籍</span>
+        <span><strong>{ready ? relationCount.toLocaleString('zh-CN') : '—'}</strong> 条书海暗线</span>
+        <span><strong>{ready ? curatedRelationCount.toLocaleString('zh-CN') : '—'}</strong> 条冥冥书线</span>
       </div>
-      <div className="intro-challenges">CHALLENGE 02 × 03</div>
+      <div className="intro-challenges">双题合流 · 02 × 03</div>
     </section>
   )
 }
@@ -117,20 +271,38 @@ export function ObservatoryHeader({
   onToggleMotion,
   onReset,
 }: HeaderProps) {
-  const fullscreen = () => {
-    if (document.fullscreenElement) void document.exitFullscreen()
-    else void document.documentElement.requestFullscreen()
+  const fullscreenAvailable = typeof document !== 'undefined'
+    && document.fullscreenEnabled
+    && typeof document.documentElement.requestFullscreen === 'function'
+  const [fullscreenActive, setFullscreenActive] = useState(() => (
+    typeof document !== 'undefined' && Boolean(document.fullscreenElement)
+  ))
+
+  useEffect(() => {
+    if (!fullscreenAvailable) return
+    const syncFullscreen = () => setFullscreenActive(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', syncFullscreen)
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen)
+  }, [fullscreenAvailable])
+
+  const fullscreen = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen()
+      else await document.documentElement.requestFullscreen()
+    } catch (error) {
+      console.error('Book Galaxy fullscreen failure', error)
+    }
   }
   return (
     <header className="observatory-header">
       <button className="wordmark" type="button" onClick={onReset} aria-label="返回星系入口">
-        <span className="wordmark-mark">BG</span>
+        <span className="wordmark-mark">书</span>
         <span><strong>书架星系</strong><small>暗物质图书馆</small></span>
       </button>
       <div className="catalog-state">
         <span>{bookCount.toLocaleString('zh-CN')} 颗书星</span>
         <i />
-        <span>{relationCount.toLocaleString('zh-CN')} 条隐藏引力</span>
+        <span>{relationCount.toLocaleString('zh-CN')} 条书海暗线</span>
       </div>
       <nav className="observatory-tools" aria-label="观测工具">
         <button type="button" onClick={onToggleMotion} aria-pressed={reducedMotion} title="稳定镜头">
@@ -139,9 +311,11 @@ export function ObservatoryHeader({
         <button type="button" onClick={onToggleSound} aria-pressed={soundEnabled} title="声音">
           <Icon name={soundEnabled ? 'sound' : 'mute'} /><span>{soundEnabled ? '声音开启' : '开启声音'}</span>
         </button>
-        <button type="button" onClick={fullscreen} title="全屏">
-          <Icon name="expand" /><span>全屏</span>
-        </button>
+        {fullscreenAvailable && (
+          <button type="button" onClick={fullscreen} aria-pressed={fullscreenActive} title={fullscreenActive ? '退出全屏' : '全屏'}>
+            <Icon name="expand" /><span>{fullscreenActive ? '退出全屏' : '全屏'}</span>
+          </button>
+        )}
       </nav>
     </header>
   )
@@ -166,14 +340,142 @@ export function HoverLabel({
   )
 }
 
+type ExternalUrlKind = 'source' | 'wikipediaRevision' | 'wikidata' | 'cover' | 'coverSource' | 'license'
+
+export function safeExternalUrl(value: string | null | undefined, kind: ExternalUrlKind = 'source'): string | undefined {
+  if (!value) return undefined
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' || url.username || url.password || url.port || url.hash) return undefined
+    const host = url.hostname.toLowerCase()
+    const path = decodeURIComponent(url.pathname)
+    if (kind === 'cover') {
+      return host === 'covers.openlibrary.org'
+        && /^\/b\/(?:id\/\d+|olid\/OL[A-Z0-9]+[A-Z])-[SML]\.jpg$/iu.test(path)
+        && !url.search
+        ? url.toString()
+        : undefined
+    }
+    if (kind === 'coverSource') {
+      return host === 'openlibrary.org'
+        && /^\/(?:works\/OL[A-Z0-9]+W|books\/OL[A-Z0-9]+M)\/?$/iu.test(path)
+        && !url.search
+        ? url.toString()
+        : undefined
+    }
+    if (kind === 'wikidata') {
+      return host === 'www.wikidata.org'
+        && /^\/wiki\/Q\d+$/u.test(path)
+        && !url.search
+        ? url.toString()
+        : undefined
+    }
+    if (kind === 'license') {
+      return host === 'creativecommons.org'
+        && path === '/licenses/by-sa/4.0/deed.zh-hans'
+        && !url.search
+        ? url.toString()
+        : undefined
+    }
+    if (host !== 'zh.wikipedia.org' || !path.startsWith('/wiki/') || !path.slice(6)) return undefined
+    if (kind === 'wikipediaRevision') {
+      const oldid = url.searchParams.get('oldid')
+      return oldid && url.searchParams.size === 1 && /^\d+$/u.test(oldid)
+        ? url.toString()
+        : undefined
+    }
+    return url.search ? undefined : url.toString()
+  } catch {
+    return undefined
+  }
+}
+
+function BookCover({ book }: { book: Book }) {
+  const [failedCoverId, setFailedCoverId] = useState<string>()
+  const coverUrl = safeExternalUrl(book.coverUrl, 'cover')
+  const hasCover = Boolean(coverUrl) && failedCoverId !== book.id
+  const imageLabel = book.imageKind === 'related-image' ? '相关图像' : '封面'
+  const plateTitle = book.title.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 3) || '书'
+  const plateYear = formatYear(book.year)
+
+  return (
+    <div className={`book-cover ${hasCover ? 'has-cover' : 'bookplate'}`} aria-label={hasCover ? `《${book.title}》${imageLabel}` : `《${book.title}》藏书票预览`}>
+      {hasCover ? (
+        <img
+          src={coverUrl}
+          alt={`《${book.title}》${imageLabel}`}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedCoverId(book.id)}
+        />
+      ) : (
+        <div className="bookplate-inner">
+          <span className="bookplate-overline">藏书票 · 书页</span>
+          <strong>{plateTitle}</strong>
+          <span className="bookplate-rule" />
+          <small>{book.author}</small>
+          <em>{plateYear}</em>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function formatYear(year: number | null | undefined): string {
+  if (typeof year !== 'number' || !Number.isInteger(year) || year === 0) return '年代未注明'
+  return year < 0 ? `公元前 ${Math.abs(year)} 年` : `${year} 年`
+}
+
+function formatLanguage(language: string | null | undefined): string {
+  const label = language?.trim()
+  if (!label || label === '未注明') return '语种未注明'
+  const translations: Record<string, string> = {
+    'Late Biblical Hebrew': '后期圣经希伯来语',
+    'Quranic Arabic': '古兰经阿拉伯语',
+    'Jewish Koine Greek': '犹太通用希腊语',
+    'medieval Italian': '中世纪意大利语',
+  }
+  return translations[label] ?? label
+}
+
+function specificInstanceType(book: Book): string | undefined {
+  const types = book.instanceOf?.map((type) => type.label.trim()).filter(Boolean) ?? []
+  if (types.length === 0) return undefined
+  const generic = /^(文学作品|著作|书籍?|作品|文献|手稿|文本|written work|literary work|book|text)$/iu
+  return types.find((label) => !generic.test(label)) ?? types[0]
+}
+
+interface SemanticNeighborView {
+  book: Book
+  similarity?: number
+  surprise?: number
+  navigable?: boolean
+  basis?: string[]
+}
+
+export function whyHereCopy(
+  locationLabel: string,
+  densityWord: string,
+  nearest?: SemanticNeighborView,
+): string {
+  if (!nearest) return `它位于“${locationLabel}”的${densityWord}。附近暂未显出可命名的相遇。`
+  return `它位于“${locationLabel}”的${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
+}
+
 interface BookPanelProps {
   book: Book
   index: number
   total: number
+  locationLabel?: string
+  semanticNeighbors?: SemanticNeighborView[]
+  nearbyBooks?: Book[]
+  curatedThreads?: CuratedThreadView[]
   canImprint: boolean
   canDetour: boolean
   hasRelationship: boolean
   onClose: () => void
+  onObserveNearby: (book: Book) => void
+  onFollowCuratedThread: (relation: BookRelation) => void
   onDetour: () => void
   onRestart: () => void
   onAsk: () => void
@@ -181,96 +483,474 @@ interface BookPanelProps {
   onReturn: () => void
 }
 
+export interface CuratedThreadView {
+  relation: BookRelation
+  target: Book
+}
+
+/**
+ * Keep hand-written reading hypotheses separate from the algorithmic detour
+ * compass.  The view is intentionally tiny: a selected book gets at most
+ * three distinct, fully resolvable destinations.
+ */
+export function curatedThreadsFor(
+  bookId: string,
+  relations: readonly BookRelation[],
+  booksById: ReadonlyMap<string, Book>,
+  limit = 3,
+): CuratedThreadView[] {
+  if (!bookId || limit <= 0) return []
+  const candidates = relations
+    .filter((relation) => relation.provenance === 'reading-hypothesis'
+      && (relation.source === bookId || relation.target === bookId))
+    .map((relation) => ({ relation, target: booksById.get(otherBookId(relation, bookId)) }))
+    .filter((item): item is CuratedThreadView => {
+      const target = item.target
+      if (!target) return false
+      return target.id !== bookId && Boolean(item.relation.sentence?.trim())
+    })
+    .sort((left, right) => (
+      (right.relation.confidence ?? 0) - (left.relation.confidence ?? 0)
+      || left.target.title.localeCompare(right.target.title, 'zh-CN')
+      || left.target.id.localeCompare(right.target.id)
+    ))
+  const seenTargets = new Set<string>()
+  return candidates
+    .filter(({ target }) => !seenTargets.has(target.id) && seenTargets.add(target.id))
+    .slice(0, limit)
+}
+
 export function BookObservatory({
   book,
   index,
   total,
+  locationLabel = '书云交界处',
+  semanticNeighbors = [],
+  nearbyBooks = [],
+  curatedThreads = [],
   canImprint,
   canDetour,
   hasRelationship,
   onClose,
+  onObserveNearby,
+  onFollowCuratedThread,
   onDetour,
   onRestart,
   onAsk,
   onImprint,
   onReturn,
 }: BookPanelProps) {
+  const themes = book.themes.filter(Boolean)
+  const summary = book.summary?.trim()
+  const summaryChineseCharacters = chineseCharacterCount(summary)
+  const contentReady = summaryChineseCharacters >= 120
+  const hasSecondaryTitle = Boolean(book.originalTitle && book.originalTitle !== book.title)
+  const collectionType = specificInstanceType(book)
+  const country = book.country?.trim()
+  const nearestSemantic = semanticNeighbors[0]
+  const density = typeof book.localDensity === 'number' ? book.localDensity : undefined
+  const densityWord = density === undefined
+    ? '书云交界处'
+    : density >= 0.72
+      ? '书云深处'
+      : density <= 0.3
+        ? '星群边缘'
+        : '书云过渡带'
+  const whyHere = whyHereCopy(locationLabel, densityWord, nearestSemantic)
+
   return (
     <aside className="book-observatory" aria-labelledby="observed-book-title">
       <div className="panel-heading">
         <span>观测对象 {String(index + 1).padStart(2, '0')} / {total.toLocaleString('zh-CN')}</span>
         <button type="button" onClick={onClose} aria-label="收起书籍信息"><Icon name="close" /></button>
       </div>
-      <div className="book-coordinate">{book.year ?? '年代未知'} · {book.language ?? '多语种'} · {book.themes[0] ?? '未命名星域'}</div>
-      <h2 id="observed-book-title">{book.title}</h2>
-      {book.originalTitle && <p className="original-title">{book.originalTitle}</p>}
-      <p className="book-byline">{book.author}</p>
-      <p className="book-summary">{book.summary ?? '这颗星只有书目信息。靠近它，关系会替它开口。'}</p>
-      {book.sourceUrl && (
-        <a className="source-link" href={book.sourceUrl} target="_blank" rel="noreferrer">
-          核查书目来源 ↗
-        </a>
+      <div className="book-coordinate">
+         <span>来源 / {book.source ?? '开放资料'}</span>
+        <span>{formatYear(book.year)} · {formatLanguage(book.language)}</span>
+        <span>星域 / {locationLabel}</span>
+        {(country || collectionType) && (
+          <span className="book-coordinate-facts">
+            {country && <span>地域 / {country}</span>}
+            {collectionType && <span>类型 / {collectionType}</span>}
+          </span>
+        )}
+      </div>
+      <div className="book-identity">
+        <BookCover book={book} />
+        <div className="book-title-stack">
+          <span className="book-title-label">{hasSecondaryTitle ? '中文题名' : '馆藏题名'}</span>
+          <h2 id="observed-book-title" data-book-observatory-title tabIndex={-1}>{book.title}</h2>
+          {hasSecondaryTitle && <p className="original-title"><span>外文题名</span>{book.originalTitle}</p>}
+          <p className="book-byline">{book.author}</p>
+        </div>
+      </div>
+      <div className="book-record">
+         <span className="book-record-label">书页一瞥</span>
+        {contentReady ? (
+          <p className="book-summary">{summary}</p>
+        ) : (
+          <div className="book-content-missing" role="status">
+            <strong>内容尚未显影</strong>
+            <p>这颗书星的故事还没有显影，暂不开放偏航。</p>
+          </div>
+        )}
+      </div>
+      <div className="book-record" aria-label="星域定位">
+         <span className="book-record-label">为什么在这里</span>
+        <p className="book-summary">{whyHere}</p>
+      </div>
+      {nearbyBooks.length > 0 && (
+        <div className="book-record nearby-record" aria-label="附近书星">
+           <span className="book-record-label">附近书星</span>
+          <ul className="nearby-book-list">
+            {nearbyBooks.slice(0, 3).map((nearby) => (
+              <li key={nearby.id}>
+                <button type="button" onClick={() => onObserveNearby(nearby)}>
+                  <span>《{nearby.title}》</span>
+                  <small>{nearby.author}{nearby.year ? ` · ${formatYear(nearby.year)}` : ''}</small>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <small className="nearby-note">点开一颗书星，继续沿着它的光走。</small>
+        </div>
       )}
-      <div className="theme-row">
-        {book.themes.slice(0, 4).map((theme) => <span key={theme}>{theme}</span>)}
+      {curatedThreads.length > 0 && (
+        <div className="book-record hidden-thread-record" aria-labelledby="hidden-thread-title">
+           <span id="hidden-thread-title" className="book-record-label">冥冥书线</span>
+          <ul className="hidden-thread-list">
+            {curatedThreads.map(({ relation, target }) => (
+              <li key={`${relation.source}:${relation.target}`}>
+                <button className="hidden-thread-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
+                  <small>{relation.kind}</small>
+                  <strong>《{target.title}》</strong>
+                  <span>{relation.sentence}</span>
+                  <Icon name="arrow" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <details className="hidden-thread-note">
+            <summary>关于这段相遇</summary>
+            <p>一种读法，并非定论。</p>
+          </details>
+        </div>
+      )}
+      <div className="book-source-row">
+          <span>书页出处</span>
+        <div className="source-links">
+          {(() => {
+            const revisionUrl = safeExternalUrl(book.provenance?.wikipediaRevisionUrl, 'wikipediaRevision')
+            const sourceUrl = revisionUrl ?? safeExternalUrl(book.sourceUrl, 'source')
+            return sourceUrl ? (
+              <>
+                <a className="source-link" href={sourceUrl} target="_blank" rel="noreferrer noopener">
+                  {revisionUrl ? '中文维基百科 · 固定修订' : (book.source ?? '开放资料')} ↗
+                </a>
+                {revisionUrl && safeExternalUrl('https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans', 'license') && (
+                  <a className="source-link source-link-secondary" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans" target="_blank" rel="noreferrer noopener">
+                    CC BY-SA 4.0 ↗
+                  </a>
+                )}
+              </>
+            ) : <span className="source-unavailable">{book.source ?? '未提供核查链接'}</span>
+          })()}
+          {safeExternalUrl(book.wikidataUrl, 'wikidata') && (
+              <a className="source-link source-link-secondary" href={safeExternalUrl(book.wikidataUrl, 'wikidata')} target="_blank" rel="noreferrer noopener">
+              资料核查 ↗
+            </a>
+          )}
+          {safeExternalUrl(book.coverSourceUrl, 'coverSource') && (
+            <a className="source-link source-link-secondary" href={safeExternalUrl(book.coverSourceUrl, 'coverSource')} target="_blank" rel="noreferrer noopener">
+              封面出处 ↗
+            </a>
+          )}
+          <a className="source-link source-link-secondary" href={`${import.meta.env.BASE_URL}data-license.html`}>
+            资料说明 ↗
+          </a>
+        </div>
+      </div>
+      <div className="theme-row" aria-label="主题">
+        {themes.slice(0, 4).map((theme) => <span key={theme}>{theme}</span>)}
       </div>
       <div className="panel-actions">
-        <button className="primary-action" type="button" autoFocus onClick={canDetour ? onDetour : onRestart}>
-          {canDetour ? '从这里偏航' : '以此为新的出发星'} <Icon name="arrow" />
+        <button
+          className="primary-action"
+          type="button"
+          disabled={!contentReady}
+          data-overlay-trigger={contentReady && canDetour ? 'detour' : undefined}
+          onClick={contentReady ? (canDetour ? onDetour : onRestart) : undefined}
+        >
+          {contentReady ? (canDetour ? '从这里偏航' : '以此为新的出发星') : '内容尚未显影'} {contentReady && <Icon name="arrow" />}
         </button>
-        <button type="button" onClick={onAsk}><Icon name="signal" /> {hasRelationship ? '询问引力来源' : '询问这颗书星'}</button>
-        {canImprint && <button type="button" onClick={onImprint}>留下这次迷路</button>}
+        <button type="button" data-overlay-trigger="librarian" onClick={onAsk}><Icon name="signal" /> {hasRelationship ? '请馆员说说这段缘分' : '听听这颗书星'}</button>
+        {canImprint && <button type="button" data-overlay-trigger="chart" onClick={onImprint}>留下这次迷路</button>}
         <button className="quiet-action" type="button" onClick={onReturn}>返回出发星</button>
       </div>
     </aside>
   )
 }
 
-function directionCopy(relation: BookRelation): [string, string] {
-  if (relation.surprise < 0.52) return ['沿着近处的回声', '先看见它们共享的问题']
-  if (relation.surprise < 0.8) return ['穿过一条隐秘暗河', '跨过时代与类型的边界']
-  return ['去最远但仍说得通', '让陌生抵达，但不让意义断裂']
+function maskedTitle(title: string): string {
+  const cleaned = title.replace(/[（(][^）)]*[）)]/gu, '').trim() || title
+  const characters = [...cleaned]
+  if (characters.length <= 5) return cleaned
+  return `${characters.slice(0, 2).join('')}···${characters.slice(-2).join('')}`
+}
+
+const relationTechnicalTerms = /多维|语义|书目|模型|摘要|字段|相似度|邻接|可解释|证明|元数据/iu
+
+function readableRelationClue(relation: BookRelation, target?: Book): string {
+  const explicitTheme = relation.basis
+    .map((item) => item.trim())
+    .find((item) => /^主题[:：]/u.test(item) && !relationTechnicalTerms.test(item))
+  const theme = explicitTheme?.replace(/^主题[:：]\s*/u, '').trim()
+    || target?.themes.find((item) => item.trim() && !relationTechnicalTerms.test(item.trim()))?.trim()
+  if (theme) return theme
+  if (target?.country?.trim()) return `${target.country.trim()}的远岸`
+  if (target?.year && Number.isFinite(target.year)) return `${formatYear(target.year)}的旧时光`
+  return '一页未读的远方'
+}
+
+function readableRelationBasis(relation: BookRelation, target?: Book): string[] {
+  const labels = relation.basis
+    .map((item) => item.trim())
+    .filter((item) => item && !relationTechnicalTerms.test(item))
+    .map((item) => {
+      if (item === '主题' || item === '时代' || item === '地域' || item === '作者') return item
+      if (/^阅读联想/u.test(item)) return '阅读联想'
+      const label = item.match(/^([^:：]{1,12})[:：]/u)?.[1]?.trim()
+      return label || item.slice(0, 12)
+    })
+  const unique = [...new Set(labels)]
+  if (unique.length > 0) return unique.slice(0, 3)
+  const clue = readableRelationClue(relation, target)
+  return clue === '一页未读的远方' ? [] : ['主题']
+}
+
+/** Only a reading hypothesis owns authored interpretation; other edges record travel facts. */
+export function relationReading(relation: BookRelation, departure?: Book, arrival?: Book): string {
+  const sentence = relation.sentence?.trim()
+  if (relation.provenance === 'reading-hypothesis' && sentence) return sentence
+  const from = departure ? `《${departure.title}》` : '出发星'
+  const to = arrival ? `《${arrival.title}》` : '远方书星'
+  return `这次航行从${from}抵达${to}。`
+}
+
+/** A detour card may excerpt authored curation, never generated navigation prose. */
+export function relationExcerpt(relation: BookRelation, maxLength = 72): string {
+  if (relation.provenance !== 'reading-hypothesis') return ''
+  const sentence = relation.sentence?.trim() ?? ''
+  const firstSentence = sentence.split(/[。！？]/u)[0]?.trim() || sentence
+  const characters = [...firstSentence]
+  return characters.length <= maxLength
+    ? firstSentence
+    : `${characters.slice(0, Math.max(1, maxLength - 1)).join('')}…`
+}
+
+export function directionCopy(
+  relation: BookRelation,
+  target?: Book,
+  index = 0,
+  total = 3,
+): { band: string; title: string; description: string } {
+  const targetHint = target ? `《${maskedTitle(target.title)}》` : '一颗待显影书星'
+  const relativeBand = total >= 3 ? index : total === 2 ? index * 2 : 1
+  const band = relativeBand === 0 ? '近' : relativeBand === 1 ? '桥' : '远'
+  const routeCopy = {
+    近: '留在相近的书云，看熟悉的方向如何变化。',
+    桥: '越过一层书云，让另一种目光接住这段航行。',
+    远: '驶向更陌生的远星，把答案留到抵达以后。',
+  }[band]
+  return {
+    band,
+    title: target ? `向 ${targetHint} 偏航` : '向远方偏航',
+    description: relation.provenance === 'reading-hypothesis'
+      ? relationReading(relation, undefined, target) || '一条尚未命名的阅读假说。'
+      : routeCopy,
+  }
+}
+
+const modalFocusableSelector = [
+  'a[href]',
+  'area[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'iframe',
+  'object',
+  'embed',
+  'summary',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
+function getModalFocusableElements(dialog: HTMLElement): HTMLElement[] {
+  return Array.from(dialog.querySelectorAll<HTMLElement>(modalFocusableSelector))
+    .filter((element) => {
+      if (element.tabIndex < 0 || element.hasAttribute('disabled')) return false
+      if (element.closest('[hidden], [aria-hidden="true"]')) return false
+      const style = window.getComputedStyle(element)
+      return style.display !== 'none' && style.visibility !== 'hidden'
+    })
+}
+
+function useModalFocusTrap<T extends HTMLElement>(
+  headingRef: React.RefObject<T | null>,
+  onClose: () => void,
+  returnFocusSelector: string,
+) {
+  const dialogRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    // `aria-modal` describes the contract; inert plus pointer suppression
+    // enforces it for browsers and input methods that do not honour the
+    // attribute on their own.
+    const background = dialog.parentElement
+      ? Array.from(dialog.parentElement.children)
+        .filter((element): element is HTMLElement => element !== dialog && element instanceof HTMLElement)
+      : []
+    const snapshots = background.map((element) => ({
+      element,
+      hadInertAttribute: element.hasAttribute('inert'),
+      inert: Boolean((element as HTMLElement & { inert?: boolean }).inert),
+      ariaHidden: element.getAttribute('aria-hidden'),
+      pointerEvents: element.style.pointerEvents,
+    }))
+    background.forEach((element) => {
+      ;(element as HTMLElement & { inert?: boolean }).inert = true
+      element.setAttribute('inert', '')
+      element.setAttribute('aria-hidden', 'true')
+      element.style.pointerEvents = 'none'
+    })
+    headingRef.current?.focus()
+    return () => {
+      snapshots.forEach(({ element, hadInertAttribute, inert, ariaHidden, pointerEvents }) => {
+        ;(element as HTMLElement & { inert?: boolean }).inert = inert
+        if (hadInertAttribute) element.setAttribute('inert', '')
+        else element.removeAttribute('inert')
+        if (ariaHidden === null) element.removeAttribute('aria-hidden')
+        else element.setAttribute('aria-hidden', ariaHidden)
+        element.style.pointerEvents = pointerEvents
+      })
+      window.requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>(returnFocusSelector)?.focus({ preventScroll: true })
+      })
+    }
+  }, [headingRef, returnFocusSelector])
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      onClose()
+      return
+    }
+    if (event.key !== 'Tab') return
+
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const focusable = getModalFocusableElements(dialog)
+    if (focusable.length === 0) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const activeIndex = active ? focusable.indexOf(active) : -1
+    const shouldWrap = event.shiftKey
+      ? activeIndex <= 0
+      : activeIndex === focusable.length - 1 || activeIndex < 0
+
+    if (shouldWrap) {
+      event.preventDefault()
+      ;(event.shiftKey ? last : first).focus()
+    }
+  }
+
+  return { dialogRef, handleKeyDown }
 }
 
 export function DetourCompass({
+  currentBook,
+  booksById,
   relations,
   onChoose,
   onClose,
 }: {
+  currentBook?: Book
+  booksById: ReadonlyMap<string, Book>
   relations: BookRelation[]
   onChoose: (relation: BookRelation) => void
   onClose: () => void
 }) {
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const { dialogRef, handleKeyDown } = useModalFocusTrap(headingRef, onClose, '[data-overlay-trigger="detour"]')
+
   return (
-    <section className="detour-compass" role="dialog" aria-modal="true" aria-labelledby="detour-title">
+    <section ref={dialogRef} className="detour-compass" role="dialog" aria-modal="true" aria-labelledby="detour-title" onKeyDown={handleKeyDown}>
       <div className="compass-heading">
-        <span>选择偏航方向</span>
+        <span>选择偏航方向{currentBook ? ` / 《${currentBook.title}》` : ''}</span>
         <button type="button" onClick={onClose} aria-label="取消偏航"><Icon name="close" /></button>
       </div>
-      <h2 id="detour-title">你愿意离熟悉多远？</h2>
-      <div className="direction-list">
-        {relations.map((relation, index) => {
-          const copy = directionCopy(relation)
-          return (
-            <button key={`${relation.source}:${relation.target}`} type="button" autoFocus={index === 0} onClick={() => onChoose(relation)}>
-              <small>0{index + 1} / {relation.kind}</small>
-              <strong>{copy[0]}</strong>
-              <span>{copy[1]}</span>
-              <Icon name="arrow" />
-            </button>
-          )
-        })}
-      </div>
+      <h2 id="detour-title" ref={headingRef} tabIndex={-1}>你愿意离熟悉多远？</h2>
+      {relations.length > 0 ? (
+        <div className="direction-list">
+          {relations.map((relation, index) => {
+            const target = booksById.get(otherBookId(relation, currentBook?.id ?? relation.source))
+            const copy = directionCopy(relation, target, index, relations.length)
+            return (
+              <button key={`${relation.source}:${relation.target}`} type="button" onClick={() => onChoose(relation)}>
+                <small>0{index + 1} / {copy.band}{relation.provenance === 'reading-hypothesis' ? ` · ${relation.kind}` : ''}</small>
+                <strong>{copy.title}</strong>
+                <span>{copy.description}</span>
+                <Icon name="arrow" />
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="direction-empty" role="status">
+          <strong>这颗书星暂时没有可去的远方</strong>
+          <p>它周围的灯还没有汇成一条路。可以回到观测，或从这里重新出发。</p>
+          <button type="button" onClick={onClose}>返回观测</button>
+        </div>
+      )}
     </section>
   )
 }
 
-export function VoyageNarration({ relation }: { relation: BookRelation }) {
+export function voyageCopy(relation: BookRelation, departure?: Book, arrival?: Book): { label: string; route: string } {
+  const curatedLabels: Record<BookRelation['kind'], string> = {
+    回声: '远方有回声',
+    镜像: '镜面翻转',
+    暗河: '暗河开航',
+    裂隙: '裂隙显影',
+    余烬: '余温未熄',
+    潮汐: '书海涨潮',
+  }
+  const navigationLabel = relation.distanceBand === 'near'
+    ? '沿近路航行'
+    : relation.distanceBand === 'mid'
+      ? '越过书云'
+      : '驶向远星'
+  const from = departure ? `《${departure.title}》` : '出发星'
+  const to = arrival ? `《${arrival.title}》` : '远方书星'
+  return {
+    label: relation.provenance === 'reading-hypothesis' ? curatedLabels[relation.kind] : navigationLabel,
+    route: `${from}  ·  ${to}`,
+  }
+}
+
+export function VoyageNarration({ relation, from, to }: { relation: BookRelation; from?: Book; to?: Book }) {
+  const copy = voyageCopy(relation, from, to)
   return (
     <div className="voyage-narration" role="status" aria-live="polite">
-      <small>{relation.kind}正在改变航向</small>
-      <p>“{relation.sentence}”</p>
-      <span>ESC 可中止镜头</span>
+      <small>{copy.label}</small>
+      <p>{copy.route}</p>
+      <span>按退出键可停下镜头</span>
     </div>
   )
 }
@@ -296,55 +976,63 @@ export function JourneyRail({ books }: { books: Book[] }) {
 
 export function LibrarianBand({
   relation,
+  from,
   to,
   onClose,
   onlineAvailable = false,
   onAskOnline,
 }: {
   relation?: BookRelation
+  from?: Book
   to: Book
   onClose: () => void
   onlineAvailable?: boolean
   onAskOnline?: (question: string) => Promise<string | undefined>
 }) {
-  const [mode, setMode] = useState<'reading' | 'basis' | 'bold'>('reading')
+  const [mode, setMode] = useState<'reading' | 'basis'>('reading')
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<string>()
   const [loading, setLoading] = useState(false)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const { dialogRef, handleKeyDown } = useModalFocusTrap(headingRef, onClose, '[data-overlay-trigger="librarian"]')
+
   const provenance = relation?.provenance === 'catalog'
-    ? '书目邻接'
+    ? '书云相逢'
     : relation?.provenance === 'semantic'
-      ? '语义推断'
+      ? '书海暗线'
       : relation?.provenance === 'reading-hypothesis'
         ? '阅读联想'
         : '单书观测'
-  const boldReading = relation
-    ? `再把这条引力推远一点：${relation.sentence} 它们也许并不相似，而是在不同语境里替同一个问题保留了两种相反的答案。`
-    : `《${to.title}》暂时没有前一跳需要证明。把它当作新的出发星，星海才会为它寻找一条可解释的偏航。`
-  const basisReading = relation
-    ? `这条连接依据：${relation.basis.join('、')}。它被标记为“${provenance}”，不是文学史上的确定影响关系。`
-    : `这颗书星的题名与作者来自${to.source ?? '开放书目'}；当前主题为${to.themes.slice(0, 3).join('、') || '尚未分类'}。单书信息不构成两本书之间的关系。`
+  const basis = relation ? readableRelationBasis(relation, to) : []
   return (
-    <section className="librarian-band" role="dialog" aria-modal="true" aria-labelledby="librarian-title">
+    <section ref={dialogRef} className="librarian-band" role="dialog" aria-modal="true" aria-labelledby="librarian-title" onKeyDown={handleKeyDown}>
       <div className="signal-rule"><span /><i /><span /></div>
-      <div className="signal-meta"><Icon name="signal" /> 馆员波段 / SIGNAL 07</div>
-      <button className="signal-close" type="button" autoFocus onClick={onClose} aria-label="关闭馆员波段"><Icon name="close" /></button>
-      <h2 id="librarian-title">{relation ? '为什么是这一本？' : '这颗书星正在说什么？'}</h2>
-      <p>
-        {answer ?? (mode === 'basis'
-          ? basisReading
-          : mode === 'bold'
-            ? boldReading
-            : relation?.sentence ?? `你正在单独观测《${to.title}》。当前没有一条可供解释的前置引力，因此这里不会伪造关系。`)}
-      </p>
-      <div className="signal-evidence">
-        <span>{provenance}</span>
-        {relation?.basis.slice(0, 3).map((basis) => <span key={basis}>{basis}</span>)}
-      </div>
-      <div className="signal-actions">
-        <button type="button" onClick={() => { setAnswer(undefined); setMode('bold') }}>再大胆一点</button>
-        <button type="button" onClick={() => { setAnswer(undefined); setMode('basis') }}>显示依据</button>
-      </div>
+      <div className="signal-meta"><Icon name="signal" /> 馆员来信</div>
+      <button className="signal-close" type="button" onClick={onClose} aria-label="关闭馆员来信"><Icon name="close" /></button>
+      <h2 id="librarian-title" ref={headingRef} tabIndex={-1}>{relation ? '为什么是这一本？' : '这颗书星正在说什么？'}</h2>
+      {answer ? <p>{answer}</p> : mode === 'basis' && relation ? null : (
+        <p>{relation ? relationReading(relation, from, to) : `你正在单独观测《${to.title}》。它还没有前一跳，先让它独自发光。`}</p>
+      )}
+      {mode === 'basis' && relation && (
+        <div className="signal-evidence">
+          <span>{provenance}</span>
+          {basis.map((item) => <span key={item}>{item}</span>)}
+        </div>
+      )}
+      {relation && (
+        <div className="signal-actions">
+          <button
+            type="button"
+            aria-pressed={mode === 'basis'}
+            onClick={() => {
+              setAnswer(undefined)
+              setMode((current) => current === 'basis' ? 'reading' : 'basis')
+            }}
+          >
+            {mode === 'basis' ? '返回解读' : '显示依据'}
+          </button>
+        </div>
+      )}
       {onlineAvailable && onAskOnline && (
         <>
           <form
@@ -354,7 +1042,7 @@ export function LibrarianBand({
               if (!question.trim() || loading) return
               setLoading(true)
               const next = await onAskOnline(question.trim())
-              setAnswer(next ?? '远方波段暂时没有回应，本地引力解释仍然有效。')
+              setAnswer(next ?? '远方暂时没有回信，这颗书星仍在这里发光。')
               setLoading(false)
             }}
           >
@@ -362,12 +1050,12 @@ export function LibrarianBand({
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               maxLength={240}
-              placeholder="继续追问这条关系"
-              aria-label="向馆员波段继续追问"
+              placeholder="继续问问这本书"
+              aria-label="向馆员来信继续提问"
             />
             <button type="submit" disabled={loading}>{loading ? '接收中' : '发送'}</button>
           </form>
-          <small className="signal-disclosure">发送时仅会离开浏览器：当前问题、两本书、关系依据与最近五站航迹。</small>
+          <small className="signal-disclosure">这封问询只带走你的问题、眼前两本书，以及最近五站航迹。</small>
         </>
       )}
     </section>
@@ -383,15 +1071,18 @@ export function StarChartReveal({
   onDownload: () => void
   onClose: () => void
 }) {
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const { dialogRef, handleKeyDown } = useModalFocusTrap(headingRef, onClose, '[data-overlay-trigger="chart"]')
+
   return (
-    <section className="star-chart-reveal" role="dialog" aria-modal="true" aria-labelledby="chart-title">
+    <section ref={dialogRef} className="star-chart-reveal" role="dialog" aria-modal="true" aria-labelledby="chart-title" onKeyDown={handleKeyDown}>
       <div className="exposure-curtain" />
       <div className="chart-copy">
-        <small>BOOKSHELF GALAXY / PRIVATE PLATE</small>
-        <h2 id="chart-title">你的迷路，已经显影。</h2>
+        <small>书架星系 · 私人星图</small>
+        <h2 id="chart-title" ref={headingRef} tabIndex={-1}>你的迷路，已经显影。</h2>
         <p>空间被压成纸面，经过的书成为一幅只属于本次航行的未刊星图。</p>
         <div>
-          <button className="ink-action" type="button" autoFocus onClick={onDownload}>保存高清星图</button>
+          <button className="ink-action" type="button" onClick={onDownload}>保存高清星图</button>
           <button type="button" onClick={onClose}>返回星海</button>
         </div>
       </div>
@@ -404,7 +1095,7 @@ export function StarChartReveal({
 export function ErrorFallback({ message, onReset }: { message: string; onReset: () => void }) {
   return (
     <section className="error-fallback" role="alert">
-      <small>OBSERVATION INTERRUPTED</small>
+      <small>观测中断</small>
       <h1>星海暂时失去显影。</h1>
       <p>{message}</p>
       <button type="button" onClick={onReset}>重新观测</button>

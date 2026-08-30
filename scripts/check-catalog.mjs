@@ -6,7 +6,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
-const dataDir = resolve(root, 'public/data')
+const dataDir = resolve(root, 'data/legacy')
 const catalogPath = resolve(dataDir, 'catalog.json')
 const manifestPath = resolve(dataDir, 'manifest.json')
 

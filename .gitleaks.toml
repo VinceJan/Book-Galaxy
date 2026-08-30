@@ -1,0 +1,13 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Wikidata statement UUIDs in generated catalog provenance"
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''(?:^|[\\/])(?:data[\\/](?:raw[\\/]rich-catalog[\\/]wikidata-entities|rich[\\/]books)|public[\\/]data[\\/]catalog|dist[\\/]data[\\/]catalog)\.json$''',
+]
+regexes = [
+  '''Q[0-9]+\$[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}''',
+]

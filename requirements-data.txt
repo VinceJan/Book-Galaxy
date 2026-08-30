@@ -1,0 +1,7 @@
+# Offline rich-catalogue semantic layout pipeline.
+# Python 3.11+ (including 3.12) is supported.
+numpy>=1.26,<3
+scikit-learn>=1.5,<2
+sentence-transformers>=3.0,<6
+umap-learn>=0.5.6,<1
+torch>=2.2,<3

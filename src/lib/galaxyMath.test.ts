@@ -5,6 +5,7 @@ import {
   hashString,
   otherBookId,
   positionForBook,
+  selectSemanticRegions,
   visualAttributesForBook,
 } from './galaxyMath'
 
@@ -75,6 +76,42 @@ describe('galaxyMath', () => {
     expect(shapeCounts.double / visuals.length).toBeLessThan(0.26)
     expect(shapeCounts.ring / visuals.length).toBeGreaterThan(0.03)
     expect(shapeCounts.ring / visuals.length).toBeLessThan(0.12)
+  })
+
+  it('maps semantic layout shape names to stable shader families', () => {
+    const families = [
+      ['orb', 0.18],
+      ['seed', 0.18],
+      ['diamond', 0.63],
+      ['cross', 0.63],
+      ['flare', 0.63],
+      ['petal', 0.83],
+      ['ring', 0.96],
+    ] as const
+    families.forEach(([shape, expected]) => {
+      expect(visualAttributesForBook({ ...book, shape }, 3).shape).toBe(expected)
+    })
+  })
+
+  it('selects distinct Chinese semantic regions and computes deterministic robust anchors', () => {
+    const themes = ['宇宙文明', '婚姻悲剧', '苦难救赎', '唐代史', '中国近代小说', '女性成长', '人工智能', '海洋冒险']
+    const books = Array.from({ length: 16 }, (_, index): Book => ({
+      id: `region-book-${index}`,
+      title: `测试书 ${index}`,
+      author: '测试作者',
+      themes: [themes[index % themes.length], themes[(index + 3) % themes.length], '世界文学'],
+      position: [index * 2, index % 3, -index] as const,
+    }))
+    const resolver = (item: Book) => item.position
+    const first = selectSemanticRegions(books, resolver, 8)
+    const second = selectSemanticRegions(books, resolver, 8)
+
+    expect(first).toEqual(second)
+    expect(first).toHaveLength(8)
+    expect(first.every((region) => region.count >= 1)).toBe(true)
+    expect(first.map((region) => region.label)).not.toContain('世界文学')
+    const space = first.find((region) => region.label === '宇宙文明')
+    expect(space?.center).toEqual([13, 1.5, -6.5])
   })
 
   it('selects distinct semantic distances and avoids visited books', () => {

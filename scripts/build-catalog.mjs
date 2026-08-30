@@ -16,7 +16,10 @@ import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DATA_DIR = resolve(ROOT, 'public/data')
+// The historical Gutenberg builder is intentionally sandboxed away from the
+// production v2 bundle. Running a legacy experiment must never overwrite the
+// Chinese rich catalogue deployed by GitHub Pages.
+const DATA_DIR = resolve(ROOT, 'data/legacy')
 const RAW_DIR = resolve(ROOT, 'data/raw')
 const DEFAULT_SOURCE_URL = 'https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz'
 const DEFAULT_LIMIT = 20_000

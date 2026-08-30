@@ -20,6 +20,18 @@ export function hasOnlineCurator(): boolean {
   }
 }
 
+export function publicRelationContext(relation: BookRelation | undefined) {
+  if (!relation) return undefined
+  const navigation = {
+    provenance: relation.provenance,
+    distanceBand: relation.distanceBand,
+  }
+  if (relation.provenance === 'reading-hypothesis') {
+    return { ...navigation, kind: relation.kind, sentence: relation.sentence, basis: relation.basis }
+  }
+  return navigation
+}
+
 export async function askOnlineCurator(
   context: CuratorContext,
   signal?: AbortSignal,
@@ -39,12 +51,7 @@ export async function askOnlineCurator(
         question: context.question.slice(0, 240),
         from: context.from ? { title: context.from.title, author: context.from.author, themes: context.from.themes } : undefined,
         to: { title: context.to.title, author: context.to.author, themes: context.to.themes },
-        relation: context.relation ? {
-          kind: context.relation.kind,
-          sentence: context.relation.sentence,
-          basis: context.relation.basis,
-          provenance: context.relation.provenance,
-        } : undefined,
+        relation: publicRelationContext(context.relation),
         journey: context.journey.slice(-5).map((book) => ({ title: book.title, author: book.author })),
       }),
       signal: timeout.signal,

@@ -63,7 +63,14 @@ export function experienceReducer(
       return { ...state, directionsOpen: true, librarianOpen: false }
     case 'CLOSE_DIRECTIONS':
       return { ...state, directionsOpen: false }
-    case 'TRAVEL':
+    case 'TRAVEL': {
+      const selectedIndex = state.selectedId ? state.journeyIds.lastIndexOf(state.selectedId) : -1
+      const branchJourneyIds = selectedIndex >= 0
+        ? state.journeyIds.slice(0, selectedIndex + 1)
+        : state.selectedId
+          ? [state.selectedId]
+          : []
+      const branchRelationCount = Math.max(0, branchJourneyIds.length - 1)
       return {
         ...state,
         status: 'travelling',
@@ -71,7 +78,10 @@ export function experienceReducer(
         librarianOpen: false,
         travelSequence: state.travelSequence + 1,
         pendingRelation: action.relation,
+        journeyIds: branchJourneyIds,
+        journeyRelations: state.journeyRelations.slice(0, branchRelationCount),
       }
+    }
     case 'ARRIVE':
       if (action.sequence !== state.travelSequence) return state
       return {

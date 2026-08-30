@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>数据归属 · 书架星系</title>
+    <style>
+      :root { color: #dedbd0; background: #070b0c; font-family: "Noto Serif SC", "Songti SC", SimSun, serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 18% 0%, #172426 0, #0a1011 32rem, #050809 70%); }
+      main { width: min(920px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0 96px; }
+      header { border-top: 1px solid #a68b52; padding-top: 26px; margin-bottom: 58px; }
+      .eyebrow { color: #a68b52; font: 600 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .25em; }
+      h1 { margin: 16px 0 12px; font-size: clamp(38px, 7vw, 78px); font-weight: 400; letter-spacing: -.055em; }
+      .lede { max-width: 650px; color: #9ca5a1; font-size: 17px; line-height: 1.9; }
+      section { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 34px; padding: 34px 0; border-top: 1px solid #263132; }
+      h2 { margin: 0; color: #b7aa82; font: 500 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; }
+      p { margin: 0 0 15px; color: #c9cbc3; line-height: 1.9; }
+      a { color: #e1d4aa; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+      a:hover { color: #fff9e7; }
+      .warning { padding: 18px 20px; border-left: 2px solid #914337; background: #111718; color: #bfc3bb; }
+      footer { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: baseline; margin-top: 36px; padding-top: 24px; border-top: 1px solid #a68b52; color: #7f8985; font: 12px/1.7 ui-monospace, SFMono-Regular, Consolas, monospace; }
+      @media (max-width: 650px) { main { width: min(100% - 28px, 920px); padding-top: 42px; } section { grid-template-columns: 1fr; gap: 12px; } }
+      :focus-visible { outline: 2px solid #d8c68d; outline-offset: 5px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">BOOKSHELF GALAXY / DATA PROVENANCE</div>
+        <h1>每颗书星，<br />都有来处。</h1>
+        <p class="lede">这片星海把开放书目、中文百科导语与算法生成的空间布局编织在一起。本页说明什么来自哪里、经过了什么处理，以及哪些权利不能被项目代为许诺。</p>
+      </header>
+
+      <section>
+        <h2>中文内容</h2>
+        <div>
+          <p>中文主标题与作品摘要主要取自中文维基百科的对应作品页，按 zh-cn 变体读取，清理空白并在句末附近截取。每本书都保留页面链接及构建时使用的固定修订链接。</p>
+          <p>这些文本依据 <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans" rel="noreferrer">CC BY-SA 4.0</a> 使用；贡献者名单以对应页面的修订历史为准。技术性整理属于对来源文本的改编，继续适用相同方式共享要求。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>结构化书目</h2>
+        <div>
+          <p>作者、年代、语言、地域、作品类型、外部标识等结构化字段来自 Wikidata，并在每条记录中保留作品 Q-id 回链。Wikidata 的结构化数据按 <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.zh-hans" rel="noreferrer">CC0 1.0</a> 发布。</p>
+          <p>语义坐标、密度、星体视觉参数和路线分数由本项目根据已署名字段离线计算；它们是探索性推断，不是文学史事实或来源机构背书。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>开放书影</h2>
+        <div>
+          <p>存在可靠 Open Library work 标识时，界面会从 Open Library Covers 服务远程加载书影，并链接回对应 work 页面；仓库不批量复制这些图片。</p>
+          <p class="warning">公开可访问的封面 URL 不等于 CC0 授权。封面仍可能受原始出版物或权利人的条款约束；无可靠书影时，界面只生成明确的文字藏书牌，不伪造真实封面。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>逐书核验</h2>
+        <div>
+          <p>发布数据旁附有机器可读归属清单。它逐书列出中文维基页面、固定修订、Wikidata 实体与封面来源，并绑定当前 catalog 的 SHA-256。</p>
+          <p><a href="./data/ATTRIBUTION.json">打开逐书归属清单 ↗</a></p>
+        </div>
+      </section>
+
+      <footer>
+        <span>书架星系 · 数据许可与归属</span>
+        <a href="./">返回星海</a>
+        <a href="https://github.com/VinceJan/Book-Galaxy/blob/main/DATA_LICENSE.md" rel="noreferrer">完整说明与构建边界</a>
+      </footer>
+    </main>
+  </body>
+</html>

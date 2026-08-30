@@ -7,7 +7,13 @@ dist/
 *.log
 coverage/
 tmp/
+output/playwright/
+.playwright-cli/
+.pi/
 *.tsbuildinfo
 data/raw/
+data/legacy/
+__pycache__/
+*.py[cod]
 .DS_Store
 Thumbs.db

@@ -1,18 +1,89 @@
 {
-  "schemaVersion": "bookshelf-galaxy/catalog-v1",
-  "generatedAt": "2026-08-23T00:00:00.000Z",
-  "snapshotAt": "2026-08-23T00:00:00.000Z",
-  "source": "Project Gutenberg Offline Catalog (pg_catalog.csv)",
-  "sourceUrl": "https://www.gutenberg.org/ebooks/offline_catalogs.html",
-  "sourceDownloadUrl": "https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz",
-  "sourceLicense": "Project Gutenberg catalog metadata; see data-sources.md for attribution and redistribution notes.",
-  "generator": "scripts/build-catalog.mjs",
-  "sourceBytes": 21188767,
-  "catalogRows": 78001,
-  "uniqueWorksAvailable": 77291,
-  "bookCount": 20000,
-  "relationCount": 60000,
-  "catalogFile": "catalog.json",
-  "catalogSha256": "55b5bc0a2d99875e8cfcda42e5ddedef31625c0344491c189de302a2995c1b5f",
-  "downloadsField": "null: pg_catalog.csv does not publish download counts"
+  "schemaVersion": "bookshelf-galaxy/manifest-v2",
+  "generatedAt": "2026-08-30T12:42:55.013Z",
+  "catalogSha256": "ef7b4aa130fef4317b1689aa27f885d6078807e2fe2e2343cd0f43ce498232a0",
+  "catalogBytes": 14556643,
+  "bookCount": 1000,
+  "relationCount": 5380,
+  "eligibilityCoverage": {
+    "count": 1000,
+    "total": 1000,
+    "rate": 1
+  },
+  "revisionUrlCoverage": {
+    "count": 1000,
+    "total": 1000,
+    "rate": 1
+  },
+  "sources": {
+    "works": {
+      "name": "Wikidata + 中文维基百科",
+      "url": "https://zh.wikipedia.org/",
+      "metadataUrl": "https://www.wikidata.org/w/api.php",
+      "candidateUrl": "https://query.wikidata.org/sparql",
+      "license": "CC BY-SA 4.0 (lead text; attribution required)",
+      "metadataLicense": "CC0 1.0 (Wikidata data)"
+    },
+    "summaries": {
+      "name": "中文维基百科导语（zh-cn）",
+      "url": "https://zh.wikipedia.org/w/api.php",
+      "license": "CC BY-SA 4.0 (lead text; attribution required)"
+    },
+    "covers": {
+      "name": "Open Library Covers",
+      "url": "https://openlibrary.org/search.json",
+      "license": "Open Library cover service terms; URLs only, no bulk download",
+      "note": "仅保留远程封面 URL，不在构建时批量下载图片。"
+    },
+    "layout": {
+      "name": "BAAI/bge-small-zh-v1.5",
+      "model": "BAAI/bge-small-zh-v1.5",
+      "generator": "scripts/build-semantic-layout.py",
+      "schemaVersion": "bookshelf-galaxy/semantic-layout-v1",
+      "seed": 17
+    }
+  },
+  "coverage": {
+    "chineseTitles": {
+      "count": 1000,
+      "total": 1000,
+      "rate": 1
+    },
+    "summaries": {
+      "count": 1000,
+      "total": 1000,
+      "rate": 1,
+      "minimumChineseCharacters": 120,
+      "medianChineseCharacters": 214
+    },
+    "namedAuthors": {
+      "count": 925,
+      "total": 1000,
+      "rate": 0.925,
+      "anonymousLabel": "佚名"
+    },
+    "themes": {
+      "count": 1000,
+      "total": 1000,
+      "rate": 1,
+      "minimumPerBook": 3
+    },
+    "sourceUrls": {
+      "count": 1000,
+      "total": 1000,
+      "rate": 1
+    },
+    "covers": {
+      "count": 571,
+      "total": 1000,
+      "rate": 0.571,
+      "kind": "Open Library 书籍封面；无封面时由界面使用书目牌兜底"
+    },
+    "relations": {
+      "booksWithAtLeastThree": 1000,
+      "minimumDegree": 6,
+      "maximumDegree": 57,
+      "averageDegree": 10.76
+    }
+  }
 }
