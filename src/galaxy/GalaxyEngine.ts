@@ -253,7 +253,7 @@ export class GalaxyEngine {
     this.controls.dampingFactor = 0.055
     this.controls.enablePan = false
     this.controls.rotateSpeed = 0.32
-    this.controls.zoomSpeed = 0.52
+    this.controls.zoomSpeed = 0.60
     this.controls.zoomToCursor = true
     this.controls.minDistance = 14
     this.controls.maxDistance = 420
