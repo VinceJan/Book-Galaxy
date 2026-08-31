@@ -113,6 +113,15 @@ const fixtures = [
   ['Q-invalid-date', work('Q-invalid-date', ['Q7725634'], { ...bibliography, P577: [literalClaim({ time: '+1812097678-00-00T00:00:00Z' }, 'P577')] }), '《异常日期》是一部长篇小说。', 'quarantine'],
   ['Q53925697', work('Q53925697', ['Q104213567', 'Q7725634'], bibliography), '《在异世界开拓第二人生》是一部小说。', 'quarantine'],
   ['Q6778594', work('Q6778594', ['Q13406463', 'Q7725634'], bibliography), '《马克思恩格斯文集》是一部文集。', 'rejected'],
+  // Publication/distribution exclusion policy v19: six conservatively excluded titles.
+  // Each would otherwise be eligible (Q7725634 + complete bibliography + explicit intro)
+  // but must be rejected by the distinct publication-excluded gate, not an identity conflict.
+  ['Q11098383', work('Q11098383', ['Q7725634'], bibliography), '《李鹏六四日记》是一部纪实著作。', 'rejected'],
+  ['Q27544', work('Q27544', ['Q7725634'], bibliography), '《毛泽东：鲜为人知的故事》是一部传记著作。', 'rejected'],
+  ['Q17029712', work('Q17029712', ['Q7725634'], bibliography), '《解放的悲剧：中国革命史1945-1957》是一部历史著作。', 'rejected'],
+  ['Q10874462', work('Q10874462', ['Q7725634'], bibliography), '《中国即将崩溃》是一部政论著作。', 'rejected'],
+  ['Q390176', work('Q390176', ['Q7725634'], bibliography), '《一个人的圣经》是一部长篇小说。', 'rejected'],
+  ['Q976946', work('Q976946', ['Q7725634'], bibliography), '《上海宝贝》是一部长篇小说。', 'rejected'],
 ]
 
 const entityMap = Object.fromEntries([
@@ -124,9 +133,16 @@ const entityMap = Object.fromEntries([
   ['Q104213567', '日本轻小说系列'], ['Q13406463', '维基媒体列表条目'], ['Q131510', '曼怛罗'], ['Q1980247', '章节'],
 ].map(([id, label]) => [id, { id, labels: { zh: { value: label } } }]))
 
+const PUBLICATION_EXCLUDED_IDS = new Set(['Q11098383', 'Q27544', 'Q17029712', 'Q10874462', 'Q390176', 'Q976946'])
 const results = fixtures.map(([id, entity, intro, expected]) => {
   const evaluation = evaluateWork({ work: entity, entityMap, intro, hasOpenLibrary: Boolean(entity.claims.P648) })
-  return { id, expected, actual: evaluation.status, ruleId: evaluation.ruleId, pass: evaluation.status === expected }
+  const publicationGate = PUBLICATION_EXCLUDED_IDS.has(id)
+  const ruleOk = publicationGate
+    ? (evaluation.ruleId === 'publication-excluded' && evaluation.category === 'publication-restricted')
+    : true
+  // Normal eligible fixture must remain accepted with its bibliographic rule.
+  const normalOk = id === 'Q607112' ? evaluation.accepted && evaluation.ruleId === 'work-with-bibliographic-evidence' : true
+  return { id, expected, actual: evaluation.status, ruleId: evaluation.ruleId, category: evaluation.category, pass: evaluation.status === expected && ruleOk && normalOk }
 })
 const failures = results.filter((result) => !result.pass)
 if (failures.length) {

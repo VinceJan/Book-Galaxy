@@ -4,7 +4,7 @@
 
 ## 先看正式快照
 
-正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,380 条语义关系**；中文摘要覆盖率 100%，中位数 214 个汉字；571 本有 Open Library 封面（57.1%）。925 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `ef7b4aa130fef4317b1689aa27f885d6078807e2fe2e2343cd0f43ce498232a0`；精确数值仍以 manifest 与策展检查器输出为准。
+正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%）。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade`；此前里程碑 SHA `6b558e11b4f1e205a25b7f973242ad8c4405032ebc29ea1976d6e5e675f356a7`（同为 v19 5385）；精确数值仍以 manifest 与策展检查器输出为准。
 
 正式 v2 的默认目标是 1,000 部中文主标题、内容完整的真实作品。每颗进入星海的书星都必须有可核查中文内容、来源和资格证明；如果某一批来源不能满足硬门槛，构建器会停止，不会用只有书名的记录填充数量。
 
@@ -41,7 +41,7 @@ scripts/lib/book-eligibility.mjs 是构建器和检查器共同使用的 fail-cl
 - 已弃用的 P31 声明不会作为资格证据；
 - 候选必须同时通过中文页面、摘要、作品类型和其他书目字段门槛；来源未署作者的传统文本保留明确“佚名”标识，不伪造作者。
 
-每本接受的记录会保留 instanceOf，以及 eligibility.accepted、ruleId、category、matchedIds、signals、policyVersion 和 policyHash。当前快照采用 `book-galaxy-book-unit-policy-v18`，policyHash 为 `d67332fa1d86d81c3a346142c862b58037ecce29852680a477e093606eda1c64`。检查器会用共享策略重新计算它们；不是“脚本当时接受了，所以现在就相信”的一次性标记。eligibility-report.json 也保留候选的 rejected 和 quarantine 原因，便于审查过滤是否过严或数据发生了漂移。
+每本接受的记录会保留 instanceOf，以及 eligibility.accepted、ruleId、category、matchedIds、signals、policyVersion 和 policyHash。当前快照采用 `book-galaxy-book-unit-policy-v19`，policyHash 为 `00cf767ed742b1c2fbda3df620dd3ac6f0f165bb4b7b0c2a7a9d7f63de9623ff`。检查器会用共享策略重新计算它们；不是“脚本当时接受了，所以现在就相信”的一次性标记。eligibility-report.json 也保留候选的 rejected 和 quarantine 原因，便于审查过滤是否过严或数据发生了漂移。 策略 v19 另含出版受限的 QID 排除层（在 `scripts/lib/book-eligibility.mjs` 中实现并由检查器复验）；面向用户的界面与文档不罗列具体书名。
 
 Wikidata 结构化数据按 CC0 1.0 发布：
 
@@ -157,7 +157,7 @@ scripts/build-semantic-layout.py 在离线构建阶段使用 Sentence Transforme
 - evidence 中可重算的共享主题、时代跨度、地域跨度和已知性标记；
 - basis、关系句、bands 和 semantic provenance。
 
-正式合并要求没有自环、悬空端点或重复无向边；每本书至少有六条诚实关系，并且 near、bridge、far 三档逐书覆盖。关系的最小覆盖、连通分量、空间—语义近邻重合、语义—空间密度相关性和三档覆盖由 check-semantic-layout.mjs 和 check-v2-catalog.mjs 验证。语义关系数量以最终 manifest.relationCount 为准；当前冻结快照为 **5,380 条**。
+正式合并要求没有自环、悬空端点或重复无向边；每本书至少有六条诚实关系，并且 near、bridge、far 三档逐书覆盖。关系的最小覆盖、连通分量、空间—语义近邻重合、语义—空间密度相关性和三档覆盖由 check-semantic-layout.mjs 和 check-v2-catalog.mjs 验证。语义关系数量以最终 manifest.relationCount 为准；当前冻结快照为 **5,385 条**。 布局的语义-空间密度 Spearman 为 0.785448（见 `data/rich/layout.json` 的 `semanticSpatialDensitySpearman`）。
 
 ### 模型推断不是文学史事实
 
@@ -175,7 +175,7 @@ scripts/build-semantic-layout.py 在离线构建阶段使用 Sentence Transforme
 
 引力书线不属于 BGE/DensMAP 语义关系。它回答的不是“哪些书在向量空间里相近”，而是“这两部作品还可能在哪个故事、世界知识或人类经验上相遇”。书线来自模型辅助的逐书策展式近读与联想，当前正式快照有 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条；它是经过自动门禁与抽样质量门禁的生成产物，不把阅读假说提升为权威结论。
 
-每条书线都绑定真实 catalog QID，使用 `reading-hypothesis` provenance，并经过自动门禁与抽样质量门禁。它必须满足真实 QID、无自环、无向端点去重、覆盖全部 1,000 本书，同时检查分片目标分布、全局集中度、禁技术套话和高频开头/句式/收尾。书线不进入 5,380 条语义关系的计数，不参与 `near` / `bridge` / `far` 三档算法排序；观测台最多展示三条，并明确标注“阅读假说”。
+每条书线都绑定真实 catalog QID，使用 `reading-hypothesis` provenance，并经过自动门禁与抽样质量门禁。它必须满足真实 QID、无自环、无向端点去重、覆盖全部 1,000 本书，同时检查分片目标分布、全局集中度、禁技术套话和高频开头/句式/收尾。书线不进入 5,385 条语义关系的计数，不参与 `near` / `bridge` / `far` 三档算法排序；观测台最多展示三条，并明确标注“阅读假说”。
 
 完整发布命令 `npm run check` 中的 `check:curated` 负责上述结构、覆盖和文案门禁，`check:copy` 负责扫描公开界面与策展文案中的技术套话；它们与 `check:data:*` 一起运行，任何一层失败都不会发布正式 Demo。
 

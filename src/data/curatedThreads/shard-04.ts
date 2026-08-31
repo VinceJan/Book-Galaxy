@@ -52,7 +52,7 @@ export const curatedThreadShard04 = [
   // 9 列女传
   { id: 'ct-04-030', source: 'Q1185340', target: 'Q1897870', kind: '镜像', sentence: '列女故事以迁徙和德行规训女性，书信中的黑人母女却让她们自己命名伤口与出路。', basis: ['女性迁徙', '自我命名'], surprise: 0.81, confidence: 0.88 },
   { id: 'ct-04-031', source: 'Q1185340', target: 'Q14911972', kind: '裂隙', sentence: '孟母三迁把教育写成改变居所，洪吉童传则让被门第拒绝的人走向民间改革。', basis: ['三迁与教育', '庶子出走'], surprise: 0.72, confidence: 0.94 },
-  { id: 'ct-04-032', source: 'Q1185340', target: 'Q390176', kind: '余烬', sentence: '列女传以孟母三迁衡量家教，一个人的圣经则让流亡作家在朝圣与回忆间重建自我。', basis: ['孟母三迁', '流亡朝圣'], surprise: 0.85, confidence: 0.83 },
+  { id: 'ct-04-032', source: 'Q1185340', target: 'Q11126316', kind: '余烬', sentence: '列女传分七卷载母仪至孽嬖并以孟母三迁为后世所引，毘婆尸佛经以二卷详述七佛之首毘婆尸佛并对应巴利大本经第14经。', basis: ['七卷母仪至孽嬖与孟母三迁', '二卷毘婆尸佛七佛之首巴利大本经'], surprise: 0.85, confidence: 0.83 },
 
   // 10 威廉·麦斯特的学徒岁月
   { id: 'ct-04-033', source: 'Q1194031', target: 'Q74287', kind: '回声', sentence: '威廉离开家庭追逐戏剧，热爱家园的比尔博也在远行中发现自己能够承担更大的世界。', basis: ['离家成长', '远行担责'], surprise: 0.55, confidence: 0.97 },

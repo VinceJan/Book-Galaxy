@@ -197,19 +197,23 @@ describe('product depth - contract', () => {
     expect(dataSources).toContain('引力书线')
     expect(starChart).toContain('引力书线')
 
-    // order within BookObservatory
+    // order within BookObservatory: 书页一瞥 → 引力书线 → 附近书星 → 为什么在这里 → footer
     const panelStart = ui.indexOf('export function BookObservatory')
     const panel = panelStart >= 0 ? ui.slice(panelStart) : ui
     expect(panel.indexOf('书页一瞥')).toBeGreaterThan(-1)
     expect(panel.indexOf('引力书线')).toBeGreaterThan(panel.indexOf('书页一瞥'))
-    expect(panel.indexOf('为什么在这里')).toBeGreaterThan(panel.indexOf('引力书线'))
-    expect(panel.indexOf('附近书星')).toBeGreaterThan(panel.indexOf('为什么在这里'))
+    expect(panel.indexOf('附近书星')).toBeGreaterThan(panel.indexOf('引力书线'))
+    expect(panel.indexOf('为什么在这里')).toBeGreaterThan(panel.indexOf('附近书星'))
+    expect(panel.indexOf('panel-footer')).toBeGreaterThan(panel.indexOf('为什么在这里'))
 
-    // humility
+    // humility: visible meta keeps hypothesis, redundant inline details removed
     expect(ui).toContain('逐书策展 · 阅读假说')
-    expect(ui).toContain('一种读法，并非定论')
+    expect(ui).not.toContain('一种读法，并非定论')
+    expect(ui).not.toContain('关于这段相遇')
+    expect(ui).not.toContain('hidden-thread-note')
+    expect(ui).not.toContain('whyhere-legend')
     expect(ui).toContain('点击一条书线，星海将显影这段相遇的航迹')
-    expect(ui).toContain('如何阅读它的位置')
+    expect(ui).toContain('如何阅读这片星海')
     expect(ui).toContain('再偏航一次，馆员便能说说两本书为何相遇')
 
     // plumbing: curated counts, journey rail conditional, aria-current, intro guard, aria-busy, imprint and chart personalization

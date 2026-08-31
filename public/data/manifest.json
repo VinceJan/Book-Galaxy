@@ -1,10 +1,10 @@
 {
   "schemaVersion": "bookshelf-galaxy/manifest-v2",
-  "generatedAt": "2026-08-30T12:42:55.013Z",
-  "catalogSha256": "ef7b4aa130fef4317b1689aa27f885d6078807e2fe2e2343cd0f43ce498232a0",
-  "catalogBytes": 14556643,
+  "generatedAt": "2026-08-31T04:37:45.060Z",
+  "catalogSha256": "1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade",
+  "catalogBytes": 14561086,
   "bookCount": 1000,
-  "relationCount": 5380,
+  "relationCount": 5385,
   "eligibilityCoverage": {
     "count": 1000,
     "total": 1000,
@@ -54,12 +54,12 @@
       "total": 1000,
       "rate": 1,
       "minimumChineseCharacters": 120,
-      "medianChineseCharacters": 214
+      "medianChineseCharacters": 213
     },
     "namedAuthors": {
-      "count": 925,
+      "count": 921,
       "total": 1000,
-      "rate": 0.925,
+      "rate": 0.921,
       "anonymousLabel": "佚名"
     },
     "themes": {
@@ -74,16 +74,16 @@
       "rate": 1
     },
     "covers": {
-      "count": 571,
+      "count": 567,
       "total": 1000,
-      "rate": 0.571,
+      "rate": 0.567,
       "kind": "Open Library 书籍封面；无封面时由界面使用书目牌兜底"
     },
     "relations": {
       "booksWithAtLeastThree": 1000,
       "minimumDegree": 6,
-      "maximumDegree": 57,
-      "averageDegree": 10.76
+      "maximumDegree": 56,
+      "averageDegree": 10.77
     }
   }
 }

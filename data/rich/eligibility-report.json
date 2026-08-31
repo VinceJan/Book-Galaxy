@@ -1,8 +1,8 @@
 {
   "schemaVersion": "bookshelf-galaxy/rich-eligibility-report-v1",
-  "generatedAt": "2026-08-30T12:42:53.705Z",
-  "policyVersion": "book-galaxy-book-unit-policy-v18",
-  "policyHash": "d67332fa1d86d81c3a346142c862b58037ecce29852680a477e093606eda1c64",
+  "generatedAt": "2026-08-31T04:37:43.787Z",
+  "policyVersion": "book-galaxy-book-unit-policy-v19",
+  "policyHash": "00cf767ed742b1c2fbda3df620dd3ac6f0f165bb4b7b0c2a7a9d7f63de9623ff",
   "queryVersion": "cached-wdqs-superset-direct-p31-filter-v1",
   "queryHash": "d9fca3f4298f11f45da7fdc6eae62e7477002675e8fe019e7ea9962bb863e5ee",
   "candidateCount": 20638,
@@ -1594,39 +1594,6 @@
       ]
     },
     {
-      "id": "Q10874462",
-      "wikipediaTitle": "中國即將崩潰",
-      "status": "accepted",
-      "accepted": true,
-      "ruleId": "work-with-bibliographic-evidence",
-      "category": "written-work",
-      "reason": "宽泛作品类型同时具备作者、初版年、语言和肯定的独立书级导语身份证据",
-      "directP31": [
-        {
-          "id": "Q7725634",
-          "label": "文学作品",
-          "rank": "normal",
-          "statementId": "Q10874462$BBB62FE0-5CAB-4416-B2D1-D480D86C6B82"
-        }
-      ],
-      "matchedIds": {
-        "allow": [
-          "Q7725634"
-        ],
-        "hardDeny": [],
-        "seriesDefaultDeny": []
-      },
-      "signals": [
-        "allow:Q7725634",
-        "author:P50-or-P2093",
-        "date:P577",
-        "language:P407",
-        "intro:first-sentence-work-identity",
-        "cover:P648",
-        "intro:no-fragment-signal"
-      ]
-    },
-    {
       "id": "Q10885393",
       "wikipediaTitle": "优昙婆逻狮子吼经",
       "status": "accepted",
@@ -3158,39 +3125,6 @@
         "missing:date",
         "language:P407",
         "missing:intro-work-identity",
-        "missing:cover:P648",
-        "intro:no-fragment-signal"
-      ]
-    },
-    {
-      "id": "Q11098383",
-      "wikipediaTitle": "李鵬六四日記",
-      "status": "accepted",
-      "accepted": true,
-      "ruleId": "work-with-bibliographic-evidence",
-      "category": "written-work",
-      "reason": "宽泛作品类型同时具备作者、初版年、语言和肯定的独立书级导语身份证据",
-      "directP31": [
-        {
-          "id": "Q7725634",
-          "label": "文学作品",
-          "rank": "normal",
-          "statementId": "Q11098383$E3B59970-1543-4C9D-BD92-F4FDF6CF1287"
-        }
-      ],
-      "matchedIds": {
-        "allow": [
-          "Q7725634"
-        ],
-        "hardDeny": [],
-        "seriesDefaultDeny": []
-      },
-      "signals": [
-        "allow:Q7725634",
-        "author:P50-or-P2093",
-        "date:P577",
-        "language:P407",
-        "intro:first-sentence-work-identity",
         "missing:cover:P648",
         "intro:no-fragment-signal"
       ]
@@ -12977,39 +12911,6 @@
       ]
     },
     {
-      "id": "Q17029712",
-      "wikipediaTitle": "解放的悲劇：中國革命史1945-1957",
-      "status": "accepted",
-      "accepted": true,
-      "ruleId": "work-with-bibliographic-evidence",
-      "category": "written-work",
-      "reason": "宽泛作品类型同时具备作者、初版年、语言和肯定的独立书级导语身份证据",
-      "directP31": [
-        {
-          "id": "Q7725634",
-          "label": "文学作品",
-          "rank": "normal",
-          "statementId": "Q17029712$94736DD8-3BF2-481E-B97C-D79330CEF881"
-        }
-      ],
-      "matchedIds": {
-        "allow": [
-          "Q7725634"
-        ],
-        "hardDeny": [],
-        "seriesDefaultDeny": []
-      },
-      "signals": [
-        "allow:Q7725634",
-        "author:P50-or-P2093",
-        "date:P577",
-        "language:P407",
-        "intro:first-sentence-work-identity",
-        "cover:P648",
-        "intro:no-fragment-signal"
-      ]
-    },
-    {
       "id": "Q17031912",
       "wikipediaTitle": "等诵经",
       "status": "accepted",
@@ -22192,39 +22093,6 @@
       ]
     },
     {
-      "id": "Q27544",
-      "wikipediaTitle": "毛澤東：鮮為人知的故事",
-      "status": "accepted",
-      "accepted": true,
-      "ruleId": "work-with-bibliographic-evidence",
-      "category": "written-work",
-      "reason": "宽泛作品类型同时具备作者、初版年、语言和肯定的独立书级导语身份证据",
-      "directP31": [
-        {
-          "id": "Q7725634",
-          "label": "文学作品",
-          "rank": "normal",
-          "statementId": "Q27544$73FEC984-3DCE-4A03-948E-B1A55269ED7F"
-        }
-      ],
-      "matchedIds": {
-        "allow": [
-          "Q7725634"
-        ],
-        "hardDeny": [],
-        "seriesDefaultDeny": []
-      },
-      "signals": [
-        "allow:Q7725634",
-        "author:P50-or-P2093",
-        "date:P577",
-        "language:P407",
-        "intro:first-sentence-work-identity",
-        "cover:P648",
-        "intro:no-fragment-signal"
-      ]
-    },
-    {
       "id": "Q27592",
       "wikipediaTitle": "日常生活的精神病學",
       "status": "accepted",
@@ -25260,39 +25128,6 @@
           "label": "文学作品",
           "rank": "normal",
           "statementId": "q389750$228CDF25-1633-493F-9018-FF75D4A6C51C"
-        }
-      ],
-      "matchedIds": {
-        "allow": [
-          "Q7725634"
-        ],
-        "hardDeny": [],
-        "seriesDefaultDeny": []
-      },
-      "signals": [
-        "allow:Q7725634",
-        "author:P50-or-P2093",
-        "date:P577",
-        "language:P407",
-        "intro:first-sentence-work-identity",
-        "cover:P648",
-        "intro:no-fragment-signal"
-      ]
-    },
-    {
-      "id": "Q390176",
-      "wikipediaTitle": "一个人的圣经",
-      "status": "accepted",
-      "accepted": true,
-      "ruleId": "work-with-bibliographic-evidence",
-      "category": "classical-text",
-      "reason": "宽泛作品类型同时具备作者、初版年、语言和肯定的独立书级导语身份证据",
-      "directP31": [
-        {
-          "id": "Q7725634",
-          "label": "文学作品",
-          "rank": "normal",
-          "statementId": "Q390176$67CC259E-4C7A-46E1-8E0B-0C8F2FA17830"
         }
       ],
       "matchedIds": {
@@ -41693,39 +41528,6 @@
       ]
     },
     {
-      "id": "Q976946",
-      "wikipediaTitle": "上海宝贝",
-      "status": "accepted",
-      "accepted": true,
-      "ruleId": "work-with-bibliographic-evidence",
-      "category": "written-work",
-      "reason": "宽泛作品类型同时具备作者、初版年、语言和肯定的独立书级导语身份证据",
-      "directP31": [
-        {
-          "id": "Q7725634",
-          "label": "文学作品",
-          "rank": "normal",
-          "statementId": "q976946$373E9987-ECDD-4143-AF7A-5C547958976C"
-        }
-      ],
-      "matchedIds": {
-        "allow": [
-          "Q7725634"
-        ],
-        "hardDeny": [],
-        "seriesDefaultDeny": []
-      },
-      "signals": [
-        "allow:Q7725634",
-        "author:P50-or-P2093",
-        "date:P577",
-        "language:P407",
-        "intro:first-sentence-work-identity",
-        "missing:cover:P648",
-        "intro:no-fragment-signal"
-      ]
-    },
-    {
       "id": "Q97716707",
       "wikipediaTitle": "普賢菩薩行願品",
       "status": "accepted",
@@ -50834,6 +50636,39 @@
       ]
     },
     {
+      "id": "Q10874462",
+      "wikipediaTitle": "中國即將崩潰",
+      "status": "rejected",
+      "accepted": false,
+      "ruleId": "publication-excluded",
+      "category": "publication-restricted",
+      "reason": "出版/发行受限：中国即将崩溃（与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录保守出版排除策略排除",
+      "directP31": [
+        {
+          "id": "Q7725634",
+          "label": "文学作品",
+          "rank": "normal",
+          "statementId": "Q10874462$BBB62FE0-5CAB-4416-B2D1-D480D86C6B82"
+        }
+      ],
+      "matchedIds": {
+        "allow": [
+          "Q7725634"
+        ],
+        "hardDeny": [],
+        "seriesDefaultDeny": []
+      },
+      "signals": [
+        "allow:Q7725634",
+        "author:P50-or-P2093",
+        "date:P577",
+        "language:P407",
+        "intro:first-sentence-work-identity",
+        "cover:P648",
+        "intro:no-fragment-signal"
+      ]
+    },
+    {
       "id": "Q108752513",
       "wikipediaTitle": "ChaoJi",
       "status": "rejected",
@@ -55036,6 +54871,39 @@
         "missing:date",
         "missing:language",
         "missing:intro-work-identity",
+        "missing:cover:P648",
+        "intro:no-fragment-signal"
+      ]
+    },
+    {
+      "id": "Q11098383",
+      "wikipediaTitle": "李鵬六四日記",
+      "status": "rejected",
+      "accepted": false,
+      "ruleId": "publication-excluded",
+      "category": "publication-restricted",
+      "reason": "出版/发行受限：李鹏六四日记（用户指定保守排除）——按本目录出版排除策略排除",
+      "directP31": [
+        {
+          "id": "Q7725634",
+          "label": "文学作品",
+          "rank": "normal",
+          "statementId": "Q11098383$E3B59970-1543-4C9D-BD92-F4FDF6CF1287"
+        }
+      ],
+      "matchedIds": {
+        "allow": [
+          "Q7725634"
+        ],
+        "hardDeny": [],
+        "seriesDefaultDeny": []
+      },
+      "signals": [
+        "allow:Q7725634",
+        "author:P50-or-P2093",
+        "date:P577",
+        "language:P407",
+        "intro:first-sentence-work-identity",
         "missing:cover:P648",
         "intro:no-fragment-signal"
       ]
@@ -93800,6 +93668,39 @@
       ]
     },
     {
+      "id": "Q17029712",
+      "wikipediaTitle": "解放的悲劇：中國革命史1945-1957",
+      "status": "rejected",
+      "accepted": false,
+      "ruleId": "publication-excluded",
+      "category": "publication-restricted",
+      "reason": "出版/发行受限：解放的悲剧：中国革命史1945-1957（用户指定保守排除；与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录出版排除策略排除",
+      "directP31": [
+        {
+          "id": "Q7725634",
+          "label": "文学作品",
+          "rank": "normal",
+          "statementId": "Q17029712$94736DD8-3BF2-481E-B97C-D79330CEF881"
+        }
+      ],
+      "matchedIds": {
+        "allow": [
+          "Q7725634"
+        ],
+        "hardDeny": [],
+        "seriesDefaultDeny": []
+      },
+      "signals": [
+        "allow:Q7725634",
+        "author:P50-or-P2093",
+        "date:P577",
+        "language:P407",
+        "intro:first-sentence-work-identity",
+        "cover:P648",
+        "intro:no-fragment-signal"
+      ]
+    },
+    {
       "id": "Q17033604",
       "wikipediaTitle": "网络天书",
       "status": "rejected",
@@ -125873,6 +125774,39 @@
       ]
     },
     {
+      "id": "Q27544",
+      "wikipediaTitle": "毛澤東：鮮為人知的故事",
+      "status": "rejected",
+      "accepted": false,
+      "ruleId": "publication-excluded",
+      "category": "publication-restricted",
+      "reason": "出版/发行受限：毛泽东：鲜为人知的故事（用户指定保守排除；与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录出版排除策略排除",
+      "directP31": [
+        {
+          "id": "Q7725634",
+          "label": "文学作品",
+          "rank": "normal",
+          "statementId": "Q27544$73FEC984-3DCE-4A03-948E-B1A55269ED7F"
+        }
+      ],
+      "matchedIds": {
+        "allow": [
+          "Q7725634"
+        ],
+        "hardDeny": [],
+        "seriesDefaultDeny": []
+      },
+      "signals": [
+        "allow:Q7725634",
+        "author:P50-or-P2093",
+        "date:P577",
+        "language:P407",
+        "intro:first-sentence-work-identity",
+        "cover:P648",
+        "intro:no-fragment-signal"
+      ]
+    },
+    {
       "id": "Q2758190",
       "wikipediaTitle": "魔法少女奈葉ViVid",
       "status": "rejected",
@@ -143066,6 +143000,39 @@
         "language:P407",
         "missing:intro-work-identity",
         "missing:cover:P648",
+        "intro:no-fragment-signal"
+      ]
+    },
+    {
+      "id": "Q390176",
+      "wikipediaTitle": "一个人的圣经",
+      "status": "rejected",
+      "accepted": false,
+      "ruleId": "publication-excluded",
+      "category": "publication-restricted",
+      "reason": "出版/发行受限：一个人的圣经（与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录保守出版排除策略排除",
+      "directP31": [
+        {
+          "id": "Q7725634",
+          "label": "文学作品",
+          "rank": "normal",
+          "statementId": "Q390176$67CC259E-4C7A-46E1-8E0B-0C8F2FA17830"
+        }
+      ],
+      "matchedIds": {
+        "allow": [
+          "Q7725634"
+        ],
+        "hardDeny": [],
+        "seriesDefaultDeny": []
+      },
+      "signals": [
+        "allow:Q7725634",
+        "author:P50-or-P2093",
+        "date:P577",
+        "language:P407",
+        "intro:first-sentence-work-identity",
+        "cover:P648",
         "intro:no-fragment-signal"
       ]
     },
@@ -200275,6 +200242,39 @@
         "missing:date",
         "missing:language",
         "missing:intro-work-identity",
+        "missing:cover:P648",
+        "intro:no-fragment-signal"
+      ]
+    },
+    {
+      "id": "Q976946",
+      "wikipediaTitle": "上海宝贝",
+      "status": "rejected",
+      "accepted": false,
+      "ruleId": "publication-excluded",
+      "category": "publication-restricted",
+      "reason": "出版/发行受限：上海宝贝（与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录保守出版排除策略排除",
+      "directP31": [
+        {
+          "id": "Q7725634",
+          "label": "文学作品",
+          "rank": "normal",
+          "statementId": "q976946$373E9987-ECDD-4143-AF7A-5C547958976C"
+        }
+      ],
+      "matchedIds": {
+        "allow": [
+          "Q7725634"
+        ],
+        "hardDeny": [],
+        "seriesDefaultDeny": []
+      },
+      "signals": [
+        "allow:Q7725634",
+        "author:P50-or-P2093",
+        "date:P577",
+        "language:P407",
+        "intro:first-sentence-work-identity",
         "missing:cover:P648",
         "intro:no-fragment-signal"
       ]

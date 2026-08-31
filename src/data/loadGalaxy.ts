@@ -85,7 +85,7 @@ interface CatalogPayload {
 }
 
 const FORMAL_BOOK_COUNT = 1_000
-const FORMAL_RELATION_COUNT = 5_380
+const FORMAL_RELATION_COUNT = 5_385
 const chineseCharacters = (value = '') => [...value.matchAll(/[\u3400-\u9fff]/gu)].length
 
 function hasHonestBasis(edge: CatalogEdge): boolean {

@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto'
  * checker independently re-evaluates every generated item's evidence.
  */
 
-export const POLICY_VERSION = 'book-galaxy-book-unit-policy-v18'
+export const POLICY_VERSION = 'book-galaxy-book-unit-policy-v19'
 
 // Shared, evidence-backed exclusions for entities whose direct Wikidata
 // statements are insufficient to recover a trustworthy book record. Keeping
@@ -37,6 +37,23 @@ const BLOCKED_WORK_REASONS = new Map([
   ['Q3086228', '“历史书”是包含十二卷圣经书目的分组，不是单一书级文本'],
   ['Q3224748', '仅有杂志首发并收入故事集的单篇中篇小说证据，缺少独立成书证据'],
   ['Q4212557', '“景教经典”是多部景教译经的集合总称，不是单一书级文本'],
+])
+
+// Distinct, auditable publication/distribution exclusion set (conservative,
+// reproducible). These six works are excluded by directory policy, not by
+// source-identity conflict: the first three are user-mandated and the latter
+// three intersect the linked titles in the current《中华人民共和国被禁出版物列表》.
+// Keeping a separate map makes the offline checker reproduce the same decision
+// without camouflaging it as an identity conflict. Do NOT extend this set by
+// inference in this milestone (e.g. 灵山、致命中国、不要说我们一无所有、龙在雪域
+// remain eligible if they otherwise pass).
+const PUBLICATION_EXCLUDED_WORKS = new Map([
+  ['Q11098383', '出版/发行受限：李鹏六四日记（用户指定保守排除）——按本目录出版排除策略排除'],
+  ['Q27544', '出版/发行受限：毛泽东：鲜为人知的故事（用户指定保守排除；与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录出版排除策略排除'],
+  ['Q17029712', '出版/发行受限：解放的悲剧：中国革命史1945-1957（用户指定保守排除；与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录出版排除策略排除'],
+  ['Q10874462', '出版/发行受限：中国即将崩溃（与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录保守出版排除策略排除'],
+  ['Q390176', '出版/发行受限：一个人的圣经（与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录保守出版排除策略排除'],
+  ['Q976946', '出版/发行受限：上海宝贝（与《中华人民共和国被禁出版物列表》关联条目交集）——按本目录保守出版排除策略排除'],
 ])
 
 export const ALLOW_P31 = [
@@ -94,11 +111,12 @@ export const POLICY_TYPES = [...new Set([...ALLOW_P31, ...HARD_DENY_P31, ...SERI
 
 const POLICY_DIGEST_INPUT = JSON.stringify({
   version: POLICY_VERSION,
-  ruleContract: 'blocked-work-identity-conflicts;fixed-known-non-book-v2;chapter-p31-deny-v1;canon-collection-intro-v1;hard-deny-and-series-first;all-allowed-types-respect-explicit-fragment-intro;strong-direct;conditional-requires-positive-book-identity-and-valid-bibliography;fragment-intro-deny-v10-chinese-sentence-window;mixed-p31-deny-v2',
+  ruleContract: 'publication-exclusion-v1;blocked-work-identity-conflicts;fixed-known-non-book-v2;chapter-p31-deny-v1;canon-collection-intro-v1;hard-deny-and-series-first;all-allowed-types-respect-explicit-fragment-intro;strong-direct;conditional-requires-positive-book-identity-and-valid-bibliography;fragment-intro-deny-v10-chinese-sentence-window;mixed-p31-deny-v2',
   allow: [...ALLOW_P31].sort(),
   hardDeny: [...HARD_DENY_P31].sort(),
   seriesDefaultDeny: [...SERIES_DEFAULT_DENY_P31].sort(),
   blockedWorks: [...BLOCKED_WORK_REASONS].sort(([left], [right]) => left.localeCompare(right)),
+  publicationExcludedWorks: [...PUBLICATION_EXCLUDED_WORKS].sort(([left], [right]) => left.localeCompare(right)),
 })
 export const POLICY_HASH = createHash('sha256').update(POLICY_DIGEST_INPUT).digest('hex')
 
@@ -237,6 +255,15 @@ export function evaluateWork({ work, entityMap = {}, intro = '', hasOpenLibrary 
     directP31,
     matchedIds: { allow: matchedAllow, hardDeny: matchedDeny, seriesDefaultDeny: matchedSeries },
     signals,
+  }
+
+  if (PUBLICATION_EXCLUDED_WORKS.has(work?.id)) return {
+    accepted: false,
+    status: 'rejected',
+    ruleId: 'publication-excluded',
+    category: 'publication-restricted',
+    reason: PUBLICATION_EXCLUDED_WORKS.get(work.id),
+    ...evidence,
   }
 
   if (BLOCKED_WORK_REASONS.has(work?.id)) return {

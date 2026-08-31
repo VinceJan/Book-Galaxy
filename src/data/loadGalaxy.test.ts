@@ -97,7 +97,8 @@ describe('catalog relation resolver', () => {
       provenance: sourceBook.provenance,
     })
     expect(data.books).toHaveLength(1_000)
-    expect(data.catalogEdges).toHaveLength(5_380)
+    expect(data.catalogEdges).toHaveLength(catalogSnapshot.relations.length)
+    expect(catalogSnapshot.relations).toHaveLength(5_385)
     expect(data.curated).toEqual([])
     expect(data.curatedRelations).toHaveLength(3_002)
   })

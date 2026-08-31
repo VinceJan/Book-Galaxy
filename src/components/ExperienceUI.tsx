@@ -591,22 +591,28 @@ export function BookObservatory({
     }
   }
 
+  const metaChips: string[] = []
+  const yearValid = typeof book.year === 'number' && Number.isInteger(book.year) && book.year !== 0
+  const yearLabel = yearValid ? formatYear(book.year) : ''
+  if (yearLabel && yearLabel !== '年代未注明') metaChips.push(yearLabel)
+  const rawLang = book.language?.trim()
+  if (rawLang && rawLang !== '未注明') {
+    const formattedLang = formatLanguage(book.language)
+    if (formattedLang !== '语种未注明') metaChips.push(formattedLang)
+  }
+  if (country) metaChips.push(country)
+  if (collectionType) metaChips.push(collectionType)
+
+  const revisionUrl = safeExternalUrl(book.provenance?.wikipediaRevisionUrl, 'wikipediaRevision')
+  const sourceUrl = revisionUrl ?? safeExternalUrl(book.sourceUrl, 'source')
+  const wikidataUrl = safeExternalUrl(book.wikidataUrl, 'wikidata')
+  const coverSourceUrl = safeExternalUrl(book.coverSourceUrl, 'coverSource')
+
   return (
     <aside className="book-observatory" aria-labelledby="observed-book-title" onKeyDown={handlePanelKeyDown}>
       <div className="panel-heading">
         <span>观测对象 {String(index + 1).padStart(2, '0')} / {total.toLocaleString('zh-CN')}</span>
         <button type="button" onClick={onClose} aria-label="收起书籍信息"><Icon name="close" /></button>
-      </div>
-      <div className="book-coordinate">
-         <span>来源 / {book.source ?? '开放资料'}</span>
-        <span>{formatYear(book.year)} · {formatLanguage(book.language)}</span>
-        <span>星域 / {locationLabel}</span>
-        {(country || collectionType) && (
-          <span className="book-coordinate-facts">
-            {country && <span>地域 / {country}</span>}
-            {collectionType && <span>类型 / {collectionType}</span>}
-          </span>
-        )}
       </div>
       <div className="book-identity">
         <BookCover book={book} />
@@ -615,12 +621,19 @@ export function BookObservatory({
           <h2 id="observed-book-title" data-book-observatory-title tabIndex={-1}>{book.title}</h2>
           {hasSecondaryTitle && <p className="original-title"><span>外文题名</span>{book.originalTitle}</p>}
           <p className="book-byline">{book.author}</p>
+          {metaChips.length > 0 && (
+            <div className="book-meta-chips" aria-label="题名信息">
+              {metaChips.map((chip, idx) => (
+                <span key={`${chip}:${idx}`}><>{idx > 0 && <i aria-hidden="true" />}{chip}</></span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <div className="book-record">
-         <span className="book-record-label">书页一瞥</span>
+      <div className="book-record book-record-primary">
+         <span className="book-record-label book-record-label-primary">书页一瞥</span>
         {contentReady ? (
-          <p className="book-summary">{summary}</p>
+          <p className="book-summary book-summary-primary">{summary}</p>
         ) : (
           <div className="book-content-missing" role="status">
             <strong>内容尚未显影</strong>
@@ -630,12 +643,14 @@ export function BookObservatory({
       </div>
       {curatedThreads.length > 0 && (
         <div className="book-record gravity-thread-record hidden-thread-record" aria-labelledby="gravity-thread-title">
-           <span id="gravity-thread-title" className="book-record-label">引力书线</span>
-           <small className="gravity-thread-meta">逐书策展 · 阅读假说</small>
+          <div className="gravity-thread-header">
+            <h3 id="gravity-thread-title" className="gravity-thread-title">引力书线</h3>
+            <small className="gravity-thread-meta">逐书策展 · 阅读假说 · {curatedThreads.length}条</small>
+          </div>
           <ul className="hidden-thread-list gravity-thread-list">
             {curatedThreads.map(({ relation, target }) => (
               <li key={`${relation.source}:${relation.target}`}>
-                <button className="hidden-thread-item gravity-thread-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
+                <button className="hidden-thread-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
                   <small>{relation.kind}</small>
                   <strong>《{target.title}》</strong>
                   <span>{relation.sentence}</span>
@@ -645,21 +660,8 @@ export function BookObservatory({
             ))}
           </ul>
           <small className="gravity-thread-hint">点击一条书线，星海将显影这段相遇的航迹。</small>
-          <details className="hidden-thread-note">
-            <summary>关于这段相遇</summary>
-            <p>一种读法，并非定论。</p>
-          </details>
         </div>
       )}
-      <div className="book-record" aria-label="星域定位">
-         <span className="book-record-label">为什么在这里</span>
-        <p className="book-summary">{whyHere}</p>
-        <details className="whyhere-legend">
-          <summary>如何阅读它的位置</summary>
-          <p>它在星海中的位置与光度来自共同气质、时代与地域；更亮的星代表更显眼的体量。偏航时，近处贴近熟悉，桥上换种目光，远处走向陌生但仍有依据的方向。</p>
-          <a className="source-link source-link-secondary" href={`${import.meta.env.BASE_URL}data-license.html`}>资料说明 ↗</a>
-        </details>
-      </div>
       {nearbyBooks.length > 0 && (
         <div className="book-record nearby-record" aria-label="附近书星">
            <span className="book-record-label">附近书星</span>
@@ -676,43 +678,48 @@ export function BookObservatory({
           <small className="nearby-note">点开可先观测；偏航或引力书线才会写入航迹。</small>
         </div>
       )}
-      <div className="book-source-row">
-          <span>书页出处</span>
-        <div className="source-links">
-          {(() => {
-            const revisionUrl = safeExternalUrl(book.provenance?.wikipediaRevisionUrl, 'wikipediaRevision')
-            const sourceUrl = revisionUrl ?? safeExternalUrl(book.sourceUrl, 'source')
-            return sourceUrl ? (
-              <>
-                <a className="source-link" href={sourceUrl} target="_blank" rel="noreferrer noopener">
-                  {revisionUrl ? '中文维基百科 · 固定修订' : (book.source ?? '开放资料')} ↗
-                </a>
-                {revisionUrl && safeExternalUrl('https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans', 'license') && (
-                  <a className="source-link source-link-secondary" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans" target="_blank" rel="noreferrer noopener">
-                    CC BY-SA 4.0 ↗
-                  </a>
-                )}
-              </>
-            ) : <span className="source-unavailable">{book.source ?? '未提供核查链接'}</span>
-          })()}
-          {safeExternalUrl(book.wikidataUrl, 'wikidata') && (
-              <a className="source-link source-link-secondary" href={safeExternalUrl(book.wikidataUrl, 'wikidata')} target="_blank" rel="noreferrer noopener">
-              资料核查 ↗
-            </a>
-          )}
-          {safeExternalUrl(book.coverSourceUrl, 'coverSource') && (
-            <a className="source-link source-link-secondary" href={safeExternalUrl(book.coverSourceUrl, 'coverSource')} target="_blank" rel="noreferrer noopener">
-              封面出处 ↗
-            </a>
-          )}
-          <a className="source-link source-link-secondary" href={`${import.meta.env.BASE_URL}data-license.html`}>
-            资料说明 ↗
-          </a>
+      <div className="book-record whyhere-record" aria-label="星域定位">
+         <span className="book-record-label">为什么在这里</span>
+        <p className="book-summary whyhere-copy">{whyHere}</p>
+      </div>
+      <footer className="panel-footer">
+        <details className="footer-legend">
+          <summary>如何阅读这片星海</summary>
+          <p>它在星海中的位置与光度来自共同气质、时代与地域；更亮的星代表更显眼的体量。偏航时，近处贴近熟悉，桥上换种目光，远处走向陌生但仍有依据的方向。</p>
+          <a className="source-link source-link-secondary" href={`${import.meta.env.BASE_URL}data-license.html`}>资料说明 ↗</a>
+        </details>
+        <div className="panel-footer-source">
+          <span className="panel-footer-label">出处</span>
+          <div className="source-links source-links-compact">
+            {sourceUrl ? (
+              <a className="source-link" href={sourceUrl} target="_blank" rel="noreferrer noopener">
+                {revisionUrl ? '中文维基百科 · 固定修订' : (book.source ?? '开放资料')} ↗
+              </a>
+            ) : <span className="source-unavailable">{book.source ?? '未提供核查链接'}</span>}
+            {revisionUrl && safeExternalUrl('https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans', 'license') && (
+              <a className="source-link source-link-secondary" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans" target="_blank" rel="noreferrer noopener">
+                CC BY-SA 4.0 ↗
+              </a>
+            )}
+            {wikidataUrl && (
+              <a className="source-link source-link-secondary" href={wikidataUrl} target="_blank" rel="noreferrer noopener">
+                资料核查 ↗
+              </a>
+            )}
+            {coverSourceUrl && (
+              <a className="source-link source-link-secondary" href={coverSourceUrl} target="_blank" rel="noreferrer noopener">
+                封面出处 ↗
+              </a>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="theme-row" aria-label="主题">
-        {themes.slice(0, 4).map((theme) => <span key={theme}>{theme}</span>)}
-      </div>
+        {themes.length > 0 && (
+          <div className="theme-row panel-footer-themes" aria-label="主题">
+            {themes.slice(0, 4).map((theme) => <span key={theme}>{theme}</span>)}
+          </div>
+        )}
+        <div className="panel-footer-location">星域 / {locationLabel}</div>
+      </footer>
       <div className="panel-actions">
         <button
           className={canDetour ? 'primary-action' : 'restart-action'}

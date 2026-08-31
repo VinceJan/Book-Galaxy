@@ -11,10 +11,10 @@ export const curatedThreadShard06 = [
   { source: 'Q1063693', target: 'Q1050479', kind: '暗河', sentence: '巴恩斯借鹦鹉遗物拼出福楼拜的多重侧影；郁斯贝克则用书信记录法国见闻。一个反复校勘作家身份，一个让异乡观察随通信展开。', basis: ['侧影核对', '书信旁观'], surprise: 0.8, confidence: 0.9 },
   { source: 'Q1063693', target: 'Q106103769', kind: '潮汐', sentence: '一只鹦鹉让读者绕进作家档案，安西心从镜面进入同伴城堡。旁观者终于被故事收编。', basis: ['档案绕行', '镜面结盟'], surprise: 0.88, confidence: 0.87 },
 
-  { source: 'Q10874462', target: 'Q106852836', kind: '暗河', sentence: '崩溃预言把经济数字推向国家终局，失忆宇航员格雷斯醒于飞船。宏观警报落成一场个人返航。', basis: ['经济预言', '失忆返航'], surprise: 0.84, confidence: 0.9 },
-  { source: 'Q10874462', target: 'Q10691734', kind: '裂隙', sentence: '张从制度症候推演国家崩溃，林西莉从课堂上的汉字拆解文化起源。一边面对宏观危机，一边从孩子认字的时刻理解历史。', basis: ['制度症候', '汉字课堂'], surprise: 0.83, confidence: 0.87 },
-  { source: 'Q10874462', target: 'Q107790', kind: '镜像', sentence: '书中预言国家失序，卡扎菲把政治哲学写成给全民的三卷小册。危机叙事转写成训诫。', basis: ['国家失序', '全民训诫'], surprise: 0.79, confidence: 0.89 },
-  { source: 'Q10874462', target: 'Q1426188', kind: '余烬', sentence: '崩溃论寻找制度裂缝，玛蒂尔达在被冷落后以阅读和意志顶住校长。权力尺度缩到孩子身上。', basis: ['制度裂缝', '儿童阅读'], surprise: 0.9, confidence: 0.86 },
+  { source: 'Q6395670', target: 'Q106852836', kind: '暗河', sentence: '坚固经让佛陀在那烂陀寺拒以神通取信而独倡教诫神变的戒定慧，格雷斯从失忆昏迷中醒于飞船并逐步回忆赴天仓五12光年逆转黯化。', basis: ['那烂陀寺拒神通倡教诫戒定慧', '失忆昏迷赴天仓五12光年逆转黯化'], surprise: 0.84, confidence: 0.9 },
+  { source: 'Q6395670', target: 'Q10691734', kind: '裂隙', sentence: '林西莉以二百余汉字图文从甲骨钟鼎追溯字形并获1989年奥古斯特奖，那烂陀寺的坚固经区分神通、记心与教诫三神变而独倡教诫。', basis: ['二百汉字甲骨钟鼎奥古斯特奖', '那烂陀三神变独倡教诫'], surprise: 0.83, confidence: 0.87 },
+  { source: 'Q6395670', target: 'Q107790', kind: '镜像', sentence: '卡扎菲把三卷小册的政治哲学写给所有利比亚人民，而那烂陀寺的坚固经让佛陀拒示神通只倡教诫神变的戒定慧。', basis: ['三卷小册写给利比亚人民', '那烂陀拒示神通教诫戒定慧'], surprise: 0.79, confidence: 0.89 },
+  { source: 'Q6395670', target: 'Q1426188', kind: '余烬', sentence: '被父母冷落的玛蒂尔达以阅读与意志顶住川奇布尔校长，那烂陀寺的坚固经以教诫神变回应求神通之请。', basis: ['被冷落童年阅读顶住校长', '那烂陀教诫神变回应求神通'], surprise: 0.9, confidence: 0.86 },
 
   { source: 'Q10933698', target: 'Q10866090', kind: '回声', sentence: '焰鬘前生在雨季静处修悲禅而见梵天；佛陀反问两名婆罗门青年是否曾亲见梵天。亲身修证在另一部经中接受追问。', basis: ['雨季悲禅', '梵天追问'], surprise: 0.89, confidence: 0.9 },
   { source: 'Q10933698', target: 'Q10873654', kind: '镜像', sentence: '大典尊舍弃祭司技艺出家，钱学森被美国驱逐后登船归国。前者应梵天召唤离俗，后者在被驱逐后返乡。', basis: ['召唤离俗', '驱逐归国'], surprise: 0.88, confidence: 0.88 },
@@ -129,7 +129,7 @@ export const curatedThreadShard06 = [
   { source: 'Q1789161', target: 'Q1639633', kind: '暗河', sentence: '汤米与塔彭丝以婚姻默契追踪危险，三剑客在二十年后保护年幼的路易十四。伙伴关系跨入代际守护。', basis: ['婚姻默契', '保护幼王'], surprise: 0.86, confidence: 0.91 },
 
   { source: 'Q182502', target: 'Q165318', kind: '裂隙', sentence: '兰登在梵蒂冈循光明会线索追凶；拉斯科尔尼科夫持斧杀人后承受良心与司法审判。一个谜案向外寻找凶手，一个罪行向内逼问责任。', basis: ['梵蒂冈线索', '杀人审判'], surprise: 0.89, confidence: 0.91 },
-  { source: 'Q182502', target: 'Q17029712', kind: '镜像', sentence: '天使与魔鬼把教会危机压缩进二十四小时，冯客从档案与证词重写建国十年。倒计时与长时段互相照亮。', basis: ['二十四时限', '档案证词'], surprise: 0.9, confidence: 0.88 },
+  { source: 'Q182502', target: 'Q1632827', kind: '镜像', sentence: '兰登在梵蒂冈于二十四小时内循光照派线索追凶，黄帝阴符经以四百余字分三章论暗合天道的盗机之说。', basis: ['梵蒂冈光照派二十四小时追凶', '四百余字三章暗合天道盗机'], surprise: 0.9, confidence: 0.88 },
   { source: 'Q182502', target: 'Q170583', kind: '暗河', sentence: '兰登在科学与信仰的冲突中辨认凶手，伊丽莎白在舞会礼法和交往中判断婚姻。两人都必须识别人心，只是危险分别来自阴谋和日常偏见。', basis: ['科学信仰', '舞会择偶'], surprise: 0.91, confidence: 0.89 },
 
   { source: 'Q18676975', target: 'Q552213', kind: '回声', sentence: '克里斯·凯尔在狙击镜后记住战友，福雷斯特从小镇跑进战争又回到家。战争记忆与平凡成长换了方向。', basis: ['狙击记忆', '小镇返家'], surprise: 0.89, confidence: 0.9 },
@@ -306,7 +306,7 @@ export const curatedThreadShard06 = [
   { source: 'Q76210', target: 'Q1639633', kind: '镜像', sentence: '上海街巷让丁丁从冒险者变成见证者，三剑客在二十年后保护年幼国王。少年成长与老伙伴守护换了方向。', basis: ['冒险见证', '守护幼王'], surprise: 0.9, confidence: 0.91 },
 
   { source: 'Q7729387', target: 'Q165318', kind: '暗河', sentence: '阿尔伯特陪妻子回布加勒斯特奔丧，并观察极权社会的日常；拉斯科尔尼科夫在圣彼得堡承受杀人后的罪责。一个返乡者看见外部压抑，一个凶手面对内心审判。', basis: ['奔丧返乡', '杀人罪责'], surprise: 0.91, confidence: 0.9 },
-  { source: 'Q7729387', target: 'Q17029712', kind: '裂隙', sentence: '院长陪妻子回布加勒斯特处理岳母后事，并看见极权日常；冯客以档案重写建国初年的暴力。家庭悼亡与国家记忆彼此反照。', basis: ['岳母后事与极权日常', '建国档案'], surprise: 0.92, confidence: 0.88 },
+  { source: 'Q7729387', target: 'Q1632827', kind: '裂隙', sentence: '科德陪罗马尼亚妻子赴布加勒斯特处理岳母后事时直面极权日常，黄帝阴符经则在四百余字里谈天道与盗机的暗合。', basis: ['布加勒斯特岳母后事极权日常', '四百余字天道盗机暗合'], surprise: 0.92, confidence: 0.88 },
   { source: 'Q7729387', target: 'Q170583', kind: '回声', sentence: '芝加哥院长面对罗马尼亚的压抑生活，伊丽莎白在乡绅舞会挑选婚姻。跨国观察转成爱情判断。', basis: ['跨国观察', '舞会择偶'], surprise: 0.9, confidence: 0.91 },
 
   { source: 'Q7743953', target: 'Q552213', kind: '镜像', sentence: '拉特用图画保存甘榜学校、森林与童年习俗，福雷斯特从小镇进入战争后又回到家。前者让孩子的目光停在乡土，后者让普通人生穿过美国历史。', basis: ['甘榜图画', '小镇战争'], surprise: 0.88, confidence: 0.93 },
