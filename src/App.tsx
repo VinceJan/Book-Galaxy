@@ -10,6 +10,7 @@ import {
   JourneyRail,
   LibrarianBand,
   ObservatoryHeader,
+  preloadCover,
   StarChartReveal,
   VoyageNarration,
 } from './components/ExperienceUI'
@@ -301,6 +302,7 @@ export default function App() {
     const targetId = otherBookId(relation, selected.id)
     const target = booksById.get(targetId)
     if (!target) return
+    preloadCover(target.coverUrl)
     const sequence = state.travelSequence + 1
     dispatch({ type: 'TRAVEL', relation })
     galaxyRef.current?.revealRelation(selected.id, targetId)

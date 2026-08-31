@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+// @ts-ignore - node fs is available in vitest
+import { readFileSync } from 'node:fs'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { enableSoundscape, observeReducedMotion, publicFailureMessage, silenceSoundscape } from './App'
 
@@ -69,5 +71,19 @@ describe('public failure messages', () => {
     expect(AppErrorBoundary.getDerivedStateFromError(new Error('GET /data/catalog.json 500: invalid JSON'))).toEqual({
       message: '星海暂时失去显影，请刷新页面后重试。',
     })
+  })
+
+  it('starts the exact travel target cover preload before travel dispatch and flight', () => {
+    const source = readFileSync('src/App.tsx', 'utf8')
+    const travel = source.slice(source.indexOf('const travel = useCallback'), source.indexOf('const followCuratedThread'))
+    const target = travel.indexOf('const target = booksById.get(targetId)')
+    const preload = travel.indexOf('preloadCover(target.coverUrl)')
+    const dispatch = travel.indexOf("dispatch({ type: 'TRAVEL', relation })")
+    const flight = travel.indexOf('focusBook(targetId, reducedMotion ? 0 : 1_650)')
+
+    expect(target).toBeGreaterThan(-1)
+    expect(preload).toBeGreaterThan(target)
+    expect(dispatch).toBeGreaterThan(preload)
+    expect(flight).toBeGreaterThan(dispatch)
   })
 })

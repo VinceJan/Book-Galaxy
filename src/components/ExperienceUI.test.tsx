@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  BookCover,
   curatedThreadsFor,
   directionCopy,
   relationExcerpt,
+  preloadCover,
   relationReading,
   safeExternalUrl,
   voyageCopy,
@@ -18,6 +21,8 @@ import { fileURLToPath } from 'node:url'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const readRepo = (path: string) => readFileSync(resolve(repoRoot, path), 'utf8')
+
+afterEach(() => vi.unstubAllGlobals())
 
 describe('safeExternalUrl', () => {
   it('accepts only the expected source records', () => {
@@ -38,6 +43,9 @@ describe('safeExternalUrl', () => {
     expect(safeExternalUrl('https://covers.openlibrary.org/b/id/1-M.jpg?default=true', 'cover')).toBeUndefined()
     expect(safeExternalUrl('https://covers.openlibrary.org/b/id/1-M.jpg?default=false&x=1', 'cover')).toBeUndefined()
     expect(safeExternalUrl('https://covers.openlibrary.org/b/id/1-M.jpg?%64efault=false', 'cover')).toBeUndefined()
+    expect(safeExternalUrl('https://covers.openlibrary.org/b/id/1-M.jpg?', 'cover')).toBeUndefined()
+    expect(safeExternalUrl('https://covers.openlibrary.org/b/id/1-S.jpg', 'cover')).toBeUndefined()
+    expect(safeExternalUrl('https://covers.openlibrary.org/b/id/1-L.jpg?default=false', 'cover')).toBeUndefined()
     expect(safeExternalUrl('https://covers.openlibrary.org/%62/id/1-M.jpg', 'cover')).toBeUndefined()
     expect(safeExternalUrl('https://covers.openlibrary.org/b/%69d/1-M.jpg', 'cover')).toBeUndefined()
     expect(safeExternalUrl('https://openlibrary.org/%62ooks/OL123M', 'coverSource')).toBeUndefined()
@@ -47,6 +55,56 @@ describe('safeExternalUrl', () => {
     expect(safeExternalUrl('https://zh.wikipedia.org/wiki/%E4%B8%89%E4%BD%93?oldid=1&oldid=2', 'wikipediaRevision')).toBeUndefined()
     expect(safeExternalUrl('https://www.wikidata.org/wiki/P31', 'wikidata')).toBeUndefined()
     expect(safeExternalUrl('https://openlibrary.org/works/OL45804W?foo=bar', 'coverSource')).toBeUndefined()
+  })
+})
+
+describe('selected cover loading', () => {
+  it('preloads one normalized M URL once and rejects arbitrary or large images', () => {
+    const created: Array<{ decoding: string; fetchPriority: string; src: string }> = []
+    vi.stubGlobal('Image', class {
+      decoding = ''
+      fetchPriority = ''
+      src = ''
+
+      constructor() {
+        created.push(this)
+      }
+    })
+    const coverUrl = 'https://covers.openlibrary.org/b/id/987654321-M.jpg?default=false'
+
+    expect(preloadCover(coverUrl)).toBe(true)
+    expect(preloadCover(coverUrl)).toBe(false)
+    expect(preloadCover('https://covers.openlibrary.org/b/id/987654321-L.jpg?default=false')).toBe(false)
+    expect(preloadCover('https://evil.example/b/id/987654321-M.jpg?default=false')).toBe(false)
+    expect(created).toEqual([{ decoding: 'async', fetchPriority: 'high', src: coverUrl }])
+  })
+
+  it('keeps the bookplate under eager/high/async markup while the image decodes', () => {
+    const coverUrl = 'https://covers.openlibrary.org/b/id/123456789-M.jpg?default=false'
+    const book: Book = { id: 'covered', title: '有封面的书', author: '作者', themes: [], coverUrl }
+    const markup = renderToStaticMarkup(<BookCover book={book} />)
+
+    expect(markup).toContain('class="book-cover bookplate"')
+    expect(markup).toContain('class="bookplate-inner"')
+    expect(markup).toContain(`src="${coverUrl.replace('&', '&amp;')}"`)
+    expect(markup).toContain('loading="eager"')
+    expect(markup).toContain('fetchPriority="high"')
+    expect(markup).toContain('decoding="async"')
+    expect(markup).not.toContain('is-visible')
+  })
+
+  it('keys loading and failure state by the normalized cover URL', () => {
+    const firstUrl = 'https://covers.openlibrary.org/b/id/111111111-M.jpg'
+    const secondUrl = 'https://covers.openlibrary.org/b/id/222222222-M.jpg?default=false'
+    const makeBook = (id: string, coverUrl: string): Book => ({ id, title: id, author: '作者', themes: [], coverUrl })
+
+    expect(BookCover({ book: makeBook('a', firstUrl) }).key).toBe(firstUrl)
+    expect(BookCover({ book: makeBook('b', secondUrl) }).key).toBe(secondUrl)
+    const source = readRepo('src/components/ExperienceUI.tsx')
+    expect(source).toContain("useState<CoverStatus>(coverUrl ? 'loading' : 'failed')")
+    expect(source).toContain("coverUrl && status !== 'failed'")
+    expect(source).toContain("onError={() => setStatus('failed')}")
+    expect(source.indexOf('className="bookplate-inner"')).toBeLessThan(source.indexOf("className={hasCover ? 'is-visible' : undefined}"))
   })
 })
 

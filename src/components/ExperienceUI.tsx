@@ -363,10 +363,10 @@ export function safeExternalUrl(value: string | null | undefined, kind: External
     const rawPath = url.pathname
     const path = decodeURIComponent(rawPath)
     if (kind === 'cover') {
-      const coverQuery = !url.search || url.search === '?default=false'
+      const coverQuery = (!url.search && !url.href.endsWith('?')) || url.search === '?default=false'
       return host === 'covers.openlibrary.org'
         && !rawPath.includes('%')
-        && /^\/b\/id\/\d+-[SML]\.jpg$/u.test(rawPath)
+        && /^\/b\/id\/\d+-M\.jpg$/u.test(rawPath)
         && coverQuery
         ? url.toString()
         : undefined
@@ -406,32 +406,68 @@ export function safeExternalUrl(value: string | null | undefined, kind: External
   }
 }
 
-function BookCover({ book }: { book: Book }) {
-  const [failedCoverId, setFailedCoverId] = useState<string>()
+const preloadedCovers = new Map<string, HTMLImageElement>()
+const PRELOADED_COVER_LIMIT = 32
+
+export function preloadCover(value: string | null | undefined): boolean {
+  const coverUrl = safeExternalUrl(value, 'cover')
+  if (!coverUrl || preloadedCovers.has(coverUrl) || typeof Image === 'undefined') return false
+  if (preloadedCovers.size >= PRELOADED_COVER_LIMIT) {
+    preloadedCovers.delete(preloadedCovers.keys().next().value as string)
+  }
+  const image = new Image()
+  image.decoding = 'async'
+  image.fetchPriority = 'high'
+  image.src = coverUrl
+  preloadedCovers.set(coverUrl, image)
+  return true
+}
+
+type CoverStatus = 'loading' | 'loaded' | 'failed'
+
+export function BookCover({ book }: { book: Book }) {
   const coverUrl = safeExternalUrl(book.coverUrl, 'cover')
-  const hasCover = Boolean(coverUrl) && failedCoverId !== book.id
+  return <BookCoverForUrl key={coverUrl ?? `bookplate:${book.id}`} book={book} coverUrl={coverUrl} />
+}
+
+function BookCoverForUrl({ book, coverUrl }: { book: Book; coverUrl?: string }) {
+  const [status, setStatus] = useState<CoverStatus>(coverUrl ? 'loading' : 'failed')
+  const hasCover = Boolean(coverUrl) && status === 'loaded'
   const imageLabel = book.imageKind === 'related-image' ? '相关图像' : '封面'
   const plateTitle = book.title.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 3) || '书'
   const plateYear = formatYear(book.year)
+  const revealCover = async (image: HTMLImageElement) => {
+    try {
+      await image.decode()
+    } catch {
+      if (!image.complete || image.naturalWidth === 0) {
+        setStatus('failed')
+        return
+      }
+    }
+    setStatus('loaded')
+  }
 
   return (
-    <div className={`book-cover ${hasCover ? 'has-cover' : 'bookplate'}`} aria-label={hasCover ? `《${book.title}》${imageLabel}` : `《${book.title}》藏书票预览`}>
-      {hasCover ? (
+    <div className={`book-cover bookplate${hasCover ? ' has-cover' : ''}`} aria-label={hasCover ? `《${book.title}》${imageLabel}` : `《${book.title}》藏书票预览`}>
+      <div className="bookplate-inner" aria-hidden={hasCover}>
+        <span className="bookplate-overline">藏书票 · 书页</span>
+        <strong>{plateTitle}</strong>
+        <span className="bookplate-rule" />
+        <small>{book.author}</small>
+        <em>{plateYear}</em>
+      </div>
+      {coverUrl && status !== 'failed' && (
         <img
+          className={hasCover ? 'is-visible' : undefined}
           src={coverUrl}
           alt={`《${book.title}》${imageLabel}`}
-          loading="lazy"
+          loading="eager"
+          fetchPriority="high"
           decoding="async"
-          onError={() => setFailedCoverId(book.id)}
+          onLoad={(event) => void revealCover(event.currentTarget)}
+          onError={() => setStatus('failed')}
         />
-      ) : (
-        <div className="bookplate-inner">
-          <span className="bookplate-overline">藏书票 · 书页</span>
-          <strong>{plateTitle}</strong>
-          <span className="bookplate-rule" />
-          <small>{book.author}</small>
-          <em>{plateYear}</em>
-        </div>
       )}
     </div>
   )
