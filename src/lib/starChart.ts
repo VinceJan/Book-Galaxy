@@ -42,11 +42,123 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
 
 /** Curated hops keep their authored sentence; navigation hops record only the route. */
 export function chartRelationLine(relation: BookRelation, departure?: Book, arrival?: Book): string {
-  const sentence = relation.sentence?.trim()
-  if (relation.provenance === 'reading-hypothesis' && sentence) return sentence
+  if (relation.provenance === 'reading-hypothesis') return relation.sentence
   const from = departure ? `《${departure.title}》` : '出发星'
   const to = arrival ? `《${arrival.title}》` : '远方书星'
   return `从${from}抵达${to}。`
+}
+
+export interface ChartJourneyHop {
+  relation: BookRelation
+  departure: Book
+  arrival: Book
+}
+
+/** A relation can narrate only the journey segment at the same index. */
+export function chartJourneyHops(
+  books: readonly Book[],
+  relations: readonly BookRelation[],
+): ChartJourneyHop[] {
+  return relations.flatMap((relation, index) => {
+    const departure = books[index]
+    const arrival = books[index + 1]
+    if (!departure || !arrival) return []
+    const matches = (
+      (relation.source === departure.id && relation.target === arrival.id)
+      || (relation.source === arrival.id && relation.target === departure.id)
+    )
+    return matches ? [{ relation, departure, arrival }] : []
+  })
+}
+
+interface FittedHopLines {
+  fontSize: number
+  lineHeight: number
+  lines: string[][]
+}
+
+function fitHopLines(
+  context: CanvasRenderingContext2D,
+  texts: string[],
+  maxWidth: number,
+  maxHeight: number,
+  maximumFontSize: number,
+): FittedHopLines {
+  for (let fontSize = maximumFontSize; fontSize >= 1; fontSize -= 1) {
+    context.font = `400 ${fontSize}px "Noto Serif SC", "SimSun", serif`
+    const lineHeight = fontSize * 1.35
+    const lines = texts.map((text) => wrapText(context, text, maxWidth))
+    if (lines.every((wrapped) => wrapped.length * lineHeight <= maxHeight)) {
+      return { fontSize, lineHeight, lines }
+    }
+  }
+  context.font = '400 1px "Noto Serif SC", "SimSun", serif'
+  return { fontSize: 1, lineHeight: 1.35, lines: texts.map((text) => wrapText(context, text, maxWidth)) }
+}
+
+function drawJourneyHops(
+  context: CanvasRenderingContext2D,
+  hops: ChartJourneyHop[],
+  dense: boolean,
+): void {
+  if (hops.length === 0) return
+
+  const x = 150
+  const width = 2_600
+  const contentTop = 1_390
+  const contentHeight = 200
+  const columns = dense ? Math.min(3, hops.length) : hops.length
+  const rows = Math.ceil(hops.length / columns)
+  const cellWidth = width / columns
+  const cellHeight = contentHeight / rows
+  const numberGutter = dense ? 42 : 54
+  const fitted = fitHopLines(
+    context,
+    hops.map(({ relation, departure, arrival }) => chartRelationLine(relation, departure, arrival)),
+    cellWidth - numberGutter - 18,
+    cellHeight - 16,
+    dense ? 24 : 32,
+  )
+
+  context.save()
+  context.textAlign = 'left'
+  context.strokeStyle = 'rgba(55, 57, 54, 0.2)'
+  context.lineWidth = 1
+  context.beginPath()
+  context.moveTo(x, 1_330)
+  context.lineTo(x + width, 1_330)
+  for (let column = 1; column < columns; column += 1) {
+    context.moveTo(x + column * cellWidth, contentTop)
+    context.lineTo(x + column * cellWidth, contentTop + contentHeight)
+  }
+  for (let row = 1; row < rows; row += 1) {
+    context.moveTo(x, contentTop + row * cellHeight)
+    context.lineTo(x + width, contentTop + row * cellHeight)
+  }
+  context.stroke()
+
+  context.fillStyle = '#776d49'
+  context.font = '500 20px "Noto Sans SC", "Microsoft YaHei", sans-serif'
+  context.fillText(`引力书线 · ${hops.length.toString().padStart(2, '0')} 段航迹`, x + 4, 1_370)
+
+  hops.forEach((_, index) => {
+    const column = index % columns
+    const row = Math.floor(index / columns)
+    const cellX = x + column * cellWidth
+    const cellY = contentTop + row * cellHeight
+    const baseline = cellY + 8 + fitted.fontSize
+
+    context.fillStyle = '#776d49'
+    context.font = `500 ${Math.min(20, fitted.fontSize)}px "IBM Plex Mono", Consolas, monospace`
+    context.fillText((index + 1).toString().padStart(2, '0'), cellX + 8, baseline)
+
+    context.fillStyle = '#303432'
+    context.font = `400 ${fitted.fontSize}px "Noto Serif SC", "SimSun", serif`
+    fitted.lines[index].forEach((line, lineIndex) => {
+      context.fillText(line, cellX + numberGutter, baseline + lineIndex * fitted.lineHeight)
+    })
+  })
+  context.restore()
 }
 
 export function renderStarChart(input: StarChartInput): string {
@@ -136,21 +248,7 @@ export function renderStarChart(input: StarChartInput): string {
     context.fillText(book.author, x, y + (labelAbove ? -38 : 142))
   })
 
-  const relation = input.relations.at(-1)
-  if (relation) {
-    context.textAlign = 'left'
-    context.fillStyle = '#303432'
-    context.font = '400 38px "Noto Serif SC", "SimSun", serif'
-    const lines = wrapText(context, chartRelationLine(relation, input.books.at(-2), input.books.at(-1)), 1280).slice(0, 3)
-    lines.forEach((line, index) => context.fillText(line, 160, 1450 + index * 56))
-    context.font = '500 22px "Noto Sans SC", "Microsoft YaHei", sans-serif'
-    context.fillStyle = '#776d49'
-    context.fillText(
-      relation.provenance === 'reading-hypothesis' ? `引力书线 · ${relation.kind}` : '偏航记录',
-      164,
-      1410,
-    )
-  }
+  drawJourneyHops(context, chartJourneyHops(input.books, input.relations), input.books.length > 4)
 
   const date = input.date ?? new Date()
   const dateText = new Intl.DateTimeFormat('zh-CN', {
