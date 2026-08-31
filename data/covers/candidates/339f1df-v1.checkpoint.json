@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "book-galaxy/cover-candidate-checkpoint-v1",
+  "approval": "candidate-only-never-runtime",
+  "source": {
+    "commit": "339f1df39911f5b60eb43e0dcd4864b71437cf75",
+    "path": "data/rich/books.json",
+    "payloadSha256": "cd5b78df2add34a42d3371335885218cbc8ec62516ee9f609cca56579eb8610e"
+  },
+  "candidateSidecar": {
+    "path": "data/covers/candidates/339f1df-v1.json",
+    "payloadSha256": "8944367ef10c67dd4c584c203cc8c6761c33f78378df18104b3234b487478aa2",
+    "schemaVersion": "book-galaxy-cover-candidates-sol/v1"
+  },
+  "counts": {
+    "processed": 428,
+    "candidateWorks": 249,
+    "candidates": 438,
+    "noCandidate": 179,
+    "rankOneByteAudits": 249,
+    "approved": 0
+  },
+  "excludedBlockedIds": [
+    "Q127149",
+    "Q172723",
+    "Q41064",
+    "Q589197",
+    "Q9184"
+  ]
+}
