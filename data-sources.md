@@ -4,7 +4,7 @@
 
 ## 先看正式快照
 
-正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%）。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade`；此前里程碑 SHA `6b558e11b4f1e205a25b7f973242ad8c4405032ebc29ea1976d6e5e675f356a7`（同为 v19 5385）；精确数值仍以 manifest 与策展检查器输出为准。
+正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%）。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade`；精确数值仍以 manifest 与策展检查器输出为准。
 
 正式 v2 的默认目标是 1,000 部中文主标题、内容完整的真实作品。每颗进入星海的书星都必须有可核查中文内容、来源和资格证明；如果某一批来源不能满足硬门槛，构建器会停止，不会用只有书名的记录填充数量。
 
@@ -17,7 +17,7 @@
 | data/rich/layout.json | 语义坐标、星体参数、近邻和关系证据 | 构建中间产物 |
 | src/data/curatedThreads.ts + src/data/curatedThreads/*.ts | 引力书线 / `reading-hypothesis` 独立策展层及其分片 | 随源码发布，浏览器最多取三条展示 |
 | public/data/catalog.json | 富书目与语义布局的最终合并资源 | Demo 直接载入 |
-| public/data/manifest.json | 当前发布快照的机器可读统计和来源信息 | Demo 与评审核验 |
+| public/data/manifest.json | 当前发布快照的机器可读统计和来源信息 | 在线体验与版本核验 |
 | public/data/ATTRIBUTION.json | 逐本作品的来源、固定修订、Wikidata 与封面回链 | 发布归属侧车 |
 | data/raw/rich-catalog/ | 网络响应缓存 | 被 gitignore，不发布 |
 
@@ -78,9 +78,9 @@ P31 的作用是回答“这个实体是否足以作为正式书星”，不是�
 - 将摘要清理为空白规范化文本，并在需要时截断到约 600 字符的句子边界；
 - 保留 sourceUrl 和同一页面的固定 Wikipedia oldid 修订回链。
 
-少数明确用于路演路线的锚点（例如《三体》《基地》《沙丘》《安娜·卡列尼娜》《活着》《红楼梦》《西游记》《百年孤独》《罪与罚》《包法利夫人》《悲惨世界》）若导语短于 120 个汉字，可以从同一页面、同一固定修订的纯文本正文开头补足。这个例外不是降低质量的通道：
+少数明确用于默认体验路线的锚点（例如《三体》《基地》《沙丘》《安娜·卡列尼娜》《活着》《红楼梦》《西游记》《百年孤独》《罪与罚》《包法利夫人》《悲惨世界》）若导语短于 120 个汉字，可以从同一页面、同一固定修订的纯文本正文开头补足。这个例外不是降低质量的通道：
 
-- 只有预先命名的路演锚点才允许使用；
+- 只有预先命名的体验锚点才允许使用；
 - 仍必须有中文维基页面、固定 oldid、作品资格、作者字段或“佚名”标识，以及主题等全部证明；
 - 记录的 provenance.summaryMethod 会明确写成 full-extract anchor fallback；
 - 内容仍来自来源页面的选择与技术性整理，不是项目凭空撰写的简介；
@@ -88,7 +88,7 @@ P31 的作用是回答“这个实体是否足以作为正式书星”，不是�
 
 中文维基百科文本以 CC BY-SA 4.0 发布。若再发布、实质改编或把这些摘要放入新的数据产品，应保留中文维基百科来源、固定 oldid、许可证说明，并按适用条款处理署名和相同方式共享；具体贡献者应以页面历史为准，项目不臆造单一作者署名。sourceUrl 是页面级回链，provenance.wikipediaRevisionUrl 是与其对应的固定修订链接。
 
-固定 oldid 的意义是让评委或维护者能回到构建时使用的页面版本，而不是被未来编辑后的页面内容悄悄替换。构建器和归属脚本会验证：
+固定 oldid 的意义是让核验者或维护者能回到构建时使用的页面版本，而不是被未来编辑后的页面内容悄悄替换。构建器和归属脚本会验证：
 
 - sourceUrl 和 revision URL 必须是 HTTPS；
 - revision URL 必须带 oldid；
@@ -244,7 +244,7 @@ npm run build:data:legacy
 npm run check:data:legacy
 ```
 
-它只用于历史对照、脚本回归或离线实验，不进入正式中文 v2 星海，不产生正式 catalog-v2 的节点或关系，也不应在路演中宣称为当前作品的数据规模。正式 v2 的书目来源是 Wikidata + 中文维基百科，封面是可选的 Open Library URL；两条流水线的 schema、质量门槛和关系模型不同。
+它只用于历史对照、脚本回归或离线实验，不进入正式中文 v2 星海，不产生正式 catalog-v2 的节点或关系，也不应在公开说明中宣称为当前作品的数据规模。正式 v2 的书目来源是 Wikidata + 中文维基百科，封面是可选的 Open Library URL；两条流水线的 schema、质量门槛和关系模型不同。
 
 Project Gutenberg 的旧版来源说明可参考：
 
@@ -252,7 +252,7 @@ Project Gutenberg 的旧版来源说明可参考：
 - [官方 pg_catalog.csv.gz](https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv.gz)
 - [Project Gutenberg Terms of Use / License](https://www.gutenberg.org/policy/license)
 
-即使运行 legacy 命令，也必须分别遵守 Project Gutenberg 的目录、文本、商标和再分发条款；项目不重新分发 Gutenberg 正文。不要把 legacy 目录中的 Type=Text 记录、旧版主题分组或旧版关系统计写进 README、演示页面或评审口径。
+即使运行 legacy 命令，也必须分别遵守 Project Gutenberg 的目录、文本、商标和再分发条款；项目不重新分发 Gutenberg 正文。不要把 legacy 目录中的 Type=Text 记录、旧版主题分组或旧版关系统计写进 README、演示页面或公开口径。
 
 ## 7. 字段级归属与发布责任
 
@@ -287,7 +287,8 @@ src/data/libraryAdapter.ts 的 normalizeLibraryRecord() 只做本地字段规范
 
 ## 参考文件
 
-- README.md：产品叙事、路演路径、体验和运行命令。
+- README.md：项目故事、核心体验与最快启动路径。
+- docs/architecture.md：运行时架构、数据流水线、开发与部署。
 - DATA_LICENSE.md：数据归属、许可证和 ATTRIBUTION.json 约定。
 - scripts/lib/book-eligibility.mjs：共享 direct-P31 fail-closed 资格策略。
 - scripts/build-rich-catalog.mjs：中文富书目构建器。

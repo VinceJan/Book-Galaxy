@@ -1335,7 +1335,7 @@ async function ensureRequiredAnchorSummaries(candidates, introMap, refresh) {
   })
   if (!needsFullExtract.length) return introMap
 
-  console.log(`为 ${needsFullExtract.length} 本路演锚点补充可核查的中文正文节选…`)
+  console.log(`为 ${needsFullExtract.length} 本体验锚点补充可核查的中文正文节选…`)
   for (const batch of chunks(needsFullExtract, INTRO_BATCH_SIZE)) {
     const url = urlWithParams(WIKIPEDIA_API_URL, {
       action: 'query',
@@ -1846,7 +1846,7 @@ async function main() {
         openLibraryCovers: 'Open Library cover service terms; URLs only, no bulk download',
       },
       notes: [
-        '仅写入拥有中文维基百科页面且中文摘要含至少 120 个汉字的作品；命名路演锚点若导语过短，可使用同一固定修订页面的纯文本正文开头补足，并逐条标记 summaryMethod。',
+        '仅写入拥有中文维基百科页面且中文摘要含至少 120 个汉字的作品；命名体验锚点若导语过短，可使用同一固定修订页面的纯文本正文开头补足，并逐条标记 summaryMethod。',
         'title 优先使用 MediaWiki info API 的 zh-cn varianttitles，wikipediaTitle 保留规范页题名；旧缓存才使用本地繁简回退表。',
         '每本书的 themeProvenance 逐条记录主题来源：wikidata-claim、summary-rule、contextual-metadata 或 generic-last-resort。',
         '主题生成顺序为受控的 Wikidata genre/subject claims、中文导语关键词规则，再到国家/地域、世纪与具体 P31/P136 类型；语言字段仅作书目展示，不进入主题或关系主题。',

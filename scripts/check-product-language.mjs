@@ -4,7 +4,7 @@
  * Product-language gate for the public reading experience.
  *
  * This is deliberately a small, dependency-free check.  It looks only at
- * public copy (UI source literals, README roadshow text, and curated prose),
+ * public copy (UI source literals, the README front page, and curated prose),
  * not hidden catalog sentences, implementation names, evidence arrays, or
  * URLs. Schema and generated-catalog content are checked by check-v2-catalog.
  */
@@ -47,19 +47,22 @@ const FORBIDDEN_COPY = [
 ]
 const PERCENT_TEMPLATE = /(?:\d+(?:\.\d+)?\s*[%％]|百分之\s*[\d一二三四五六七八九十百千万零点]+)/gu
 const MAX_IDENTICAL_RELATION_COPIES = 3
-
-// Keep this list deliberately narrower than FORBIDDEN_COPY.  The rest of the
-// README is an engineering record; only the user-facing roadshow is held to
-// the same quiet-language bar as the UI.
-const ROADSHOW_FORBIDDEN_COPY = [
-  ['多维语义', /多维(?:书目)?语义/gu],
-  ['相似度术语', /相似度/gu],
-  ['语义接近', /语义接近/gu],
-  ['置信边界', /置信边界/gu],
-  ['模型摘要书目模板', /模型[^。！？\n]{0,32}(?:摘要|书目|字段)|(?:摘要|书目|字段)[^。！？\n]{0,32}模型/gu],
-  ['书目检索', /书目检索/gu],
-  ['实现细节', /\bVITE_[A-Z0-9_]+\b/gu],
-  ['硬编码路线', /硬编码/gu],
+const MAX_README_LINES = 140
+const README_FORBIDDEN_COPY = [
+  ['比赛话术', /黑客松|赛题|路演|评委|评审/gu],
+]
+const README_FORBIDDEN_HEADINGS = new Set([
+  '技术架构',
+  '数据质量硬门槛',
+  '视觉编码',
+  '重建正式数据',
+  '静态部署',
+])
+const README_REQUIRED_REFERENCES = [
+  'https://vincejan.github.io/Book-Galaxy/',
+  'docs/hero-preview.png',
+  'docs/star-chart-preview.png',
+  'docs/architecture.md',
 ]
 
 function parseArgs(argv) {
@@ -304,74 +307,46 @@ function matchingDelimiter(source, openIndex, limit = source.length) {
   return -1
 }
 
-function escapedRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-}
-
-function markdownSection(source, heading) {
-  const headingMatch = new RegExp(`^##\\s+${escapedRegExp(heading)}\\s*$`, 'mu').exec(source)
-  if (!headingMatch) return null
-  const start = (headingMatch.index ?? 0) + headingMatch[0].length
-  const nextHeading = /^##\s+/gmu
-  nextHeading.lastIndex = start
-  const nextMatch = nextHeading.exec(source)
-  const end = nextMatch?.index ?? source.length
-  return { start, text: source.slice(start, end) }
-}
-
-function inspectRoadshow(readme, sourceByPath, errors, stats) {
-  const section = markdownSection(readme, '3 分钟路演')
-  if (!section) {
+function inspectReadme(readme, errors, stats) {
+  stats.readmeLines = readme.split('\n').length
+  if (stats.readmeLines > MAX_README_LINES) {
     errors.push({
       path: README_SOURCE,
-      message: 'README 缺少可检查的“3 分钟路演”章节',
-      excerpt: '路演说明需要与实际界面和按钮保持同步',
+      message: `README 共 ${stats.readmeLines} 行，超过门面文档 ${MAX_README_LINES} 行上限`,
+      excerpt: '技术细节应链接到 docs/architecture.md 或 data-sources.md',
     })
-    return
   }
 
-  const checkPattern = (label, pattern) => {
+  for (const [label, pattern] of README_FORBIDDEN_COPY) {
     pattern.lastIndex = 0
-    for (const match of section.text.matchAll(pattern)) {
-      const offset = section.start + (match.index ?? 0)
-      const location = lineLocation(readme, offset)
+    for (const match of readme.matchAll(pattern)) {
+      const location = lineLocation(readme, match.index ?? 0)
       errors.push({
         path: `${README_SOURCE}:${location.line}:${location.column}`,
-        message: `用户路演仍包含不应出现的技术套话（${label}）`,
+        message: `README 仍包含不属于长期产品门面的${label}`,
         excerpt: location.excerpt,
       })
     }
     pattern.lastIndex = 0
   }
-  for (const [label, pattern] of ROADSHOW_FORBIDDEN_COPY) checkPattern(label, pattern)
-  checkPattern('百分比模板', PERCENT_TEMPLATE)
 
-  const uiCopy = [...sourceByPath.values()]
-    .flatMap((source) => sourceCopyRanges(source).map((range) => cleanText(range.text)))
-    .filter(Boolean)
-  // Keep JSX text split by an interpolation (for example
-  // `选择偏航方向{currentBook ? ...}`) in the label corpus too.  Comments and
-  // quoted implementation strings are masked, so a stale prose mention in a
-  // comment cannot make a missing control look real.
-  const uiCorpus = [
-    ...uiCopy,
-    ...[...sourceByPath.values()].map((source) => maskStringsAndComments(source)),
-  ].join('\n')
-  const labels = [...section.text.matchAll(/「([^」]+)」/gu)]
-  stats.roadshowLabels = labels.length
-  for (const match of labels) {
-    const label = cleanText(match[1])
-    if (!label) continue
-    const normalizedLabel = label.replace(/\s+/gu, '')
-    const existsInUi = uiCopy.some((copy) => copy.replace(/\s+/gu, '').includes(normalizedLabel))
-      || uiCorpus.replace(/\s+/gu, '').includes(normalizedLabel)
-    if (existsInUi) continue
-    const offset = section.start + (match.index ?? 0)
-    const location = lineLocation(readme, offset)
+  for (const match of readme.matchAll(/^##\s+(.+?)\s*$/gmu)) {
+    const heading = cleanText(match[1])
+    if (!README_FORBIDDEN_HEADINGS.has(heading)) continue
+    const location = lineLocation(readme, match.index ?? 0)
     errors.push({
       path: `${README_SOURCE}:${location.line}:${location.column}`,
-      message: `用户路演引用了界面中不存在的标签“${label}”`,
+      message: `README 不应内联“${heading}”，请放入专题文档`,
       excerpt: location.excerpt,
+    })
+  }
+
+  for (const reference of README_REQUIRED_REFERENCES) {
+    if (readme.includes(reference)) continue
+    errors.push({
+      path: README_SOURCE,
+      message: `README 缺少必要的体验或视觉引用：${reference}`,
+      excerpt: reference,
     })
   }
 }
@@ -652,7 +627,7 @@ async function main() {
   const stats = {
     sourceFiles: 0,
     curatedSourceFiles: 0,
-    roadshowLabels: 0,
+    readmeLines: 0,
     curatedTexts: 0,
     uniqueCuratedTexts: 0,
     maxCuratedExactCopies: 0,
@@ -678,7 +653,7 @@ async function main() {
   }
 
   const readmeText = await readText(resolve(root, README_SOURCE), README_SOURCE, errors)
-  if (readmeText !== null) inspectRoadshow(readmeText, sourceByPath, errors, stats)
+  if (readmeText !== null) inspectReadme(readmeText, errors, stats)
 
   const curatedRecords = []
   for (const filePath of await discoverCuratedSources(root, errors)) {
@@ -718,7 +693,7 @@ async function main() {
 
   console.log(`产品文案门禁通过：${stats.sourceFiles} 个界面源码文件，${stats.curatedSourceFiles} 个策展源码文件，${stats.curatedTexts} 段策展文案；未扫描隐藏目录句`)
   console.log(`策展重复度：${stats.uniqueCuratedTexts} 段独立文案，同文案最高 ${stats.maxCuratedExactCopies} 次、骨架最高 ${stats.maxCuratedTemplateCopies} 次`)
-  console.log(`路演文案门禁通过：引用的 ${stats.roadshowLabels} 个界面标签均存在`)
+  console.log(`README 门面检查通过：${stats.readmeLines} 行，视觉入口与专题文档引用完整`)
 }
 
 await main()
