@@ -87,6 +87,16 @@ export function observeReducedMotion(setReducedMotion: (value: boolean) => void)
   return () => undefined
 }
 
+export function startTravel(
+  targetCoverUrl: string | undefined,
+  relation: BookRelation,
+  dispatch: (action: { type: 'TRAVEL'; relation: BookRelation }) => void,
+  preload: (coverUrl: string | undefined) => unknown = preloadCover,
+): void {
+  preload(targetCoverUrl)
+  dispatch({ type: 'TRAVEL', relation })
+}
+
 function eraLocationLabel(year: number | undefined): string | undefined {
   if (typeof year !== 'number' || !Number.isFinite(year) || year === 0) return undefined
   if (year < 0) {
@@ -302,9 +312,8 @@ export default function App() {
     const targetId = otherBookId(relation, selected.id)
     const target = booksById.get(targetId)
     if (!target) return
-    preloadCover(target.coverUrl)
     const sequence = state.travelSequence + 1
-    dispatch({ type: 'TRAVEL', relation })
+    startTravel(target.coverUrl, relation, dispatch)
     galaxyRef.current?.revealRelation(selected.id, targetId)
     soundRef.current?.detour(Math.floor(relation.surprise * 100))
     const completed = await galaxyRef.current?.focusBook(targetId, reducedMotion ? 0 : 1_650)

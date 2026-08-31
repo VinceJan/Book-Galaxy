@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-// @ts-ignore - node fs is available in vitest
-import { readFileSync } from 'node:fs'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
-import { enableSoundscape, observeReducedMotion, publicFailureMessage, silenceSoundscape } from './App'
+import { enableSoundscape, observeReducedMotion, publicFailureMessage, silenceSoundscape, startTravel } from './App'
+import type { BookRelation } from './types'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -73,17 +72,30 @@ describe('public failure messages', () => {
     })
   })
 
-  it('starts the exact travel target cover preload before travel dispatch and flight', () => {
-    const source = readFileSync('src/App.tsx', 'utf8')
-    const travel = source.slice(source.indexOf('const travel = useCallback'), source.indexOf('const followCuratedThread'))
-    const target = travel.indexOf('const target = booksById.get(targetId)')
-    const preload = travel.indexOf('preloadCover(target.coverUrl)')
-    const dispatch = travel.indexOf("dispatch({ type: 'TRAVEL', relation })")
-    const flight = travel.indexOf('focusBook(targetId, reducedMotion ? 0 : 1_650)')
+  it('preloads the exact travel target before dispatching TRAVEL', () => {
+    const events: string[] = []
+    const coverUrl = 'https://covers.openlibrary.org/b/id/123456789-M.jpg?default=false'
+    const relation: BookRelation = {
+      source: 'origin',
+      target: 'destination',
+      kind: '回声',
+      sentence: '',
+      basis: [],
+      surprise: 0.5,
+      confidence: 0.8,
+      provenance: 'semantic',
+    }
 
-    expect(target).toBeGreaterThan(-1)
-    expect(preload).toBeGreaterThan(target)
-    expect(dispatch).toBeGreaterThan(preload)
-    expect(flight).toBeGreaterThan(dispatch)
+    startTravel(
+      coverUrl,
+      relation,
+      (action) => events.push(`dispatch:${action.type}:${action.relation.target}`),
+      (target) => events.push(`preload:${target}`),
+    )
+
+    expect(events).toEqual([
+      `preload:${coverUrl}`,
+      'dispatch:TRAVEL:destination',
+    ])
   })
 })

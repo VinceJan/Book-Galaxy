@@ -2,8 +2,10 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   BookCover,
+  coverLoadReducer,
   curatedThreadsFor,
   directionCopy,
+  initialCoverLoadState,
   relationExcerpt,
   preloadCover,
   relationReading,
@@ -79,32 +81,38 @@ describe('selected cover loading', () => {
     expect(created).toEqual([{ decoding: 'async', fetchPriority: 'high', src: coverUrl }])
   })
 
-  it('keeps the bookplate under eager/high/async markup while the image decodes', () => {
+  it('keeps only the visible bookplate accessible while the eager image decodes', () => {
     const coverUrl = 'https://covers.openlibrary.org/b/id/123456789-M.jpg?default=false'
     const book: Book = { id: 'covered', title: '有封面的书', author: '作者', themes: [], coverUrl }
     const markup = renderToStaticMarkup(<BookCover book={book} />)
 
     expect(markup).toContain('class="book-cover bookplate"')
-    expect(markup).toContain('class="bookplate-inner"')
+    expect(markup).toContain('class="bookplate-inner" role="img"')
     expect(markup).toContain(`src="${coverUrl.replace('&', '&amp;')}"`)
+    expect(markup).toContain('aria-hidden="true"')
     expect(markup).toContain('loading="eager"')
     expect(markup).toContain('fetchPriority="high"')
     expect(markup).toContain('decoding="async"')
     expect(markup).not.toContain('is-visible')
   })
 
-  it('keys loading and failure state by the normalized cover URL', () => {
+  it('accepts only current normalized-URL load events and resets failures on URL change', () => {
     const firstUrl = 'https://covers.openlibrary.org/b/id/111111111-M.jpg'
     const secondUrl = 'https://covers.openlibrary.org/b/id/222222222-M.jpg?default=false'
-    const makeBook = (id: string, coverUrl: string): Book => ({ id, title: id, author: '作者', themes: [], coverUrl })
+    let state = initialCoverLoadState(firstUrl)
 
-    expect(BookCover({ book: makeBook('a', firstUrl) }).key).toBe(firstUrl)
-    expect(BookCover({ book: makeBook('b', secondUrl) }).key).toBe(secondUrl)
-    const source = readRepo('src/components/ExperienceUI.tsx')
-    expect(source).toContain("useState<CoverStatus>(coverUrl ? 'loading' : 'failed')")
-    expect(source).toContain("coverUrl && status !== 'failed'")
-    expect(source).toContain("onError={() => setStatus('failed')}")
-    expect(source.indexOf('className="bookplate-inner"')).toBeLessThan(source.indexOf("className={hasCover ? 'is-visible' : undefined}"))
+    state = coverLoadReducer(state, { type: 'loaded', url: firstUrl })
+    expect(state).toEqual({ url: firstUrl, status: 'loaded' })
+
+    state = coverLoadReducer(state, { type: 'url-changed', url: secondUrl })
+    expect(state).toEqual({ url: secondUrl, status: 'loading' })
+    state = coverLoadReducer(state, { type: 'loaded', url: firstUrl })
+    expect(state).toEqual({ url: secondUrl, status: 'loading' })
+
+    state = coverLoadReducer(state, { type: 'failed', url: secondUrl })
+    expect(state).toEqual({ url: secondUrl, status: 'failed' })
+    state = coverLoadReducer(state, { type: 'url-changed', url: firstUrl })
+    expect(state).toEqual({ url: firstUrl, status: 'loading' })
   })
 })
 

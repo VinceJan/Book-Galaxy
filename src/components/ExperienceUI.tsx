@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import type { Book, BookRelation } from '../types'
 import { otherBookId } from '../lib/galaxyMath'
 
@@ -425,48 +425,69 @@ export function preloadCover(value: string | null | undefined): boolean {
 
 type CoverStatus = 'loading' | 'loaded' | 'failed'
 
-export function BookCover({ book }: { book: Book }) {
-  const coverUrl = safeExternalUrl(book.coverUrl, 'cover')
-  return <BookCoverForUrl key={coverUrl ?? `bookplate:${book.id}`} book={book} coverUrl={coverUrl} />
+export interface CoverLoadState {
+  url?: string
+  status: CoverStatus
 }
 
-function BookCoverForUrl({ book, coverUrl }: { book: Book; coverUrl?: string }) {
-  const [status, setStatus] = useState<CoverStatus>(coverUrl ? 'loading' : 'failed')
-  const hasCover = Boolean(coverUrl) && status === 'loaded'
+export type CoverLoadAction =
+  | { type: 'url-changed'; url?: string }
+  | { type: 'loaded' | 'failed'; url: string }
+
+export function initialCoverLoadState(url?: string): CoverLoadState {
+  return { url, status: url ? 'loading' : 'failed' }
+}
+
+export function coverLoadReducer(state: CoverLoadState, action: CoverLoadAction): CoverLoadState {
+  if (action.type === 'url-changed') {
+    return action.url === state.url ? state : initialCoverLoadState(action.url)
+  }
+  return action.url !== state.url ? state : { ...state, status: action.type }
+}
+
+export function BookCover({ book }: { book: Book }) {
+  const coverUrl = safeExternalUrl(book.coverUrl, 'cover')
+  let [coverState, dispatchCover] = useReducer(coverLoadReducer, coverUrl, initialCoverLoadState)
+  if (coverState.url !== coverUrl) {
+    coverState = coverLoadReducer(coverState, { type: 'url-changed', url: coverUrl })
+    dispatchCover({ type: 'url-changed', url: coverUrl })
+  }
+  const hasCover = Boolean(coverUrl) && coverState.status === 'loaded'
   const imageLabel = book.imageKind === 'related-image' ? '相关图像' : '封面'
   const plateTitle = book.title.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 3) || '书'
   const plateYear = formatYear(book.year)
-  const revealCover = async (image: HTMLImageElement) => {
+  const revealCover = async (image: HTMLImageElement, eventUrl: string) => {
     try {
       await image.decode()
     } catch {
       if (!image.complete || image.naturalWidth === 0) {
-        setStatus('failed')
+        dispatchCover({ type: 'failed', url: eventUrl })
         return
       }
     }
-    setStatus('loaded')
+    dispatchCover({ type: 'loaded', url: eventUrl })
   }
 
   return (
-    <div className={`book-cover bookplate${hasCover ? ' has-cover' : ''}`} aria-label={hasCover ? `《${book.title}》${imageLabel}` : `《${book.title}》藏书票预览`}>
-      <div className="bookplate-inner" aria-hidden={hasCover}>
+    <div className={`book-cover bookplate${hasCover ? ' has-cover' : ''}`}>
+      <div className="bookplate-inner" role="img" aria-label={`《${book.title}》藏书票预览`} aria-hidden={hasCover}>
         <span className="bookplate-overline">藏书票 · 书页</span>
         <strong>{plateTitle}</strong>
         <span className="bookplate-rule" />
         <small>{book.author}</small>
         <em>{plateYear}</em>
       </div>
-      {coverUrl && status !== 'failed' && (
+      {coverUrl && coverState.status !== 'failed' && (
         <img
           className={hasCover ? 'is-visible' : undefined}
           src={coverUrl}
           alt={`《${book.title}》${imageLabel}`}
+          aria-hidden={!hasCover}
           loading="eager"
           fetchPriority="high"
           decoding="async"
-          onLoad={(event) => void revealCover(event.currentTarget)}
-          onError={() => setStatus('failed')}
+          onLoad={(event) => void revealCover(event.currentTarget, coverUrl)}
+          onError={() => dispatchCover({ type: 'failed', url: coverUrl })}
         />
       )}
     </div>
