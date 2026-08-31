@@ -39,6 +39,7 @@ interface CatalogBook {
   openLibraryId?: string | null
   coverUrl?: string | null
   coverSourceUrl?: string | null
+  coverAsset?: Book['coverAsset']
   imageKind?: string
   popularity?: number
   contentLength?: number
@@ -163,6 +164,7 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
     openLibraryId: book.openLibraryId ?? undefined,
     coverUrl: book.coverUrl ?? undefined,
     coverSourceUrl: book.coverSourceUrl,
+    coverAsset: book.coverAsset,
     imageKind: book.imageKind,
     popularity: book.popularity,
     contentLength: book.contentLength,

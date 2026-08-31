@@ -26,12 +26,13 @@
 
 ### Open Library 书籍封面
 
-可用时，`coverUrl` 使用 Open Library Covers 服务的远程图片 URL，`coverSourceUrl` 指向相应的 Open Library work 页面。项目不把 Open Library 封面声明为 CC0，也不把“有一个公开 URL”当作图片版权授权。封面可能受其原始出版物、贡献者或其他权利人的条款约束，应以 Open Library 当前说明和具体记录为准：
+一般记录的 `coverUrl` 使用 Open Library Covers 服务的远程图片 URL，`coverSourceUrl` 指向相应的 Open Library work 页面。首批 6 条人工批准资产改用 exact Edition 回链：运行时显示 M 派生图，完整 `coverAsset` 保留审计过的 L URL、Edition、provider Work、图片哈希、尺寸、MIME、CORS 证据、权利复核与生命周期。项目不把 Open Library 封面声明为 CC0，也不把“有一个公开 URL”当作图片版权授权。封面可能受其原始出版物、贡献者或其他权利人的条款约束，应以 Open Library 当前说明和具体记录为准：
 
 - [Open Library API](https://openlibrary.org/developers/api)
 - [Open Library Covers API](https://openlibrary.org/dev/docs/api/covers)
+- [Internet Archive Terms](https://archive.org/about/terms.php)
 
-构建快照只保留远程地址，不批量下载图片；没有可靠封面时，界面使用本地生成的文字书目牌作为视觉兜底。`coverSourceUrl` 没有来源时为 `null`，不会伪造封面归属。
+构建快照只保留远程地址，不批量下载图片；没有可靠封面时，界面使用本地生成的文字书目牌作为视觉兜底。`coverSourceUrl` 没有来源时为 `null`，不会伪造封面归属。批准侧车的 provider policy 采用六个月复核周期；只有 `approved + active` 可显示，active 资产到期即失败关闭，`quarantined` 与 `removed` 即使过期也会保留审计记录但清空运行时 URL。六条批准记录只能从固定 Gallery Git object 严格导入；普通文件或 stdin 只可作为不写批准快照的候选输入。封面移除请求使用 [Book Galaxy cover-removal 表单](https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml)，每条 exact Edition 还保留 Open Library 的逐版本 report route。
 
 ## 字段级回链
 
@@ -43,7 +44,8 @@
 | `sourceUrl` | 中文维基百科作品页/摘要来源 |
 | `wikipediaRevisionUrl` | 与 `sourceUrl` 对应的固定 Wikipedia `oldid` 修订回链 |
 | `wikidataUrl` | 对应 Wikidata 作品实体 |
-| `coverSourceUrl` | Open Library work 回链；无可靠封面时为 `null` |
+| `coverSourceUrl` | Open Library work 或批准资产的 exact Edition 回链；无可靠封面时为 `null` |
+| `coverAsset` | exact Edition 的完整图片审计、权利、复核、移除入口和生命周期；仅批准记录存在 |
 
 `ATTRIBUTION.json` 还记录输入 catalog 的 SHA-256，因此可以确认归属列表确实对应当前发布的 catalog，而不是另一个数据快照。条目按 `id` 稳定排序，使用相同输入重复生成应得到相同文件。
 
@@ -69,4 +71,5 @@ smoke 不读取、不写入 `public/data`，同时检查 HTTPS 回链、Wikidata
 1. 任何过滤、合并、翻译或布局构建都不得丢弃书目的 `sourceUrl`、`wikipediaRevisionUrl`、`wikidataUrl` 或 `coverSourceUrl`。
 2. 新增摘要或对摘要做实质改写时，仍需保留中文维基百科来源和 CC BY-SA 4.0 归属信息。
 3. 不要在 README、演示页面或演讲中把 Open Library 封面称为 CC0；没有封面时应明确显示文字书目牌兜底。
-4. catalog 发生变化后重新生成并检查 `ATTRIBUTION.json`，不要手工编辑归属清单。
+4. 收到移除请求时，先按 `purgeKey` 将资产从 `active` 转为 `quarantined` 或 `removed`，并记录含 `changedAt`、原因和复核版本的 `lifecycle.transition`；再重算侧车内容哈希、重建静态 catalog/ATTRIBUTION 并清理部署缓存。不得改写 immutable source-derived 字段或删除审计记录来掩盖历史使用。
+5. catalog 发生变化后重新生成并检查 `ATTRIBUTION.json`，不要手工编辑归属清单。

@@ -19,18 +19,19 @@ import {
   ATTRIBUTION_NOTICE,
   CC_BY_SA_4_URL,
   isOpenLibraryCoverUrl,
-  isOpenLibraryWorkUrl,
+  isOpenLibrarySourceUrl,
   isWikipediaRevisionUrl,
   isWikipediaSourceUrl,
   isWikidataUrl,
   runSourceUrlSelfTest,
 } from './lib/source-urls.mjs'
+import { COVER_REMOVAL_CONTACT_URL, LIFECYCLE_STATUSES } from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
 const DEFAULT_OUTPUT = resolve(ROOT, 'public/data/ATTRIBUTION.json')
 const CATALOG_SCHEMA = 'bookshelf-galaxy/catalog-v2'
-const ATTRIBUTION_SCHEMA = 'bookshelf-galaxy/attribution-v1'
+const ATTRIBUTION_SCHEMA = 'bookshelf-galaxy/attribution-v2'
 
 function parseArgs(argv) {
   const options = {}
@@ -105,8 +106,19 @@ function validateCatalog(catalog) {
     if (book.coverUrl !== null && book.coverUrl !== undefined && !isOpenLibraryCoverUrl(cleanText(book.coverUrl))) {
       errors.push(`${prefix}.coverUrl 必须是 covers.openlibrary.org 的固定 JPG 封面链接或 null`)
     }
-    if (coverSourceUrl !== null && !isOpenLibraryWorkUrl(coverSourceUrl)) {
-      errors.push(`${prefix}.coverSourceUrl 必须是 Open Library works 链接或 null`)
+    if (coverSourceUrl !== null && !isOpenLibrarySourceUrl(coverSourceUrl)) {
+      errors.push(`${prefix}.coverSourceUrl 必须是 Open Library work 或 exact Edition 链接或 null`)
+    }
+    if (book.coverAsset !== undefined) {
+      if (!isObject(book.coverAsset)) errors.push(`${prefix}.coverAsset 必须是对象`)
+      else {
+        if (book.coverAsset.reviewStatus !== 'approved') errors.push(`${prefix}.coverAsset.reviewStatus 必须是 approved`)
+        if (!LIFECYCLE_STATUSES.has(book.coverAsset.lifecycle?.status)) errors.push(`${prefix}.coverAsset.lifecycle.status 无效`)
+        if (!cleanText(book.coverAsset.lifecycle?.purgeKey)) errors.push(`${prefix}.coverAsset.lifecycle.purgeKey 缺失`)
+        if (book.coverAsset.rights?.removalContactUrl !== COVER_REMOVAL_CONTACT_URL) errors.push(`${prefix}.coverAsset.rights.removalContactUrl 无效`)
+        if (book.coverAsset.lifecycle?.status === 'active' && (!book.coverUrl || !coverSourceUrl)) errors.push(`${prefix} active coverAsset 缺少运行时封面或 exact Edition 回链`)
+        if (book.coverAsset.lifecycle?.status !== 'active' && (book.coverUrl != null || coverSourceUrl != null)) errors.push(`${prefix} 非 active coverAsset 不得进入运行时`)
+      }
     }
   }
   return { books: catalog.books, errors }
@@ -126,6 +138,7 @@ function buildAttribution(catalog, catalogSha256) {
     wikipediaRevisionUrl: cleanText(book.wikipediaRevisionUrl || book.provenance?.wikipediaRevisionUrl),
     coverUrl: book.coverUrl == null ? null : cleanText(book.coverUrl),
     coverSourceUrl: book.coverSourceUrl == null ? null : cleanText(book.coverSourceUrl),
+    ...(book.coverAsset !== undefined ? { coverAsset: structuredClone(book.coverAsset) } : {}),
   })).sort((left, right) => left.id.localeCompare(right.id, 'en'))
 
   return {
@@ -137,12 +150,15 @@ function buildAttribution(catalog, catalogSha256) {
       notice: ATTRIBUTION_NOTICE,
     },
     catalogSha256,
+    coverRemovalContactUrl: COVER_REMOVAL_CONTACT_URL,
     entryCount: entries.length,
     entries,
   }
 }
 
 function validateAttribution(attribution, catalog, catalogSha256) {
+  if (attribution?.schemaVersion !== ATTRIBUTION_SCHEMA) throw new Error(`ATTRIBUTION.json schemaVersion 必须为 ${ATTRIBUTION_SCHEMA}`)
+  if (attribution?.coverRemovalContactUrl !== COVER_REMOVAL_CONTACT_URL) throw new Error('ATTRIBUTION.json 缺少真实封面移除联系入口')
   if (!isObject(attribution?.license)
     || attribution.license.name !== 'CC BY-SA 4.0'
     || attribution.license.url !== CC_BY_SA_4_URL

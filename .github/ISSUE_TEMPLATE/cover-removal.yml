@@ -1,0 +1,41 @@
+---
+name: Cover removal request
+description: Request quarantine or removal of a cover image used by Book Galaxy.
+title: "[Cover removal] "
+labels:
+  - cover-removal
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to request quarantine or removal of a cover.
+        Do not post private contact details or legal documents; maintainers
+        can arrange a private follow-up if needed.
+  - type: input
+    id: work
+    attributes:
+      label: Book Galaxy work ID
+      description: The QID shown in catalog data, if known.
+      placeholder: Q607112
+  - type: input
+    id: purge-key
+    attributes:
+      label: Purge key or cover URL
+      description: Provide the coverAsset lifecycle.purgeKey or exact image URL.
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: Requested action and basis
+      description: >-
+        Explain whether the cover should be quarantined or removed and why.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Public supporting links
+      description: >-
+        Optional provider record, rights statement, or other public evidence.
+        Do not include private information.

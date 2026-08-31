@@ -30,6 +30,12 @@ function parseHttps(value, hosts) {
   return url
 }
 
+/** Strict HTTPS trust boundary shared by generic cover metadata validators. */
+export function isTrustedHttpsUrl(value) {
+  const url = parseHttps(value)
+  return Boolean(url && !url.hash)
+}
+
 function wikipediaPageKeyFromUrl(url) {
   if (!url.pathname.startsWith('/wiki/') || url.pathname.length <= '/wiki/'.length) return null
   let title
@@ -78,15 +84,29 @@ export function isWikidataUrl(value, expectedId = null) {
 /** Return true only for a canonical Open Library work URL. */
 export function isOpenLibraryWorkUrl(value, expectedId = null) {
   const url = parseHttps(value, new Set([OPEN_LIBRARY_HOST]))
-  if (!url || url.search || url.hash) return false
+  if (!url || url.search || url.hash || url.pathname.includes('%')) return false
   const match = /^\/works\/(OL\d+W)$/u.exec(url.pathname)
   return Boolean(match && (!expectedId || match[1] === expectedId))
+}
+
+/** Return true only for a canonical Open Library edition URL. */
+export function isOpenLibraryEditionUrl(value, expectedId = null) {
+  const url = parseHttps(value, new Set([OPEN_LIBRARY_HOST]))
+  if (!url || url.search || url.hash || url.pathname.includes('%')) return false
+  const match = /^\/books\/(OL\d+M)$/u.exec(url.pathname)
+  return Boolean(match && (!expectedId || match[1] === expectedId))
+}
+
+/** Return true only for a canonical Open Library work or edition source URL. */
+export function isOpenLibrarySourceUrl(value) {
+  return isOpenLibraryWorkUrl(value) || isOpenLibraryEditionUrl(value)
 }
 
 /** Return true only for an Open Library Covers image URL used by this app. */
 export function isOpenLibraryCoverUrl(value) {
   const url = parseHttps(value, new Set([OPEN_LIBRARY_COVERS_HOST]))
-  return Boolean(url && !url.search && !url.hash && /^\/b\/id\/\d+-[SML]\.jpg$/u.test(url.pathname))
+  if (!url || url.hash || url.pathname.includes('%') || !/^\/b\/id\/\d+-[SML]\.jpg$/u.test(url.pathname)) return false
+  return !url.search || url.search === '?default=false'
 }
 
 /** Canonical site/API endpoints used in manifest metadata. */
@@ -116,7 +136,9 @@ export function runSourceUrlSelfTest() {
     ),
     isWikidataUrl('https://www.wikidata.org/wiki/Q123', 'Q123'),
     isOpenLibraryWorkUrl('https://openlibrary.org/works/OL123W', 'OL123W'),
+    isOpenLibraryEditionUrl('https://openlibrary.org/books/OL123M', 'OL123M'),
     isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-M.jpg'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-L.jpg?default=false'),
   ]
   if (valid.some((value) => !value)) throw new Error('source URL self-test 失败：合法 URL 被拒绝')
 
@@ -132,8 +154,17 @@ export function runSourceUrlSelfTest() {
     isWikidataUrl('https://www.wikidata.org/wiki/Q124', 'Q123'),
     isOpenLibraryWorkUrl('https://openlibrary.org/works/OL123M', 'OL123M'),
     isOpenLibraryWorkUrl('https://user@openlibrary.org/works/OL123W', 'OL123W'),
+    isOpenLibraryEditionUrl('https://openlibrary.org/books/OL123W', 'OL123W'),
+    isOpenLibraryEditionUrl('https://openlibrary.org/%62ooks/OL123M', 'OL123M'),
+    isOpenLibraryWorkUrl('https://openlibrary.org/%77orks/OL123W', 'OL123W'),
     isOpenLibraryCoverUrl('https://covers.openlibrary.org.evil.example/b/id/123-M.jpg'),
     isOpenLibraryCoverUrl('https://covers.openlibrary.org:8443/b/id/123-M.jpg'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/%62/id/123-M.jpg'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/%69d/123-M.jpg'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-M%2Ejpg'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-M.jpg?default=true'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-M.jpg?default=false&x=1'),
+    isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-M.jpg?%64efault=false'),
     isOpenLibraryCoverUrl('https://covers.openlibrary.org/b/id/123-M.jpg?redirect=https://evil.example'),
   ]
   if (invalid.some((value) => value)) throw new Error('source URL self-test 失败：恶意 URL 被接受')

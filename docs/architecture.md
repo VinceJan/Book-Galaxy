@@ -9,6 +9,7 @@ flowchart LR
   A[Wikidata] --> D[中文富书目]
   B[中文维基百科] --> D
   C[Open Library] --> D
+  L[本地批准封面侧车] --> D
   D --> E[BGE 向量与 DensMAP 布局]
   E --> F[catalog-v2]
   G[引力书线策展层] --> H[浏览器体验]
@@ -22,7 +23,7 @@ flowchart LR
 
 - **React 19** 管理入口、选书、航迹、偏航罗盘、书籍观测台和星图状态。
 - **Three.js / WebGL2** 渲染书星、星云、尘埃、拾取、镜头飞行和关系线。
-- **catalog-v2** 提供书目、三维坐标、星体参数和可漫游关系；加载不完整时应用会失败关闭，而不是伪装成正式星海。
+- **catalog-v2** 提供书目、三维坐标、星体参数、可漫游关系和已覆盖的 `coverAsset`；加载不完整时应用会失败关闭，而不是伪装成正式星海。浏览器不另行请求封面侧车。
 - **本地优先**：搜索、书目阅读、偏航、航迹和星图导出不依赖远程 AI。
 - **可选在线馆员**只在用户主动召唤时调用配置的端点，不参与正式书目、坐标或关系图谱生成。
 
@@ -49,7 +50,7 @@ data/rich/books.json
 data/rich/eligibility-report.json
 ```
 
-网络缓存位于 `data/raw/rich-catalog/`，不会提交到仓库。
+网络缓存位于 `data/raw/rich-catalog/`，不会提交到仓库。`data/covers/provenance/` 保存只含固定 commit、沿目标路径的 tree 和目标 blob 的非运行时证明；CI 会重新计算 Git object ID 并解析 path，缺失或篡改即失败。网络 enrichment 完成后，构建器必须重新应用 `data/covers/approved-v1.json`；blocklist 优先，只有 `approved + active` 的受支持 provider 资产会覆盖封面。
 
 ### 2. 语义布局
 
@@ -71,7 +72,7 @@ data/rich/layout.json
 npm run build:data:assemble
 ```
 
-合并阶段重新校验富书目和布局，写入：
+合并阶段再次读取并校验本地批准侧车、重新覆盖富书目，再校验布局并写入：
 
 ```text
 public/data/catalog.json
@@ -79,7 +80,7 @@ public/data/manifest.json
 public/data/ATTRIBUTION.json
 ```
 
-`manifest.json` 保存当前快照的书数、关系数、模型、参数与 SHA-256；`ATTRIBUTION.json` 保存逐本来源和固定修订回链。
+`manifest.json` 保存当前快照的书数、关系数、模型、参数、SHA-256、侧车内容哈希和 provider policy；`ATTRIBUTION.json` 保存逐本来源、固定修订回链，并为 exact Edition 条目保存完整权利/生命周期/清除信息和项目移除入口。
 
 ### 一步重建
 
@@ -114,7 +115,7 @@ npm run check      # 完整发布检查
 `npm run check` 依次覆盖：
 
 - 单元测试；
-- 作品资格、富书目、布局、catalog 与归属检查；
+- 作品资格、批准封面侧车/生命周期、富书目、布局、catalog 与归属检查；
 - 引力书线的真实 QID、去重、全书覆盖和文案检查；
 - 公开产品文案检查；
 - TypeScript 与生产构建。
@@ -166,6 +167,7 @@ npm run check
 
 ```text
 public/data/                 正式 catalog、manifest 与字段级归属
+data/covers/                 确定性批准封面侧车；候选不得放入运行时文件
 data/rich/                   富书目、资格报告与语义布局快照
 data/raw/                    本地网络缓存；不提交
 scripts/lib/                 共享作品资格策略

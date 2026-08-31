@@ -9,14 +9,20 @@ import { fileURLToPath } from 'node:url'
 import { evaluateWork, POLICY_HASH, POLICY_VERSION } from './lib/book-eligibility.mjs'
 import {
   isOpenLibraryCoverUrl,
-  isOpenLibraryWorkUrl,
+  isOpenLibrarySourceUrl,
   isWikipediaRevisionUrl,
   isWikipediaSourceUrl,
   isWikidataUrl,
 } from './lib/source-urls.mjs'
+import {
+  COVER_BLOCKLIST,
+  assertApprovedCoverOverlay,
+  assertValidApprovedCovers,
+} from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DEFAULT_PATH = resolve(ROOT, 'data/rich/books.json')
+const DEFAULT_APPROVED_COVERS = resolve(ROOT, 'data/covers/approved-v1.json')
 const PLACEHOLDER = /尚无简介|暂无简介|需要补充|正在編寫|正在编写|没有描述|可能指|本條目需要|消歧義/iu
 const SECTION_MARKUP = /={2,}\s*[^=]+\s*={2,}/u
 const THEME_SOURCES = new Set(['wikidata-claim', 'summary-rule', 'contextual-metadata', 'generic-last-resort'])
@@ -88,14 +94,6 @@ const NAMED_AUTHOR_COUNT_REGRESSIONS = new Map([
   ['Q70827', 1],
   ['Q1185340', 1],
   ['Q1845', 0],
-])
-const COVER_BLOCKLIST = new Map([
-  ['Q172723', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q589197', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q127149', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q41064', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q9184', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q921522', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
 ])
 const FORBIDDEN_THEME_REGRESSIONS = new Map([
   ['Q1075382', new Set(['神话与超自然'])], // 《韩非子》只在史料说明中提到民间传说
@@ -196,7 +194,12 @@ async function main() {
   const target = Number.parseInt(String(options.target || 5000), 10)
   if (!existsSync(path)) throw new Error(`找不到富书目文件：${path}`)
   const snapshot = JSON.parse(await readFile(path, 'utf8'))
+  const approvedCoversPath = resolve(ROOT, String(options.sidecar || DEFAULT_APPROVED_COVERS))
+  if (!existsSync(approvedCoversPath)) throw new Error(`找不到已批准封面侧车：${approvedCoversPath}`)
+  const approvedCovers = JSON.parse(await readFile(approvedCoversPath, 'utf8'))
   const books = Array.isArray(snapshot.books) ? snapshot.books : []
+  assertValidApprovedCovers(approvedCovers, { catalogBooks: books })
+  assertApprovedCoverOverlay(books, approvedCovers)
   const errors = []
   const requestedTarget = options.target === undefined ? Number(snapshot.selection?.targetCount || 0) : target
   if (!Number.isInteger(requestedTarget) || requestedTarget < 1 || requestedTarget > 5000) fail(errors, `目标数必须在 1..5000：${requestedTarget}`)
@@ -206,7 +209,7 @@ async function main() {
   if (snapshot.selection?.acceptedCount !== books.length) fail(errors, 'selection.acceptedCount 与实际书目数量不一致')
   if (snapshot.eligibilityPolicy?.version !== POLICY_VERSION || snapshot.eligibilityPolicy?.hash !== POLICY_HASH) fail(errors, '输出使用的资格 policy 与当前共享 policy 不一致')
   const coverProvenance = snapshot.provenance?.cover
-  if (!coverProvenance || coverProvenance.method !== 'Wikidata P648 Open Library work ID + Open Library Search API cover_i') fail(errors, 'provenance.cover.method 缺失或不诚实')
+  if (!coverProvenance || coverProvenance.method !== 'Default: Wikidata P648 Open Library work ID + Search API cover_i; approved sidecar entries: exact Edition CoverAsset overlay') fail(errors, 'provenance.cover.method 缺失或不诚实')
   if (!coverProvenance || !String(coverProvenance.versionNote || '').trim()) fail(errors, 'provenance.cover.versionNote 缺失')
   const coverEntries = Array.isArray(coverProvenance?.blocklist) ? coverProvenance.blocklist : []
   for (const [id, reason] of COVER_BLOCKLIST) {
@@ -374,7 +377,7 @@ async function main() {
     if (!recomputed.accepted || recomputed.ruleId !== book.eligibility?.ruleId || book.eligibility?.policyHash !== POLICY_HASH) fail(errors, `${prefix}.eligibility 无法由共享 policy 独立复算`)
     if (book.coverUrl !== null && book.coverUrl !== undefined && !isOpenLibraryCoverUrl(String(book.coverUrl))) fail(errors, `${prefix}.coverUrl 必须是 covers.openlibrary.org 的固定 JPG 封面链接`)
     if (book.coverUrl && !book.openLibraryId) fail(errors, `${prefix}.coverUrl 存在但没有 openLibraryId`)
-    if (book.coverSourceUrl && !isOpenLibraryWorkUrl(String(book.coverSourceUrl))) fail(errors, `${prefix}.coverSourceUrl 必须是 Open Library works 链接`)
+    if (book.coverSourceUrl && !isOpenLibrarySourceUrl(String(book.coverSourceUrl))) fail(errors, `${prefix}.coverSourceUrl 必须是 Open Library work 或 exact Edition 链接`)
     const coverBlockReason = COVER_BLOCKLIST.get(book.id)
     if (coverBlockReason) {
       if (book.coverUrl !== null || book.coverSourceUrl !== null) fail(errors, `${prefix} 已知错配封面必须将 coverUrl/coverSourceUrl 置 null`)

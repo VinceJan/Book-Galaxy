@@ -1,12 +1,13 @@
 {
-  "schemaVersion": "bookshelf-galaxy/attribution-v1",
+  "schemaVersion": "bookshelf-galaxy/attribution-v2",
   "catalogSchemaVersion": "bookshelf-galaxy/catalog-v2",
   "license": {
     "name": "CC BY-SA 4.0",
     "url": "https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans",
     "notice": "中文维基百科导语按 CC BY-SA 4.0 许可使用；请保留原作者署名并以相同方式共享。"
   },
-  "catalogSha256": "1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade",
+  "catalogSha256": "6eaacc96bd72a440fba7188bf64c93ebc9b099f81b9bd121d11e6ad537d2dd02",
+  "coverRemovalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
   "entryCount": 1000,
   "entries": [
     {
@@ -2859,8 +2860,58 @@
       "sourceUrl": "https://zh.wikipedia.org/wiki/%E9%9D%88%E5%B1%B1_(%E5%B0%8F%E8%AA%AA)",
       "wikidataUrl": "https://www.wikidata.org/wiki/Q1760054",
       "wikipediaRevisionUrl": "https://zh.wikipedia.org/wiki/%E9%9D%88%E5%B1%B1_(%E5%B0%8F%E8%AA%AA)?oldid=83498066",
-      "coverUrl": "https://covers.openlibrary.org/b/id/52610-M.jpg",
-      "coverSourceUrl": "https://openlibrary.org/works/OL4049087W"
+      "coverUrl": "https://covers.openlibrary.org/b/id/9394485-M.jpg?default=false",
+      "coverSourceUrl": "https://openlibrary.org/books/OL28010784M",
+      "coverAsset": {
+        "id": "open-library-cover-9394485",
+        "edition": {
+          "scheme": "open-library-edition",
+          "value": "OL28010784M"
+        },
+        "editionTitle": "Soul Mountain",
+        "publisher": "联经出版",
+        "publishedAt": "2010",
+        "isbn13": "9789570836899",
+        "language": "zh-CN",
+        "imageUrl": "https://covers.openlibrary.org/b/id/9394485-L.jpg?default=false",
+        "sourcePageUrl": "https://openlibrary.org/books/OL28010784M",
+        "provider": "open-library",
+        "providerWorkId": "OL4049087W",
+        "providerAssetId": "9394485",
+        "width": 375,
+        "height": 500,
+        "matchBasis": "Open Library Edition OL28010784M belongs to Work OL4049087W, lists cover 9394485, and is joined to catalog Work Q1760054.",
+        "reviewStatus": "approved",
+        "audit": {
+          "checkedAt": "2026-08-31T05:30:00.000Z",
+          "imageSha256": "29c95a78196b502485cf9b0107f32b089eeb45e84a2f2c3e7d3279eb1e441c9d",
+          "byteLength": 57900,
+          "contentType": "image/jpeg",
+          "corsOrigin": "*",
+          "corsEvidence": {
+            "state": "allowed-origin",
+            "origin": "*"
+          }
+        },
+        "rights": {
+          "usageBasis": "provider-hotlink",
+          "termsUrl": "https://openlibrary.org/about",
+          "rightsStatement": "The image is provider-hosted; availability does not imply public-domain or open-license status.",
+          "attribution": "Cover image served by Open Library; edition and provider Work are linked from the exhibit.",
+          "providerTermsUrl": "https://archive.org/about/terms.php",
+          "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+          "policyVersion": "open-library-cover-policy-v1",
+          "providerReportUrl": "https://openlibrary.org/contact?path=/books/OL28010784M",
+          "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+          "reviewedAt": "2026-08-31T05:30:00.000Z",
+          "reviewVersion": "book-galaxy-cover-review-v1",
+          "recheckAfter": "2027-02-28T05:30:00.000Z"
+        },
+        "lifecycle": {
+          "status": "active",
+          "purgeKey": "cover:open-library:9394485:Q1760054:OL28010784M"
+        }
+      }
     },
     {
       "id": "Q1763759",
@@ -3066,8 +3117,58 @@
       "sourceUrl": "https://zh.wikipedia.org/wiki/%E6%82%B2%E6%83%A8%E4%B8%96%E7%95%8C",
       "wikidataUrl": "https://www.wikidata.org/wiki/Q180736",
       "wikipediaRevisionUrl": "https://zh.wikipedia.org/wiki/%E6%82%B2%E6%83%A8%E4%B8%96%E7%95%8C?oldid=93801278",
-      "coverUrl": "https://covers.openlibrary.org/b/id/12721865-M.jpg",
-      "coverSourceUrl": "https://openlibrary.org/works/OL1063588W"
+      "coverUrl": "https://covers.openlibrary.org/b/id/12722997-M.jpg?default=false",
+      "coverSourceUrl": "https://openlibrary.org/books/OL27299181M",
+      "coverAsset": {
+        "id": "open-library-cover-12722997",
+        "edition": {
+          "scheme": "open-library-edition",
+          "value": "OL27299181M"
+        },
+        "editionTitle": "Bei can shi jie",
+        "publisher": "上海人民美术出版社",
+        "publishedAt": "2010",
+        "isbn13": "9787532227228",
+        "language": "zh-CN",
+        "imageUrl": "https://covers.openlibrary.org/b/id/12722997-L.jpg?default=false",
+        "sourcePageUrl": "https://openlibrary.org/books/OL27299181M",
+        "provider": "open-library",
+        "providerWorkId": "OL1063588W",
+        "providerAssetId": "12722997",
+        "width": 328,
+        "height": 500,
+        "matchBasis": "Open Library Edition OL27299181M belongs to Work OL1063588W, lists cover 12722997, and is joined to catalog Work Q180736.",
+        "reviewStatus": "approved",
+        "audit": {
+          "checkedAt": "2026-08-31T05:30:00.000Z",
+          "imageSha256": "e9bbeb5d42605e649492c2cd684a03996fe4258fac049c242a0d45f5f125d670",
+          "byteLength": 54882,
+          "contentType": "image/jpeg",
+          "corsOrigin": "*",
+          "corsEvidence": {
+            "state": "allowed-origin",
+            "origin": "*"
+          }
+        },
+        "rights": {
+          "usageBasis": "provider-hotlink",
+          "termsUrl": "https://openlibrary.org/about",
+          "rightsStatement": "The image is provider-hosted; availability does not imply public-domain or open-license status.",
+          "attribution": "Cover image served by Open Library; edition and provider Work are linked from the exhibit.",
+          "providerTermsUrl": "https://archive.org/about/terms.php",
+          "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+          "policyVersion": "open-library-cover-policy-v1",
+          "providerReportUrl": "https://openlibrary.org/contact?path=/books/OL27299181M",
+          "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+          "reviewedAt": "2026-08-31T05:30:00.000Z",
+          "reviewVersion": "book-galaxy-cover-review-v1",
+          "recheckAfter": "2027-02-28T05:30:00.000Z"
+        },
+        "lifecycle": {
+          "status": "active",
+          "purgeKey": "cover:open-library:12722997:Q180736:OL27299181M"
+        }
+      }
     },
     {
       "id": "Q18081",
@@ -4965,8 +5066,58 @@
       "sourceUrl": "https://zh.wikipedia.org/wiki/%E9%AA%86%E9%A9%BC%E7%A5%A5%E5%AD%90",
       "wikidataUrl": "https://www.wikidata.org/wiki/Q3140506",
       "wikipediaRevisionUrl": "https://zh.wikipedia.org/wiki/%E9%AA%86%E9%A9%BC%E7%A5%A5%E5%AD%90?oldid=93216148",
-      "coverUrl": "https://covers.openlibrary.org/b/id/13498082-M.jpg",
-      "coverSourceUrl": "https://openlibrary.org/works/OL51427W"
+      "coverUrl": "https://covers.openlibrary.org/b/id/10783577-M.jpg?default=false",
+      "coverSourceUrl": "https://openlibrary.org/books/OL32122716M",
+      "coverAsset": {
+        "id": "open-library-cover-10783577",
+        "edition": {
+          "scheme": "open-library-edition",
+          "value": "OL32122716M"
+        },
+        "editionTitle": "骆驼祥子",
+        "publisher": "南海出版公司",
+        "publishedAt": "2010",
+        "isbn13": "9787544246279",
+        "language": "zh-CN",
+        "imageUrl": "https://covers.openlibrary.org/b/id/10783577-L.jpg?default=false",
+        "sourcePageUrl": "https://openlibrary.org/books/OL32122716M",
+        "provider": "open-library",
+        "providerWorkId": "OL51427W",
+        "providerAssetId": "10783577",
+        "width": 319,
+        "height": 500,
+        "matchBasis": "Open Library Edition OL32122716M belongs to Work OL51427W, lists cover 10783577, and is joined to catalog Work Q3140506.",
+        "reviewStatus": "approved",
+        "audit": {
+          "checkedAt": "2026-08-31T05:30:00.000Z",
+          "imageSha256": "76a9ff7a9d4104811ef7b0c53a628dbac2a1fdecb584c54526cfef35ffa7f2ca",
+          "byteLength": 10605,
+          "contentType": "image/jpeg",
+          "corsOrigin": "*",
+          "corsEvidence": {
+            "state": "allowed-origin",
+            "origin": "*"
+          }
+        },
+        "rights": {
+          "usageBasis": "provider-hotlink",
+          "termsUrl": "https://openlibrary.org/about",
+          "rightsStatement": "The image is provider-hosted; availability does not imply public-domain or open-license status.",
+          "attribution": "Cover image served by Open Library; edition and provider Work are linked from the exhibit.",
+          "providerTermsUrl": "https://archive.org/about/terms.php",
+          "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+          "policyVersion": "open-library-cover-policy-v1",
+          "providerReportUrl": "https://openlibrary.org/contact?path=/books/OL32122716M",
+          "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+          "reviewedAt": "2026-08-31T05:30:00.000Z",
+          "reviewVersion": "book-galaxy-cover-review-v1",
+          "recheckAfter": "2027-02-28T05:30:00.000Z"
+        },
+        "lifecycle": {
+          "status": "active",
+          "purgeKey": "cover:open-library:10783577:Q3140506:OL32122716M"
+        }
+      }
     },
     {
       "id": "Q3141640",
@@ -6792,8 +6943,58 @@
       "sourceUrl": "https://zh.wikipedia.org/wiki/%E4%B8%89%E4%BD%93_(%E5%B0%8F%E8%AF%B4)",
       "wikidataUrl": "https://www.wikidata.org/wiki/Q607112",
       "wikipediaRevisionUrl": "https://zh.wikipedia.org/wiki/%E4%B8%89%E4%BD%93_(%E5%B0%8F%E8%AF%B4)?oldid=93243870",
-      "coverUrl": "https://covers.openlibrary.org/b/id/9157544-M.jpg",
-      "coverSourceUrl": "https://openlibrary.org/works/OL17267881W"
+      "coverUrl": "https://covers.openlibrary.org/b/id/10246550-M.jpg?default=false",
+      "coverSourceUrl": "https://openlibrary.org/books/OL26951073M",
+      "coverAsset": {
+        "id": "open-library-cover-10246550",
+        "edition": {
+          "scheme": "open-library-edition",
+          "value": "OL26951073M"
+        },
+        "editionTitle": "三体 (sān tǐ)",
+        "publisher": "猫头鹰出版社",
+        "publishedAt": "2011",
+        "isbn13": "9789861206066",
+        "language": "zh-CN",
+        "imageUrl": "https://covers.openlibrary.org/b/id/10246550-L.jpg?default=false",
+        "sourcePageUrl": "https://openlibrary.org/books/OL26951073M",
+        "provider": "open-library",
+        "providerWorkId": "OL17267881W",
+        "providerAssetId": "10246550",
+        "width": 317,
+        "height": 475,
+        "matchBasis": "Open Library Edition OL26951073M belongs to Work OL17267881W, lists cover 10246550, and is joined to catalog Work Q607112.",
+        "reviewStatus": "approved",
+        "audit": {
+          "checkedAt": "2026-08-31T05:30:00.000Z",
+          "imageSha256": "606ce249d56a7c5b49b4b0e0ef3abe92a1ddeff7a061fd830b4d16572f781978",
+          "byteLength": 47520,
+          "contentType": "image/jpeg",
+          "corsOrigin": "*",
+          "corsEvidence": {
+            "state": "allowed-origin",
+            "origin": "*"
+          }
+        },
+        "rights": {
+          "usageBasis": "provider-hotlink",
+          "termsUrl": "https://openlibrary.org/about",
+          "rightsStatement": "The image is provider-hosted; availability does not imply public-domain or open-license status.",
+          "attribution": "Cover image served by Open Library; edition and provider Work are linked from the exhibit.",
+          "providerTermsUrl": "https://archive.org/about/terms.php",
+          "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+          "policyVersion": "open-library-cover-policy-v1",
+          "providerReportUrl": "https://openlibrary.org/contact?path=/books/OL26951073M",
+          "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+          "reviewedAt": "2026-08-31T05:30:00.000Z",
+          "reviewVersion": "book-galaxy-cover-review-v1",
+          "recheckAfter": "2027-02-28T05:30:00.000Z"
+        },
+        "lifecycle": {
+          "status": "active",
+          "purgeKey": "cover:open-library:10246550:Q607112:OL26951073M"
+        }
+      }
     },
     {
       "id": "Q6071286",
@@ -7377,8 +7578,58 @@
       "sourceUrl": "https://zh.wikipedia.org/wiki/%E8%A5%BF%E6%B8%B8%E8%AE%B0",
       "wikidataUrl": "https://www.wikidata.org/wiki/Q70784",
       "wikipediaRevisionUrl": "https://zh.wikipedia.org/wiki/%E8%A5%BF%E6%B8%B8%E8%AE%B0?oldid=93602268",
-      "coverUrl": "https://covers.openlibrary.org/b/id/8246231-M.jpg",
-      "coverSourceUrl": "https://openlibrary.org/works/OL3593545W"
+      "coverUrl": "https://covers.openlibrary.org/b/id/15131293-M.jpg?default=false",
+      "coverSourceUrl": "https://openlibrary.org/books/OL60461109M",
+      "coverAsset": {
+        "id": "open-library-cover-15131293",
+        "edition": {
+          "scheme": "open-library-edition",
+          "value": "OL60461109M"
+        },
+        "editionTitle": "西游记",
+        "publisher": "哈尔滨出版社",
+        "publishedAt": "2016",
+        "isbn13": "9787548427056",
+        "language": "zh-CN",
+        "imageUrl": "https://covers.openlibrary.org/b/id/15131293-L.jpg?default=false",
+        "sourcePageUrl": "https://openlibrary.org/books/OL60461109M",
+        "provider": "open-library",
+        "providerWorkId": "OL3593545W",
+        "providerAssetId": "15131293",
+        "width": 349,
+        "height": 500,
+        "matchBasis": "Open Library Edition OL60461109M belongs to Work OL3593545W, lists cover 15131293, and is joined to catalog Work Q70784.",
+        "reviewStatus": "approved",
+        "audit": {
+          "checkedAt": "2026-08-31T05:30:00.000Z",
+          "imageSha256": "d0c6da4152dc7e76d1b465ed6ba2b1fb177994e867d777df0a122e0dd77a8ed6",
+          "byteLength": 81192,
+          "contentType": "image/jpeg",
+          "corsOrigin": "*",
+          "corsEvidence": {
+            "state": "allowed-origin",
+            "origin": "*"
+          }
+        },
+        "rights": {
+          "usageBasis": "provider-hotlink",
+          "termsUrl": "https://openlibrary.org/about",
+          "rightsStatement": "The image is provider-hosted; availability does not imply public-domain or open-license status.",
+          "attribution": "Cover image served by Open Library; edition and provider Work are linked from the exhibit.",
+          "providerTermsUrl": "https://archive.org/about/terms.php",
+          "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+          "policyVersion": "open-library-cover-policy-v1",
+          "providerReportUrl": "https://openlibrary.org/contact?path=/books/OL60461109M",
+          "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+          "reviewedAt": "2026-08-31T05:30:00.000Z",
+          "reviewVersion": "book-galaxy-cover-review-v1",
+          "recheckAfter": "2027-02-28T05:30:00.000Z"
+        },
+        "lifecycle": {
+          "status": "active",
+          "purgeKey": "cover:open-library:15131293:Q70784:OL60461109M"
+        }
+      }
     },
     {
       "id": "Q70806",
@@ -7683,8 +7934,58 @@
       "sourceUrl": "https://zh.wikipedia.org/wiki/%E5%9F%BA%E5%9C%B0_(%E5%B0%8F%E8%AA%AA)",
       "wikidataUrl": "https://www.wikidata.org/wiki/Q753894",
       "wikipediaRevisionUrl": "https://zh.wikipedia.org/wiki/%E5%9F%BA%E5%9C%B0_(%E5%B0%8F%E8%AA%AA)?oldid=88051789",
-      "coverUrl": "https://covers.openlibrary.org/b/id/14612610-M.jpg",
-      "coverSourceUrl": "https://openlibrary.org/works/OL46125W"
+      "coverUrl": "https://covers.openlibrary.org/b/id/9302242-M.jpg?default=false",
+      "coverSourceUrl": "https://openlibrary.org/books/OL27010764M",
+      "coverAsset": {
+        "id": "open-library-cover-9302242",
+        "edition": {
+          "scheme": "open-library-edition",
+          "value": "OL27010764M"
+        },
+        "editionTitle": "Yinhe di guo ji di",
+        "publisher": "江苏文艺出版社",
+        "publishedAt": "2012",
+        "isbn13": "9787539949796",
+        "language": "zh-CN",
+        "imageUrl": "https://covers.openlibrary.org/b/id/9302242-L.jpg?default=false",
+        "sourcePageUrl": "https://openlibrary.org/books/OL27010764M",
+        "provider": "open-library",
+        "providerWorkId": "OL46125W",
+        "providerAssetId": "9302242",
+        "width": 340,
+        "height": 500,
+        "matchBasis": "Open Library Edition OL27010764M belongs to Work OL46125W, lists cover 9302242, and is joined to catalog Work Q753894.",
+        "reviewStatus": "approved",
+        "audit": {
+          "checkedAt": "2026-08-31T05:30:00.000Z",
+          "imageSha256": "7e5d8301fb33ba888b68df2fd44938b79b8923a774169864f99893ac8053aa92",
+          "byteLength": 64852,
+          "contentType": "image/jpeg",
+          "corsOrigin": "*",
+          "corsEvidence": {
+            "state": "allowed-origin",
+            "origin": "*"
+          }
+        },
+        "rights": {
+          "usageBasis": "provider-hotlink",
+          "termsUrl": "https://openlibrary.org/about",
+          "rightsStatement": "The image is provider-hosted; availability does not imply public-domain or open-license status.",
+          "attribution": "Cover image served by Open Library; edition and provider Work are linked from the exhibit.",
+          "providerTermsUrl": "https://archive.org/about/terms.php",
+          "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+          "policyVersion": "open-library-cover-policy-v1",
+          "providerReportUrl": "https://openlibrary.org/contact?path=/books/OL27010764M",
+          "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+          "reviewedAt": "2026-08-31T05:30:00.000Z",
+          "reviewVersion": "book-galaxy-cover-review-v1",
+          "recheckAfter": "2027-02-28T05:30:00.000Z"
+        },
+        "lifecycle": {
+          "status": "active",
+          "purgeKey": "cover:open-library:9302242:Q753894:OL27010764M"
+        }
+      }
     },
     {
       "id": "Q756199",

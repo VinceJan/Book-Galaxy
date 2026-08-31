@@ -23,11 +23,17 @@ import {
   POLICY_VERSION,
   evaluateWork,
 } from './lib/book-eligibility.mjs'
+import {
+  COVER_BLOCKLIST,
+  applyApprovedCoversToSnapshot,
+  assertValidApprovedCovers,
+} from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUTPUT_DIR = resolve(ROOT, 'data/rich')
 const RAW_DIR = resolve(ROOT, 'data/raw/rich-catalog')
 const OUTPUT_PATH = resolve(OUTPUT_DIR, 'books.json')
+const APPROVED_COVERS_PATH = resolve(ROOT, 'data/covers/approved-v1.json')
 
 const WDQS_URL = 'https://query.wikidata.org/sparql'
 const WBGETENTITIES_URL = 'https://www.wikidata.org/w/api.php'
@@ -109,18 +115,6 @@ const FOREIGN_TITLE_OVERRIDES = new Map([
 ])
 const DISPLAY_TITLE_OVERRIDES = new Map([
   ['Q179485', { value: '唐璜 · 莫里哀', source: 'collision-preservation', reason: 'Removing the trailing author/media disambiguator would collide with the Byron work; retain a concise author marker in the display title.' }],
-])
-
-// Open Library's cover_i is edition-level metadata.  These P648 links are
-// known to resolve to a mismatched cover in the current source snapshot, so
-// suppress them rather than presenting an attractive but false association.
-const COVER_BLOCKLIST = new Map([
-  ['Q172723', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q589197', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q127149', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q41064', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q9184', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
-  ['Q921522', 'Known P648 → Open Library cover_i mismatch; suppress the cover rather than imply edition identity.'],
 ])
 
 // A work can have several P577/P580 claims for serialisation, first edition,
@@ -1223,7 +1217,7 @@ OFFSET ${offset}`
   }
 }
 
-async function enrichEntities(ids, refresh, { cacheName = 'wikidata-entities.json', props = 'labels|descriptions|claims|sitelinks|aliases' } = {}) {
+async function enrichEntities(ids, _refresh, { cacheName = 'wikidata-entities.json', props = 'labels|descriptions|claims|sitelinks|aliases' } = {}) {
   const cachePath = resolve(RAW_DIR, cacheName)
   const cachedEntities = await readJson(cachePath, {})
   // wbgetentities includes every claim plus large references and qualifiers,
@@ -1697,6 +1691,9 @@ async function main() {
   const requestedMultiplier = Number(options['candidate-multiplier'] || DEFAULT_CANDIDATE_MULTIPLIER)
   const candidateMultiplier = Number.isFinite(requestedMultiplier) ? Math.max(1.25, requestedMultiplier) : DEFAULT_CANDIDATE_MULTIPLIER
   const startedAt = Date.now()
+  const approvedCovers = await readJson(APPROVED_COVERS_PATH, null)
+  if (!approvedCovers) throw new Error(`缺少已批准封面侧车：${APPROVED_COVERS_PATH}`)
+  assertValidApprovedCovers(approvedCovers)
   await mkdir(RAW_DIR, { recursive: true })
   const candidateSnapshot = await getCandidates(limit, refresh, candidateMultiplier)
   const candidates = candidateSnapshot.candidates
@@ -1806,7 +1803,7 @@ async function main() {
   const summaryChineseCounts = books.map((book) => chineseCount(book.summary))
   const withCovers = books.filter((book) => book.coverUrl).length
   const withAuthors = books.filter((book) => namedAuthorCount(book.authors) > 0).length
-  const snapshot = {
+  let snapshot = {
     schemaVersion: 'bookshelf-galaxy/rich-books-v2',
     generatedAt: new Date().toISOString(),
     eligibilityPolicy: { version: POLICY_VERSION, hash: POLICY_HASH },
@@ -1836,8 +1833,8 @@ async function main() {
       coverMetadataEndpoint: OPENLIBRARY_SEARCH_URL,
       wikipediaVariant: 'zh-cn',
       cover: {
-        method: 'Wikidata P648 Open Library work ID + Open Library Search API cover_i',
-        versionNote: 'cover_i is an edition-level image; the cover is not guaranteed to be identical to the work or to a specific library edition.',
+        method: 'Default: Wikidata P648 Open Library work ID + Search API cover_i; approved sidecar entries: exact Edition CoverAsset overlay',
+        versionNote: 'Default cover_i images remain work-linked and edition-ambiguous; approved sidecar assets bind an exact Edition and preserve their audited L image while displaying an M derivative.',
         blocklist: [...COVER_BLOCKLIST.entries()].map(([id, reason]) => ({ id, reason })),
       },
       licenses: {
@@ -1851,7 +1848,7 @@ async function main() {
         '每本书的 themeProvenance 逐条记录主题来源：wikidata-claim、summary-rule、contextual-metadata 或 generic-last-resort。',
         '主题生成顺序为受控的 Wikidata genre/subject claims、中文导语关键词规则，再到国家/地域、世纪与具体 P31/P136 类型；语言字段仅作书目展示，不进入主题或关系主题。',
         '摘要规则只匹配多词或明确叙事信号，不把“人”“社会”“生活”“历史”“文学”等宽泛词单独作为主题；generic-last-resort 仅在上述可核查信号不足三项时使用，并保留来源记录。',
-        'coverUrl 只有作品存在 P648 Open Library ID 且 Open Library 返回 cover_i 时才生成；封面链路为 Wikidata P648 + Open Library cover_i，不保证与当前书目版本等同；已知错配 QID 会进入 blocklist 并保持 coverUrl/coverSourceUrl 为 null；构建过程不批量下载封面。',
+        '一般 coverUrl 仅在作品存在 P648 Open Library ID 且 Search API 返回 cover_i 时生成，仍不保证版本相同；批准侧车条目例外地以 exact Edition CoverAsset 覆盖运行时 M 图与 Edition 回链，并保留审计 L 图。blocklist 始终优先；构建过程不批量下载封面。',
         '网络响应和构建原始缓存位于被 gitignore 的 data/raw/rich-catalog/。',
       ],
     },
@@ -1868,6 +1865,7 @@ async function main() {
     },
     books,
   }
+  snapshot = applyApprovedCoversToSnapshot(snapshot, approvedCovers)
   await mkdir(OUTPUT_DIR, { recursive: true })
   await writeJson(OUTPUT_PATH, snapshot)
   const digest = hash(stableJson(snapshot))

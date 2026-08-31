@@ -14,18 +14,20 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   isOpenLibraryCoverUrl,
-  isOpenLibraryWorkUrl,
+  isOpenLibrarySourceUrl,
   isTrustedEndpointUrl,
   isWikipediaRevisionUrl,
   isWikipediaSourceUrl,
   isWikidataUrl,
 } from './lib/source-urls.mjs'
+import { applyApprovedCoversToSnapshot } from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DEFAULT_BOOKS = resolve(ROOT, 'data/rich/books.json')
 const DEFAULT_LAYOUT = resolve(ROOT, 'data/rich/layout.json')
 const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
 const DEFAULT_MANIFEST = resolve(ROOT, 'public/data/manifest.json')
+const DEFAULT_APPROVED_COVERS = resolve(ROOT, 'data/covers/approved-v1.json')
 
 const RICH_SCHEMA = 'bookshelf-galaxy/rich-books-v2'
 const LAYOUT_SCHEMA = 'bookshelf-galaxy/semantic-layout-v1'
@@ -276,7 +278,7 @@ function validateRichBooks(snapshot) {
     }
     if (!isWikidataUrl(book.wikidataUrl, id)) errors.push(`${prefix}.wikidataUrl 必须链接到该作品的 Wikidata Q 项`)
     if (book.coverUrl !== null && book.coverUrl !== undefined && !isOpenLibraryCoverUrl(book.coverUrl)) errors.push(`${prefix}.coverUrl 必须是 covers.openlibrary.org 的固定 JPG 封面链接`)
-    if (book.coverSourceUrl && !isOpenLibraryWorkUrl(book.coverSourceUrl)) errors.push(`${prefix}.coverSourceUrl 必须是 Open Library works 链接`)
+    if (book.coverSourceUrl && !isOpenLibrarySourceUrl(book.coverSourceUrl)) errors.push(`${prefix}.coverSourceUrl 必须是 Open Library work 或 exact Edition 链接`)
     if (book.year !== null && book.year !== undefined) finite(book.year, `${prefix}.year`, errors)
     if (book.metadataCompleteness !== undefined) finite(book.metadataCompleteness, `${prefix}.metadataCompleteness`, errors, { min: 0, max: 1 })
   }
@@ -467,6 +469,7 @@ function buildManifest(snapshot, rich, layout, catalogBuffer, degree) {
         url: richProvenance.coverMetadataEndpoint || 'https://openlibrary.org/search.json',
         license: richProvenance.licenses?.openLibraryCovers || 'Open Library cover service terms',
         note: '仅保留远程封面 URL，不在构建时批量下载图片。',
+        approvedSidecar: richProvenance.approvedCoverSidecar || null,
       },
       layout: {
         name: layout.model || 'BAAI/bge-small-zh-v1.5',
@@ -499,15 +502,18 @@ async function main() {
   const layoutPath = pathValue(options.layout || options['input-layout'], DEFAULT_LAYOUT)
   const catalogPath = pathValue(options.output, DEFAULT_CATALOG)
   const manifestPath = pathValue(options.manifest, DEFAULT_MANIFEST)
+  const approvedCoversPath = pathValue(options.sidecar, DEFAULT_APPROVED_COVERS)
   const minDegree = Number.parseInt(String(options['min-degree'] || DEFAULT_MIN_DEGREE), 10)
   if (!Number.isInteger(minDegree) || minDegree < 1) throw new Error(`--min-degree 必须是正整数：${minDegree}`)
 
   // Read both inputs before touching either output.  In particular, a missing
   // layout must never leave behind a misleading replacement for the old demo.
-  const [rich, layout] = await Promise.all([
+  const [richInput, layout, approvedCovers] = await Promise.all([
     readJson(booksPath, '富书目文件'),
     readJson(layoutPath, '语义布局文件'),
+    readJson(approvedCoversPath, '已批准封面侧车'),
   ])
+  const rich = applyApprovedCoversToSnapshot(richInput, approvedCovers)
   const richValidation = validateRichBooks(rich)
   const richIds = new Set((richValidation.books || []).map((book) => cleanText(book.id)))
   const richBookById = new Map(richValidation.books.map((book) => [cleanText(book.id), book]))

@@ -360,17 +360,21 @@ export function safeExternalUrl(value: string | null | undefined, kind: External
     const url = new URL(value)
     if (url.protocol !== 'https:' || url.username || url.password || url.port || url.hash) return undefined
     const host = url.hostname.toLowerCase()
-    const path = decodeURIComponent(url.pathname)
+    const rawPath = url.pathname
+    const path = decodeURIComponent(rawPath)
     if (kind === 'cover') {
+      const coverQuery = !url.search || url.search === '?default=false'
       return host === 'covers.openlibrary.org'
-        && /^\/b\/(?:id\/\d+|olid\/OL[A-Z0-9]+[A-Z])-[SML]\.jpg$/iu.test(path)
-        && !url.search
+        && !rawPath.includes('%')
+        && /^\/b\/id\/\d+-[SML]\.jpg$/u.test(rawPath)
+        && coverQuery
         ? url.toString()
         : undefined
     }
     if (kind === 'coverSource') {
       return host === 'openlibrary.org'
-        && /^\/(?:works\/OL[A-Z0-9]+W|books\/OL[A-Z0-9]+M)\/?$/iu.test(path)
+        && !rawPath.includes('%')
+        && /^\/(?:works\/OL\d+W|books\/OL\d+M)$/u.test(rawPath)
         && !url.search
         ? url.toString()
         : undefined

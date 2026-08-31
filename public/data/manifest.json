@@ -1,8 +1,8 @@
 {
   "schemaVersion": "bookshelf-galaxy/manifest-v2",
   "generatedAt": "2026-08-31T04:37:45.060Z",
-  "catalogSha256": "1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade",
-  "catalogBytes": 14561086,
+  "catalogSha256": "6eaacc96bd72a440fba7188bf64c93ebc9b099f81b9bd121d11e6ad537d2dd02",
+  "catalogBytes": 14577852,
   "bookCount": 1000,
   "relationCount": 5385,
   "eligibilityCoverage": {
@@ -33,7 +33,36 @@
       "name": "Open Library Covers",
       "url": "https://openlibrary.org/search.json",
       "license": "Open Library cover service terms; URLs only, no bulk download",
-      "note": "仅保留远程封面 URL，不在构建时批量下载图片。"
+      "note": "仅保留远程封面 URL，不在构建时批量下载图片。",
+      "approvedSidecar": {
+        "schemaVersion": "book-galaxy/approved-covers-v1",
+        "contentSha256": "070d20f84cd904dfea1033db90f5ecc1ef8f0fe7fb0a3a03500ba139d1d1eabc",
+        "importedAt": "2026-08-31T05:30:00.000Z",
+        "source": {
+          "schemaVersion": "book-gallery/covers-v1",
+          "repo": "https://github.com/VinceJan/Book-Gallery",
+          "revision": "5de3efff5b88c2739ea51e44fbf8fb36541ca8d1",
+          "path": "public/data/covers-v1.json",
+          "upstreamCatalogRevision": "a7d3ae237bb0e2cf8accd0444ec49fa1269a743c",
+          "upstreamCatalogSha256": "1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade",
+          "payloadSha256": "f2af207ccf0734a84cd880833970e211a13ca4af022d81773832d8ebe1a804f5",
+          "gitObject": {
+            "kind": "git-object",
+            "commit": "5de3efff5b88c2739ea51e44fbf8fb36541ca8d1",
+            "path": "public/data/covers-v1.json",
+            "blobOid": "c4f0f50b74f11e496bf3676c935494dca62e05a2"
+          }
+        },
+        "providerPolicies": {
+          "open-library": {
+            "version": "open-library-cover-policy-v1",
+            "guidanceUrl": "https://openlibrary.org/dev/docs/api/covers",
+            "termsUrl": "https://archive.org/about/terms.php"
+          }
+        },
+        "removalContactUrl": "https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml",
+        "activeAssetCount": 6
+      }
     },
     "layout": {
       "name": "BAAI/bge-small-zh-v1.5",

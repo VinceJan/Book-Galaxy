@@ -38,6 +38,62 @@ export type BookShape =
   | 'halo'
   | 'orbit'
 
+export type CoverLifecycleStatus = 'active' | 'quarantined' | 'removed'
+
+export interface CoverAsset {
+  id: string
+  edition: { scheme: string; value: string }
+  editionTitle: string
+  publisher: string
+  publishedAt: string
+  isbn13: string
+  language: string
+  imageUrl: string
+  sourcePageUrl: string
+  provider: string
+  providerWorkId: string
+  providerAssetId: string
+  width: number
+  height: number
+  matchBasis: string
+  reviewStatus: 'approved'
+  audit: {
+    checkedAt: string
+    imageSha256: string
+    byteLength: number
+    contentType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif' | 'image/gif'
+    corsOrigin?: string
+    corsEvidence: { state: 'allowed-origin'; origin: string } | { state: 'server-only' | 'not-applicable' }
+  }
+  rights: {
+    usageBasis: string
+    termsUrl: string
+    providerTermsUrl: string
+    guidanceUrl: string
+    policyVersion: string
+    providerReportUrl: string
+    removalContactUrl: string
+    reviewedAt: string
+    reviewVersion: string
+    recheckAfter: string
+    rightsStatement: string
+    attribution: string
+  }
+  lifecycle:
+    | { status: 'active'; purgeKey: string }
+    | {
+        status: Exclude<CoverLifecycleStatus, 'active'>
+        purgeKey: string
+        transition: {
+          from: 'active'
+          changedAt: string
+          reason: string
+          reviewVersion: string
+          requestUrl?: string
+        }
+      }
+}
+
 export interface BookProvenance {
   workId?: string
   wikipediaPageId?: number | null
@@ -47,6 +103,12 @@ export interface BookProvenance {
   variantTitleSource?: string
   relationEvidence?: string
   summaryMethod?: string
+  coverStatus?: string
+  coverBlockReason?: string | null
+  coverAssetId?: string | null
+  coverAssetImageSha256?: string | null
+  coverSidecarContentSha256?: string | null
+  coverPurgeKey?: string | null
 }
 
 export interface BookNeighbor {
@@ -82,6 +144,7 @@ export interface Book {
   mood?: string[]
   coverUrl?: string
   coverSourceUrl?: string | null
+  coverAsset?: CoverAsset
   imageKind?: string
   sourceUrl?: string
   wikidataUrl?: string

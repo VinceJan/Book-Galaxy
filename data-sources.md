@@ -4,7 +4,7 @@
 
 ## 先看正式快照
 
-正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%）。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `1bbbc85c8e4c25c0eef0d2076873a87df1e3d2c3f50458a4129e3ce9693b8ade`；精确数值仍以 manifest 与策展检查器输出为准。
+正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%），其中 6 本使用人工批准并绑定 exact Edition 的封面资产。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `6eaacc96bd72a440fba7188bf64c93ebc9b099f81b9bd121d11e6ad537d2dd02`；精确数值仍以 manifest 与策展检查器输出为准。
 
 正式 v2 的默认目标是 1,000 部中文主标题、内容完整的真实作品。每颗进入星海的书星都必须有可核查中文内容、来源和资格证明；如果某一批来源不能满足硬门槛，构建器会停止，不会用只有书名的记录填充数量。
 
@@ -12,6 +12,7 @@
 
 | 文件 | 作用 | 是否发布 |
 | --- | --- | --- |
+| data/covers/approved-v1.json | 人工批准的 exact Edition 封面、内容哈希、权利复核和生命周期 | 随仓库保存的本地侧车 |
 | data/rich/books.json | 中文富书目、资格证明、主题来源、摘要和来源回链 | 随仓库保存的构建中间快照 |
 | data/rich/eligibility-report.json | 候选接受、拒绝、隔离的审计报告 | 随仓库保存 |
 | data/rich/layout.json | 语义坐标、星体参数、近邻和关系证据 | 构建中间产物 |
@@ -110,14 +111,25 @@ P31 的作用是回答“这个实体是否足以作为正式书星”，不是�
 
 ## 3. Open Library：封面查找与权利边界
 
-可用时，构建器使用 Wikidata 的 P648 Open Library ID 查询 [Open Library Search API](https://openlibrary.org/search.json)，请求作品 key、title 和 cover_i。只有同时满足下列条件才写入 coverUrl：
+一般封面仍由构建器使用 Wikidata 的 P648 Open Library ID 查询 [Open Library Search API](https://openlibrary.org/search.json)，请求作品 key、title 和 cover_i。只有同时满足下列条件才写入 coverUrl：
 
 1. 作品有可靠的 Open Library work ID；
 2. Open Library 返回真实的 cover_i；
 3. 构建器可以生成 HTTPS 的 Covers URL；
 4. coverSourceUrl 指向相应 Open Library work 页面。
 
-封面 URL 的形式为 https://covers.openlibrary.org/b/id/<cover-id>-M.jpg，来源回链为 https://openlibrary.org/works/<work-id>。构建过程只保存远程地址，不批量下载或把图片复制进仓库；没有可靠匹配时，界面使用本地程序化书目牌。
+一般封面 URL 的形式为 https://covers.openlibrary.org/b/id/<cover-id>-M.jpg，来源回链为 https://openlibrary.org/works/<work-id>。构建过程只保存远程地址，不批量下载或把图片复制进仓库；没有可靠匹配时，界面使用本地程序化书目牌。
+
+`data/covers/approved-v1.json` 是独立、确定性、fail-closed 的本地批准侧车。首批 6 条为 Q607112、Q753894、Q70784、Q180736、Q1760054、Q3140506；它们将旧的 work-level `cover_i` 替换为经审计的 Open Library Edition。浏览器使用同一资产的 M 派生图以控制卡片负载，同时在 `coverAsset.imageUrl` 中保留审计过的 L URL，并把 `coverSourceUrl` 指向 exact Edition。侧车保留来源 payload SHA-256、Git blob OID、规范内容 SHA-256、图片 SHA-256、字节数、尺寸、MIME、CORS 证据、provider Work、Edition、权利字段和唯一 `purgeKey`。批准导入只接受 `scripts/import-approved-covers.mjs` 的严格 Git-object 模式：默认从仓库内 `data/covers/provenance/gallery-5de3eff-v1.json` 重新计算固定 commit → tree → blob 对象链、解析目标 path，并核对 Git OID 与 payload SHA 后才能写批准快照；维护者也可在允许的本地 Gallery 仓库上执行同样核验。`--input <file|->` 仅做不写文件的 untrusted candidate 检查，不能产生批准数据。任何 `candidate` 状态、blocklist QID、未来审计时间、重复图片哈希、未知 active provider、失效复核或身份漂移都会被拒绝，不会进入运行时。
+
+当前 Open Library provider policy 版本为 `open-library-cover-policy-v1`，指导页为 https://openlibrary.org/dev/docs/api/covers，服务条款为 https://archive.org/about/terms.php。每条 exact Edition 都带 provider report route、项目移除入口、`reviewedAt`、`reviewVersion` 和六个月 `recheckAfter`；当前复核截止为 `2027-02-28T05:30:00.000Z`。生命周期仅允许 `active`、`quarantined`、`removed`，只有 `active + approved` 能覆盖运行时字段。过期会阻止 active 资产继续发布；已隔离或移除的资产即使超过复核期仍可保留审计记录，但运行时 URL 必须为空。正式检查器在历史 `importedAt` 校验由固定 Git object 重建的 immutable baseline，并在实际当前时间校验已提交 lifecycle snapshot，因此不会把 baseline 的历史 active 状态误当成当前发布状态。
+
+### 封面隔离、移除与重建
+
+1. 通过 `coverAsset.lifecycle.purgeKey` 定位资产，并在 `data/covers/approved-v1.json` 把状态从 `active` 改为 `quarantined`（待核查）或 `removed`（确认移除），同时写入结构化 `lifecycle.transition`：`from: active`、不早于原复核且不晚于当前时间的 `changedAt`、非空 `reason`、当前 `reviewVersion`，以及可选的项目 issue `requestUrl`。通过项目的 [cover removal 表单](https://github.com/VinceJan/Book-Galaxy/issues/new?template=cover-removal.yml) 记录请求；provider 问题使用资产内的 exact report route。
+2. 用 `withApprovedCoversContentHash()` 重新计算侧车 `contentSha256`。不得改写图片审计、来源 payload hash 或复核时间来绕过过期门禁；到期后应完成新的人工复核再生成批准快照，且不要执行网络图片重审作为普通构建副作用。
+3. 运行 `npm run apply:data:covers`，再运行 `npm run build:data:assemble`。隔离或移除的资产仍以完整 `coverAsset` 留在 catalog/ATTRIBUTION 中，但 `coverUrl` 与 `coverSourceUrl` 会清空。
+4. 运行 `npm run check:data:covers` 和 `npm run check`，然后按 `purgeKey` 清理部署/CDN 缓存。blocklist 始终优先于任何批准或生命周期状态。
 
 参考：
 
@@ -187,6 +199,16 @@ scripts/build-semantic-layout.py 在离线构建阶段使用 Sentence Transforme
 python -m pip install -r requirements-data.txt
 ```
 
+批准封面默认从随仓库提交的精简 Git commit/tree/blob 对象链重建，不需要 Gallery checkout，也不会读取 Gallery worktree：
+
+```bash
+node scripts/import-approved-covers.mjs --provenance-fixture data/covers/provenance/gallery-5de3eff-v1.json
+```
+
+本地维护者仍可用 `--git-repo D:/Projects/Book-Gallery --source-revision 5de3efff5b88c2739ea51e44fbf8fb36541ca8d1 --source-path public/data/covers-v1.json` 对照原仓库；两种模式必须产生相同的 immutable source-derived snapshot。
+
+普通文件或 stdin 只能运行 `--input <file|->` 候选检查；该模式固定 `approvable: false`、`writes: 0`，不能写 `approved-v1.json`。
+
 默认的一步流水线：
 
 ```bash
@@ -203,7 +225,7 @@ npm run build:data:assemble
 
 其中：
 
-- build:data:rich 运行 Wikidata 候选、Wikidata 实体/标签、中文维基百科内容和 Open Library 封面元数据 enrichment，输出 data/rich/books.json 和资格报告；
+- build:data:rich 运行 Wikidata 候选、Wikidata 实体/标签、中文维基百科内容和 Open Library 封面元数据 enrichment，再强制应用本地批准侧车，输出 data/rich/books.json 和资格报告；
 - build:data:layout 在本地 CPU 上运行 BGE 中文向量、cosine kNN 和 DensMAP 三维布局，输出 data/rich/layout.json；
 - build:data:assemble 重新校验两份输入，写入 catalog-v2、manifest，并生成 ATTRIBUTION.json。
 
@@ -219,13 +241,14 @@ npm run check:data
 
 ```bash
 npm run check:data:eligibility
+npm run check:data:covers
 npm run check:data:rich
 npm run check:data:layout
 npm run check:data:catalog
 npm run check:data:attribution
 ```
 
-检查内容包括资格策略 fixture、中文摘要字数和占位符、中文题名、主题与 themeProvenance、作者与作品类型、HTTPS 来源和固定修订、布局坐标、语义关系 evidence、关系度数、manifest 覆盖率、catalog SHA-256，以及归属侧车的确定性一致性。
+检查内容包括资格策略 fixture、批准封面来源/内容哈希、blocklist、provider/Edition/图片绑定、权利复核和生命周期、中文摘要字数和占位符、中文题名、主题与 themeProvenance、作者与作品类型、HTTPS 来源和固定修订、布局坐标、语义关系 evidence、关系度数、manifest 覆盖率、catalog SHA-256，以及归属侧车的确定性一致性。
 
 完整发布检查使用：
 

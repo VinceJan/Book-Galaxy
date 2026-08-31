@@ -9,16 +9,21 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   isOpenLibraryCoverUrl,
-  isOpenLibraryWorkUrl,
+  isOpenLibrarySourceUrl,
   isTrustedEndpointUrl,
   isWikipediaRevisionUrl,
   isWikipediaSourceUrl,
   isWikidataUrl,
 } from './lib/source-urls.mjs'
+import {
+  assertApprovedCoverOverlay,
+  assertValidApprovedCovers,
+} from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
 const DEFAULT_MANIFEST = resolve(ROOT, 'public/data/manifest.json')
+const DEFAULT_APPROVED_COVERS = resolve(ROOT, 'data/covers/approved-v1.json')
 const CATALOG_SCHEMA = 'bookshelf-galaxy/catalog-v2'
 const MANIFEST_SCHEMA = 'bookshelf-galaxy/manifest-v2'
 const MIN_SUMMARY_CHINESE = 120
@@ -171,11 +176,13 @@ async function main() {
   const options = parseArgs(process.argv.slice(2))
   const catalogPath = pathValue(options.input || options.catalog, DEFAULT_CATALOG)
   const manifestPath = pathValue(options.manifest, DEFAULT_MANIFEST)
+  const approvedCoversPath = pathValue(options.sidecar, DEFAULT_APPROVED_COVERS)
   const minDegree = Number.parseInt(String(options['min-degree'] || DEFAULT_MIN_DEGREE), 10)
   if (!Number.isInteger(minDegree) || minDegree < 1) throw new Error(`--min-degree 必须是正整数：${minDegree}`)
-  const [catalogBuffer, manifest] = await Promise.all([
+  const [catalogBuffer, manifest, approvedCovers] = await Promise.all([
     readFile(catalogPath),
     readJson(manifestPath, 'v2 manifest'),
+    readJson(approvedCoversPath, '已批准封面侧车'),
   ])
   const catalog = JSON.parse(catalogBuffer.toString('utf8'))
   const catalogObject = isObject(catalog) ? catalog : {}
@@ -194,6 +201,8 @@ async function main() {
   if (manifestObject.relationCount !== catalogObject.relations?.length) errors.push('manifest.relationCount 不一致')
 
   const books = Array.isArray(catalogObject.books) ? catalogObject.books : []
+  assertValidApprovedCovers(approvedCovers, { catalogBooks: books })
+  assertApprovedCoverOverlay(books, approvedCovers)
   const relations = Array.isArray(catalogObject.relations) ? catalogObject.relations : []
   const ids = new Set()
   const pageIds = new Set()
@@ -275,7 +284,7 @@ async function main() {
       if (!isOpenLibraryCoverUrl(book.coverUrl)) errors.push(`${prefix}.coverUrl 必须是 covers.openlibrary.org 的固定 JPG 封面链接`)
       else coverCount += 1
     }
-    if (book.coverSourceUrl && !isOpenLibraryWorkUrl(book.coverSourceUrl)) errors.push(`${prefix}.coverSourceUrl 必须是 Open Library works 链接`)
+    if (book.coverSourceUrl && !isOpenLibrarySourceUrl(book.coverSourceUrl)) errors.push(`${prefix}.coverSourceUrl 必须是 Open Library work 或 exact Edition 链接`)
     if (!Array.isArray(book.position) || book.position.length !== 3) errors.push(`${prefix}.position 必须包含 3 个坐标`)
     else book.position.forEach((value, axis) => finite(value, `${prefix}.position[${axis}]`, errors, { min: -150, max: 150 }))
     finite(book.localDensity, `${prefix}.localDensity`, errors, { min: 0, max: 1 })
