@@ -32,11 +32,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
-import type { Book } from '../types'
+import type { Book, MapRegion } from '../types'
+import { labelLevelFor, layoutRegionLabels, type LabelCandidate, type LabelLevel } from './regionLabelLayout'
 import {
   gaussianRandom,
   hashString,
   positionForBook,
+  robustCenter,
   selectSemanticRegions,
   seededRandom,
   visualAttributesForBook,
@@ -56,6 +58,9 @@ export interface GalaxyEngineCallbacks {
 }
 
 interface Flight {
+  ceremony?: boolean
+  arcLift?: number
+  arrival?: Vector3
   startedAt: number
   duration: number
   fromCamera: Vector3
@@ -66,9 +71,13 @@ interface Flight {
 }
 
 interface SemanticRegionLabel {
+  id: string
+  size: number
   sprite: Sprite
   material: SpriteMaterial
   texture: CanvasTexture
+  aspect: number
+  detail: { sprite: Sprite; material: SpriteMaterial; texture: CanvasTexture; aspect: number }
   anchor: Vector3
 }
 
@@ -212,13 +221,21 @@ export class GalaxyEngine {
   private disposed = false
   private elapsed = 0
   private readyTimer?: number
+  private readonly regions: MapRegion[]
+  private labelLevel?: LabelLevel
+  private focusRegionId?: string
+  private bookOpen = false
+  private trailLines: Line[] = []
+  private arrivalFlash?: { sprite: Sprite; material: SpriteMaterial; texture: CanvasTexture; startedAt: number }
 
   constructor(
     container: HTMLElement,
     books: Book[],
     callbacks: GalaxyEngineCallbacks,
     reducedMotion = false,
+    options: { regions?: MapRegion[] } = {},
   ) {
+    this.regions = options.regions ?? []
     this.container = container
     this.books = books
     this.callbacks = callbacks
@@ -268,7 +285,7 @@ export class GalaxyEngine {
     this.scene.add(this.nebula)
     this.dust = this.createDust()
     if (this.dust) this.scene.add(this.dust)
-    this.createSemanticRegionLabels()
+    this.createLabelsWhenFontsReady()
 
     this.composer = new EffectComposer(this.renderer)
     this.composer.addPass(new RenderPass(this.scene, this.camera))
@@ -507,100 +524,158 @@ export class GalaxyEngine {
   }
 
   private createSemanticRegionLabels(): void {
-    const regions = selectSemanticRegions(
-      this.books,
-      (book) => {
-        const position = this.positions.get(book.id)
-        return position ? [position.x, position.y, position.z] : undefined
-      },
-      8,
-    )
+    const positionOf = (book: Book) => {
+      const position = this.positions.get(book.id)
+      return position ? [position.x, position.y, position.z] as [number, number, number] : undefined
+    }
+    const booksById = new Map(this.books.map((book) => [book.id, book]))
+    const named = this.regions.length > 0
+      ? this.regions.map((region) => ({
+          id: region.id,
+          label: region.name,
+          subtitle: region.subtitle ?? '',
+          count: region.bookIds.length,
+          center: robustCenter(region.bookIds.flatMap((id) => {
+            const book = booksById.get(id)
+            const point = book ? positionOf(book) : undefined
+            return point ? [point] : []
+          })),
+        }))
+      : selectSemanticRegions(this.books, positionOf, 8).map((region) => ({
+          id: region.label,
+          label: region.label,
+          subtitle: '',
+          count: region.count,
+          center: region.center,
+        }))
 
-    regions.forEach((region, index) => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 720
-      canvas.height = 180
-      const context = canvas.getContext('2d')
-      if (!context) return
-      context.clearRect(0, 0, canvas.width, canvas.height)
-      context.textBaseline = 'middle'
-      context.fillStyle = 'rgba(216, 211, 197, 0.84)'
-      context.fillRect(24, 48, 2, 82)
-      context.fillStyle = 'rgba(169, 147, 96, 0.62)'
-      context.fillRect(24, 48, 22, 2)
-      context.font = '600 34px "Noto Serif SC", "Songti SC", "STSong", serif'
-      context.fillStyle = 'rgba(216, 211, 197, 0.9)'
-      context.fillText(region.label, 64, 76)
-      context.font = '500 18px "IBM Plex Mono", "SFMono-Regular", monospace'
-      context.fillStyle = 'rgba(138, 164, 159, 0.84)'
-      context.fillText(`书星 × ${String(region.count).padStart(3, '0')}`, 66, 122)
-
-      const texture = new CanvasTexture(canvas)
-      texture.colorSpace = SRGBColorSpace
-      texture.minFilter = LinearFilter
-      texture.magFilter = LinearFilter
-      texture.needsUpdate = true
-      const material = new SpriteMaterial({
-        map: texture,
-        color: '#d8d3c5',
-        transparent: true,
-        opacity: 0,
-        depthTest: false,
-        depthWrite: false,
-      })
-      const sprite = new Sprite(material)
+    named.forEach((region) => {
+      if (!region.center.every(Number.isFinite)) return
+      const name = this.makeLabelSprite(region.label, '600 44px "Noto Serif SC", "Songti SC", "STSong", serif', 'rgba(216, 211, 197, 0.92)', true)
+      const detailText = region.subtitle
+        ? `${region.subtitle}  ·  书星 × ${String(region.count).padStart(3, '0')}`
+        : `书星 × ${String(region.count).padStart(3, '0')}`
+      const detail = this.makeLabelSprite(detailText, '500 24px "IBM Plex Mono", "Noto Sans SC", monospace', 'rgba(138, 164, 159, 0.9)', false)
       const anchor = new Vector3(...region.center)
-      const angle = (hashString(region.label) % 628) / 100
-      const offset = 6 + index * 1.8
-      sprite.position.copy(anchor).add(new Vector3(
-        Math.cos(angle) * offset,
-        (index % 3 - 1) * 3.4,
-        Math.sin(angle) * offset,
-      ))
-      sprite.scale.set(36, 9, 1)
-      sprite.renderOrder = 3
-      this.scene.add(sprite)
-      this.semanticRegionLabels.push({ sprite, material, texture, anchor })
+      name.sprite.position.copy(anchor)
+      detail.sprite.position.copy(anchor)
+      this.scene.add(name.sprite, detail.sprite)
+      this.semanticRegionLabels.push({
+        id: region.id,
+        size: region.count,
+        sprite: name.sprite,
+        material: name.material,
+        texture: name.texture,
+        aspect: name.aspect,
+        detail,
+        anchor,
+      })
     })
   }
+
+  /** Region labels are drawn into canvases, so wait (briefly) for the web fonts. */
+  private createLabelsWhenFontsReady(): void {
+    const fonts = typeof document !== 'undefined' ? document.fonts : undefined
+    if (!fonts?.load) {
+      this.createSemanticRegionLabels()
+      return
+    }
+    const sample = this.regions.map((region) => `${region.name}${region.subtitle ?? ''}`).join('') || '书星'
+    const ready = Promise.all([
+      fonts.load('600 44px "BG Display"', sample),
+      fonts.load('400 24px "BG Kai"', sample),
+    ])
+    const timeout = new Promise((resolve) => window.setTimeout(resolve, 1500))
+    void Promise.race([ready, timeout]).catch(() => undefined).then(() => {
+      if (!this.disposed) this.createSemanticRegionLabels()
+    })
+  }
+
+  private makeLabelSprite(text: string, font: string, color: string, rule: boolean): { sprite: Sprite; material: SpriteMaterial; texture: CanvasTexture; aspect: number } {
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    const height = rule ? 72 : 40
+    let width = 32
+    if (context) {
+      context.font = font
+      width = Math.ceil(context.measureText(text).width) + (rule ? 40 : 8)
+    }
+    canvas.width = Math.max(32, width)
+    canvas.height = height
+    if (context) {
+      context.font = font
+      context.textBaseline = 'middle'
+      context.textAlign = 'center'
+      if (rule) {
+        context.fillStyle = 'rgba(169, 147, 96, 0.62)'
+        context.fillRect(canvas.width / 2 - 11, height - 4, 22, 2)
+      }
+      context.fillStyle = color
+      context.fillText(text, canvas.width / 2, rule ? height / 2 - 4 : height / 2)
+    }
+    const texture = new CanvasTexture(canvas)
+    texture.colorSpace = SRGBColorSpace
+    texture.minFilter = LinearFilter
+    texture.magFilter = LinearFilter
+    texture.needsUpdate = true
+    const material = new SpriteMaterial({ map: texture, color: '#d8d3c5', transparent: true, opacity: 0, depthTest: false, depthWrite: false })
+    const sprite = new Sprite(material)
+    sprite.renderOrder = 3
+    return { sprite, material, texture, aspect: canvas.width / canvas.height }
+  }
+
+  /** Region labels are screen-constant: this many CSS pixels tall. */
+  private static readonly LABEL_PX = 24
+  private static readonly DETAIL_PX = 13
 
   private updateSemanticRegionLabels(): void {
     const width = Math.max(1, this.container.clientWidth)
     const height = Math.max(1, this.container.clientHeight)
-    const occupied: Array<{ left: number; right: number; top: number; bottom: number }> = []
-    this.semanticRegionLabels.forEach(({ sprite, material }) => {
-      const distance = this.camera.position.distanceTo(sprite.position)
-      const normalized = Math.max(0, Math.min(1, (distance - 72) / 88))
-      const eased = normalized * normalized * (3 - 2 * normalized)
-      const scale = 0.9 + Math.min(0.34, distance / 520)
-      sprite.scale.set(36 * scale, 9 * scale, 1)
-
-      const projected = sprite.position.clone().project(this.camera)
-      const screenX = (projected.x * 0.5 + 0.5) * width
-      const screenY = (-projected.y * 0.5 + 0.5) * height
-      const halfWidth = Math.min(138, 102 * scale)
-      const halfHeight = Math.min(38, 27 * scale)
-      const box = {
-        left: screenX - halfWidth,
-        right: screenX + halfWidth,
-        top: screenY - halfHeight,
-        bottom: screenY + halfHeight,
+    const distance = this.camera.position.distanceTo(this.controls.target)
+    this.labelLevel = labelLevelFor(distance, this.labelLevel, this.bookOpen)
+    const worldPerPixel = (depth: number) => (2 * Math.max(1, depth) * Math.tan((this.camera.fov * Math.PI) / 360)) / height
+    const phone = width < 760
+    const reserved = [
+      { left: 0, top: 0, right: width, bottom: 70 },
+      { left: 0, top: height - 44, right: width, bottom: height },
+      ...(phone ? [{ left: 0, top: 70, right: width, bottom: 150 }] : [{ left: 0, top: height - 150, right: 320, bottom: height }]),
+    ]
+    const candidates: LabelCandidate[] = this.semanticRegionLabels.map((label) => {
+      const depth = this.camera.position.distanceTo(label.anchor)
+      const unit = worldPerPixel(depth)
+      label.sprite.scale.set(GalaxyEngine.LABEL_PX * label.aspect * unit, GalaxyEngine.LABEL_PX * unit, 1)
+      label.detail.sprite.scale.set(GalaxyEngine.DETAIL_PX * label.detail.aspect * unit, GalaxyEngine.DETAIL_PX * unit, 1)
+      label.detail.sprite.position.copy(label.anchor).addScaledVector(this.camera.up, -(GalaxyEngine.LABEL_PX * 0.5 + GalaxyEngine.DETAIL_PX) * unit)
+      const projected = label.anchor.clone().project(this.camera)
+      const showDetail = this.labelLevel === 1
+      const boxWidth = Math.max(GalaxyEngine.LABEL_PX * label.aspect, showDetail ? GalaxyEngine.DETAIL_PX * label.detail.aspect : 0)
+      const boxHeight = GalaxyEngine.LABEL_PX + (showDetail ? GalaxyEngine.DETAIL_PX + 6 : 0)
+      return {
+        id: label.id,
+        x: (projected.x * 0.5 + 0.5) * width,
+        y: (-projected.y * 0.5 + 0.5) * height + (showDetail ? (GalaxyEngine.DETAIL_PX + 6) / 2 : 0),
+        width: boxWidth,
+        height: boxHeight,
+        inFront: projected.z > -1 && projected.z < 1,
+        size: label.size,
+        focused: label.id === this.focusRegionId,
       }
-      const onScreen = projected.z > -1 && projected.z < 1
-        // Region labels are only shown whole: a half-clipped serif label at
-        // the viewport edge reads as a rendering fault, especially on phones.
-        && box.left >= 8 && box.right <= width - 8
-        && box.top >= 18 && box.bottom <= height - 18
-      const overlaps = occupied.some((other) => !(box.right + 12 < other.left
-        || box.left - 12 > other.right
-        || box.bottom + 10 < other.top
-        || box.top - 10 > other.bottom))
-      if (onScreen && !overlaps && eased > 0.02) occupied.push(box)
-      const targetOpacity = onScreen && !overlaps ? eased * 0.74 : 0
-      material.opacity = this.reducedMotion
-        ? targetOpacity
-        : material.opacity + (targetOpacity - material.opacity) * 0.14
     })
+    const placements = layoutRegionLabels(candidates, { width, height, reserved }, this.labelLevel)
+    placements.forEach((placement, index) => {
+      const label = this.semanticRegionLabels[index]
+      const ease = (material: SpriteMaterial, target: number) => {
+        material.opacity = this.reducedMotion ? target : material.opacity + (target - material.opacity) * 0.14
+        material.visible = material.opacity > 0.01
+      }
+      ease(label.material, placement.opacity)
+      ease(label.detail.material, placement.showSubtitle ? placement.opacity * 0.9 : 0)
+    })
+  }
+
+  setRegionFocus(regionId: string | undefined, bookOpen: boolean): void {
+    this.focusRegionId = regionId
+    this.bookOpen = bookOpen
   }
 
   private bindEvents(): void {
@@ -892,6 +967,7 @@ export class GalaxyEngine {
     }
     this.updateFlight(performance.now())
     this.updateRelationBeacon()
+    this.updateArrivalFlash(performance.now())
     this.updateSemanticRegionLabels()
     this.controls.update()
     if (this.needsPick) this.pick()
@@ -901,10 +977,16 @@ export class GalaxyEngine {
   private updateFlight(now: number): void {
     if (!this.flight) return
     const progress = Math.min(1, (now - this.flight.startedAt) / this.flight.duration)
-    const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2
+    // Jumps use a quintic ease (slow lift-off, long glide, soft landing) and
+    // an arc above the straight line so the reader feels the distance.
+    const eased = this.flight.ceremony
+      ? (progress < 0.5 ? 16 * progress ** 5 : 1 - (-2 * progress + 2) ** 5 / 2)
+      : progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2
     this.camera.position.lerpVectors(this.flight.fromCamera, this.flight.toCamera, eased)
+    if (this.flight.arcLift) this.camera.position.addScaledVector(this.camera.up, Math.sin(Math.PI * eased) * this.flight.arcLift)
     this.controls.target.lerpVectors(this.flight.fromTarget, this.flight.toTarget, eased)
     if (progress >= 1) {
+      if (this.flight.ceremony && this.flight.arrival) this.spawnArrivalFlash(this.flight.arrival)
       const resolve = this.flight.resolve
       this.flight = undefined
       this.controls.enabled = true
@@ -944,7 +1026,7 @@ export class GalaxyEngine {
     attribute.needsUpdate = true
   }
 
-  async focusBook(id: string, duration = 1_350): Promise<boolean> {
+  async focusBook(id: string, duration = 1_350, options: { ceremony?: boolean } = {}): Promise<boolean> {
     if (this.disposed) return false
     const target = this.positions.get(id)
     if (!target) return false
@@ -975,7 +1057,11 @@ export class GalaxyEngine {
     }
     this.controls.enabled = false
     return new Promise<boolean>((resolve) => {
+      const travelled = this.camera.position.distanceTo(toCamera)
       this.flight = {
+        ceremony: options.ceremony,
+        arcLift: options.ceremony ? Math.min(38, travelled * 0.22) : 0,
+        arrival: target.clone(),
         startedAt: performance.now(),
         duration,
         fromCamera: this.camera.position.clone(),
@@ -1032,6 +1118,82 @@ export class GalaxyEngine {
     this.relationCurve = undefined
   }
 
+  /** Faint lines for the reader's earlier trails ("我的星系"). Newest is brightest. */
+  setTrails(trails: readonly (readonly string[])[]): void {
+    this.trailLines.forEach((line) => {
+      this.scene.remove(line)
+      line.geometry.dispose()
+      ;(line.material as LineBasicMaterial).dispose()
+    })
+    this.trailLines = []
+    trails.forEach((ids, index) => {
+      const points = ids.map((id) => this.positions.get(id)).filter((point): point is Vector3 => Boolean(point))
+      if (points.length < 2) return
+      const curve = new CatmullRomCurve3(points.map((point) => point.clone()), false, 'centripetal')
+      const geometry = new BufferGeometry().setFromPoints(curve.getPoints(Math.min(400, points.length * 32)))
+      const material = new LineBasicMaterial({
+        color: '#8aa49f',
+        transparent: true,
+        opacity: 0.12 + 0.18 * ((index + 1) / trails.length),
+        blending: AdditiveBlending,
+        depthWrite: false,
+      })
+      const line = new Line(geometry, material)
+      line.renderOrder = 1
+      this.scene.add(line)
+      this.trailLines.push(line)
+    })
+  }
+
+  private spawnArrivalFlash(position: Vector3): void {
+    if (this.reducedMotion) return
+    this.clearArrivalFlash()
+    const canvas = document.createElement('canvas')
+    canvas.width = 128
+    canvas.height = 128
+    const context = canvas.getContext('2d')
+    if (context) {
+      const ring = context.createRadialGradient(64, 64, 30, 64, 64, 62)
+      ring.addColorStop(0, 'rgba(216, 211, 197, 0)')
+      ring.addColorStop(0.72, 'rgba(216, 200, 150, 0.9)')
+      ring.addColorStop(1, 'rgba(168, 148, 96, 0)')
+      context.fillStyle = ring
+      context.fillRect(0, 0, 128, 128)
+      const core = context.createRadialGradient(64, 64, 0, 64, 64, 22)
+      core.addColorStop(0, 'rgba(255, 250, 235, 0.95)')
+      core.addColorStop(1, 'rgba(255, 250, 235, 0)')
+      context.fillStyle = core
+      context.fillRect(0, 0, 128, 128)
+    }
+    const texture = new CanvasTexture(canvas)
+    texture.colorSpace = SRGBColorSpace
+    const material = new SpriteMaterial({ map: texture, transparent: true, opacity: 0.9, blending: AdditiveBlending, depthWrite: false, depthTest: false })
+    const sprite = new Sprite(material)
+    sprite.position.copy(position)
+    sprite.renderOrder = 4
+    this.scene.add(sprite)
+    this.arrivalFlash = { sprite, material, texture, startedAt: performance.now() }
+  }
+
+  private updateArrivalFlash(now: number): void {
+    const flash = this.arrivalFlash
+    if (!flash) return
+    const progress = Math.min(1, (now - flash.startedAt) / 950)
+    const eased = 1 - (1 - progress) ** 3
+    const size = 1.5 + eased * 9
+    flash.sprite.scale.set(size, size, 1)
+    flash.material.opacity = 0.9 * (1 - progress) ** 1.6
+    if (progress >= 1) this.clearArrivalFlash()
+  }
+
+  private clearArrivalFlash(): void {
+    if (!this.arrivalFlash) return
+    this.scene.remove(this.arrivalFlash.sprite)
+    this.arrivalFlash.material.dispose()
+    this.arrivalFlash.texture.dispose()
+    this.arrivalFlash = undefined
+  }
+
   resetView(): void {
     this.cancelFlight()
     this.clearRelation()
@@ -1056,11 +1218,15 @@ export class GalaxyEngine {
     this.timer.dispose()
     this.cancelFlight()
     this.clearRelation()
-    this.semanticRegionLabels.forEach(({ sprite, material, texture }) => {
-      this.scene.remove(sprite)
+    this.semanticRegionLabels.forEach(({ sprite, material, texture, detail }) => {
+      this.scene.remove(sprite, detail.sprite)
       material.dispose()
       texture.dispose()
+      detail.material.dispose()
+      detail.texture.dispose()
     })
+    this.setTrails([])
+    this.clearArrivalFlash()
     this.semanticRegionLabels.length = 0
     this.resizeObserver?.disconnect()
     window.removeEventListener('keydown', this.handleKeyDown)

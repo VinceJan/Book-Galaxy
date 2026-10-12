@@ -159,7 +159,7 @@ function median(values: readonly number[]): number {
   return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) * 0.5 : sorted[middle]
 }
 
-function robustCenter(points: readonly Point3[]): Point3 {
+export function robustCenter(points: readonly Point3[]): Point3 {
   return [
     median(points.map((point) => point[0])),
     median(points.map((point) => point[1])),

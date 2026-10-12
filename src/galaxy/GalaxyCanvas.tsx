@@ -1,9 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import type { Book } from '../types'
+import type { Book, MapRegion } from '../types'
 import { GalaxyEngine } from './GalaxyEngine'
 
 export interface GalaxyCanvasHandle {
-  focusBook: (id: string, duration?: number) => Promise<boolean | undefined>
+  focusBook: (id: string, duration?: number, options?: { ceremony?: boolean }) => Promise<boolean | undefined>
   focusStage: () => void
   revealRelation: (sourceId: string, targetId: string) => void
   clearRelation: () => void
@@ -12,6 +12,10 @@ export interface GalaxyCanvasHandle {
 
 interface GalaxyCanvasProps {
   books: Book[]
+  regions?: MapRegion[]
+  trails?: string[][]
+  focusRegionId?: string
+  bookOpen?: boolean
   emphasisIds: string[]
   keyboardEnabled: boolean
   reducedMotion: boolean
@@ -22,7 +26,7 @@ interface GalaxyCanvasProps {
 }
 
 export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(function GalaxyCanvas(
-  { books, emphasisIds, keyboardEnabled, reducedMotion, onHover, onSelect, onReady, onError },
+  { books, regions, trails, focusRegionId, bookOpen = false, emphasisIds, keyboardEnabled, reducedMotion, onHover, onSelect, onReady, onError },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -44,6 +48,7 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
           onError: (...args) => callbacksRef.current.onError(...args),
         },
         reducedMotion,
+        { regions },
       )
       engineRef.current = engine
       return () => {
@@ -53,7 +58,15 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
     } catch (error) {
       callbacksRef.current.onError(error instanceof Error ? error.message : '星海初始化失败')
     }
-  }, [books])
+  }, [books, regions])
+
+  useEffect(() => {
+    engineRef.current?.setTrails(trails ?? [])
+  }, [trails, books, regions])
+
+  useEffect(() => {
+    engineRef.current?.setRegionFocus(focusRegionId, bookOpen)
+  }, [focusRegionId, bookOpen, books, regions])
 
   useEffect(() => {
     engineRef.current?.setEmphasis(emphasisIds)
@@ -64,7 +77,7 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
   }, [reducedMotion])
 
   useImperativeHandle(ref, () => ({
-    focusBook: async (id, duration) => engineRef.current?.focusBook(id, duration),
+    focusBook: async (id, duration, options) => engineRef.current?.focusBook(id, duration, options),
     focusStage: () => containerRef.current?.focus({ preventScroll: true }),
     revealRelation: (sourceId, targetId) => engineRef.current?.revealRelation(sourceId, targetId),
     clearRelation: () => engineRef.current?.clearRelation(),
