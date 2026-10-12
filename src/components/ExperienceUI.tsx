@@ -2,6 +2,7 @@ import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, t
 import type { Book, BookRelation, MapRegion } from '../types'
 import { otherBookId } from '../lib/galaxyMath'
 import { generativeCover } from '../lib/generativeCover'
+import { ensureLibrarianFont } from '../lib/lazyFonts'
 import { offlineAnswer, offlineBookNote, offlineQuestions, offlineTransitionNote, type OfflineQuestion } from '../ai/offlineCurator'
 
 function Icon({ name }: { name: 'sound' | 'mute' | 'expand' | 'motion' | 'close' | 'arrow' | 'signal' }) {
@@ -889,10 +890,12 @@ export function directionCopy(
   target?: Book,
   index = 0,
   total = 3,
-): { band: string; title: string; description: string } {
-  const targetHint = target ? `《${maskedTitle(target.title)}》` : '一颗待显影书星'
+): { band: string; title: string; description: string; reveal?: string } {
   const relativeBand = total >= 3 ? index : total === 2 ? index * 2 : 1
   const band = relativeBand === 0 ? '近' : relativeBand === 1 ? '桥' : '远'
+  // The far option keeps its destination secret on purpose, and says so.
+  const hidden = band === '远' && relation.provenance !== 'reading-hypothesis'
+  const targetHint = target ? (hidden ? '一颗未名远星' : `《${target.title}》`) : '一颗待显影书星'
   const routeCopy = {
     近: '留在相近的书云，看熟悉的方向如何变化。',
     桥: '越过一层书云，让另一种目光接住这段航行。',
@@ -901,6 +904,7 @@ export function directionCopy(
   return {
     band,
     title: target ? `向 ${targetHint} 偏航` : '向远方偏航',
+    reveal: hidden && target ? `抵达后揭晓书名 · ${[...maskedTitle(target.title)][0]}字开头` : undefined,
     description: relation.provenance === 'reading-hypothesis'
       ? relationReading(relation, undefined, target) || '一条尚未命名的阅读假说。'
       : routeCopy,
@@ -1041,6 +1045,7 @@ export function DetourCompass({
               <button key={`${relation.source}:${relation.target}`} type="button" onClick={() => onChoose(relation)}>
                 <small>0{index + 1} / {copy.band}{relation.provenance === 'reading-hypothesis' ? ` · ${relation.kind}` : ''}</small>
                 <strong>{copy.title}</strong>
+                {copy.reveal && <em className="direction-reveal">{copy.reveal}</em>}
                 <span>{copy.description}</span>
                 <Icon name="arrow" />
               </button>
@@ -1096,14 +1101,22 @@ export function JourneyRail({ books, onSelect, myGalaxy }: {
   onSelect?: (book: Book) => void
   myGalaxy?: { trails: number; stars: number; visible: boolean; onToggle: () => void }
 }) {
+  const railRef = useRef<HTMLOListElement>(null)
+  // On phones the rail scrolls sideways; keep the newest stop in view.
+  useEffect(() => {
+    const rail = railRef.current
+    if (rail && rail.scrollWidth > rail.clientWidth) rail.scrollTo({ left: rail.scrollWidth, behavior: 'smooth' })
+  }, [books.length])
   if (books.length === 0) return null
   const visibleBooks = books.slice(-6)
   const omitted = books.length - visibleBooks.length
   const progress = books.length >= 3 ? '可留星图' : `再走 ${3 - books.length} 本可留星图`
+  // Past three stops the rail counts stops instead of showing "4/3".
+  const count = books.length >= 3 ? `${books.length} 站` : `${books.length}/3`
   return (
     <aside className="journey-rail" aria-label="本次航迹">
-      <small>本次航迹 · {books.length}/3 · {progress}</small>
-      <ol>
+      <small>本次航迹 · {count} · {progress}</small>
+      <ol ref={railRef}>
         {omitted > 0 && <li className="omitted"><span>此前 {omitted} 站 ···</span></li>}
         {visibleBooks.map((book, index) => {
           const isCurrent = index === visibleBooks.length - 1
@@ -1159,6 +1172,7 @@ export function LibrarianBand({
   const [asked, setAsked] = useState<OfflineQuestion>()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const { dialogRef, handleKeyDown } = useModalFocusTrap(headingRef, onClose, '[data-overlay-trigger="librarian"]')
+  useEffect(() => ensureLibrarianFont(), [])
 
   const provenance = relation?.provenance === 'catalog'
     ? '书云相逢'
