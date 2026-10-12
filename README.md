@@ -61,6 +61,7 @@ npm ci && npm run dev
 ## 进一步阅读
 
 - [技术手册](docs/architecture.md)
+- [星海地名](docs/region-naming.md)
 - [数据与来源](data-sources.md)
 - [数据归属与许可](DATA_LICENSE.md)
 - [MIT License](LICENSE)

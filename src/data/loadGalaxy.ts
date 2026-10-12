@@ -1,4 +1,4 @@
-import type { Book, BookRelation, BookPosition, BookShape, RelationKind, BookEligibility, BookInstanceType } from '../types'
+import type { MapRegion, Book, BookRelation, BookPosition, BookShape, RelationKind, BookEligibility, BookInstanceType } from '../types'
 import { chooseRelations, otherBookId } from '../lib/galaxyMath'
 import { buildCuratedRelationsWithStats, type CuratedRelationBuildStats } from './curatedThreads'
 
@@ -84,6 +84,7 @@ interface CatalogPayload {
   layoutModel?: string | null
   books?: CatalogBook[]
   relations?: CatalogEdge[]
+  regions?: MapRegion[]
 }
 
 const FORMAL_BOOK_COUNT = 1_000
@@ -138,6 +139,8 @@ export interface GalaxyData {
   /** Counts from the editorial adapter; absent only for pre-v2 fixtures. */
   curatedRelationStats?: CuratedRelationBuildStats
   catalogEdges: CatalogEdge[]
+  /** Named map regions; empty for snapshots built before regions existed. */
+  regions?: MapRegion[]
   relationCount: number
   source: string
   generatedAt?: string
@@ -212,6 +215,7 @@ export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> 
     curatedRelations: curatedBuild.relations,
     curatedRelationStats: curatedBuild.stats,
     catalogEdges,
+    regions: (payload.regions ?? []).filter((region) => region.id && region.name && Array.isArray(region.bookIds)),
     relationCount: catalogEdges.length,
     source: payload.source ?? '中文富书目快照',
     generatedAt: payload.generatedAt,

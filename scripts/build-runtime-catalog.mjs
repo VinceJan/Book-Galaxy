@@ -14,6 +14,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 import { bookHook } from './lib/book-hook.mjs'
+import { buildRegions } from './lib/regions.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const INPUT = resolve(ROOT, 'public/data/catalog.json')
@@ -103,6 +104,28 @@ function slimEdge(edge) {
 
 const sourceText = await readFile(INPUT, 'utf8')
 const catalog = JSON.parse(sourceText)
+const names = JSON.parse(await readFile(resolve(ROOT, 'data/regions/names.json'), 'utf8')).regions
+const regions = buildRegions(catalog.books).map((region) => {
+  const named = names[region.key]
+  if (!named?.name || !named?.question) {
+    console.error(`Region ${region.key} (${region.size} books: ${region.examples.slice(0, 5).join('、')}) has no name in data/regions/names.json`)
+    process.exit(1)
+  }
+  return {
+    id: region.key,
+    name: named.name,
+    subtitle: named.subtitle,
+    question: named.question,
+    size: region.size,
+    density: round(region.density, 3),
+    bookIds: region.bookIds,
+  }
+})
+const unused = Object.keys(names).filter((key) => !regions.some((region) => region.id === key))
+if (unused.length) {
+  console.error(`Stale region names (no matching region): ${unused.join(', ')}`)
+  process.exit(1)
+}
 const runtime = {
   schemaVersion: catalog.schemaVersion,
   runtimeOf: 'catalog.json',
@@ -112,6 +135,7 @@ const runtime = {
   layoutModel: catalog.layoutModel,
   books: catalog.books.map(slimBook),
   relations: catalog.relations.map(slimEdge),
+  regions,
 }
 const text = `${JSON.stringify(runtime)}\n`
 const kb = (value) => `${(value / 1024).toFixed(0)} KB`
@@ -119,6 +143,7 @@ const report = {
   audited: { raw: kb(Buffer.byteLength(sourceText)), gzip: kb(gzipSync(sourceText).length) },
   runtime: { raw: kb(Buffer.byteLength(text)), gzip: kb(gzipSync(text).length) },
   hooks: runtime.books.filter((book) => book.hook).length,
+  regions: regions.map((region) => `${region.name}(${region.size})`).join(' '),
 }
 
 if (check) {

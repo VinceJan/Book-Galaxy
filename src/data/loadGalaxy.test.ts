@@ -98,6 +98,9 @@ describe('catalog relation resolver', () => {
     expect(data.curatedRelations).toHaveLength(3_002)
     expect(data.books.every((book) => Boolean(book.hook))).toBe(true)
     expect(data.books[0].provenance?.wikipediaRevisionUrl).toContain('oldid=')
+    expect(data.regions).toHaveLength(12)
+    expect(new Set(data.regions?.flatMap((region) => region.bookIds)).size).toBe(1_000)
+    expect(data.regions?.every((region) => region.name && region.question)).toBe(true)
   })
 
   it('loads the complete formal snapshot and retains audited provenance', async () => {
