@@ -305,3 +305,11 @@ describe('product depth - contract', () => {
     expect(app).toContain('journey.steps.length === journeyBooks.length')
   })
 })
+
+describe('self-hosted covers', () => {
+  it('accepts only generated cover paths and wiki file pages as credits', () => {
+    expect(safeExternalUrl('covers/Q607112.webp', 'cover')).toMatch(/covers\/Q607112\.webp$/)
+    expect(safeExternalUrl('covers/../x.webp', 'cover')).toBeUndefined()
+    expect(safeExternalUrl('https://commons.wikimedia.org/wiki/File:A.jpg', 'coverSource')).toBeDefined()
+  })
+})

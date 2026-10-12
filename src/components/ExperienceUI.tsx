@@ -367,6 +367,8 @@ type ExternalUrlKind = 'source' | 'wikipediaRevision' | 'wikidata' | 'cover' | '
 
 export function safeExternalUrl(value: string | null | undefined, kind: ExternalUrlKind = 'source'): string | undefined {
   if (!value) return undefined
+  // Self-hosted covers (scripts/build-covers.py) are plain relative paths.
+  if (kind === 'cover' && /^covers\/Q\d+\.webp$/u.test(value)) return `${import.meta.env.BASE_URL}${value}`
   try {
     const url = new URL(value)
     if (url.protocol !== 'https:' || url.username || url.password || url.port || url.hash) return undefined
@@ -383,6 +385,7 @@ export function safeExternalUrl(value: string | null | undefined, kind: External
         : undefined
     }
     if (kind === 'coverSource') {
+      if ((host === 'commons.wikimedia.org' || /^[a-z-]+\.wikipedia\.org$/u.test(host)) && /^\/wiki\/File:[^/]+$/u.test(path) && !url.search) return url.toString()
       return host === 'openlibrary.org'
         && !rawPath.includes('%')
         && /^\/(?:works\/OL\d+W|books\/OL\d+M)$/u.test(rawPath)

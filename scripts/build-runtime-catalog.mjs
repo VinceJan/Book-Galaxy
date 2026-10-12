@@ -16,6 +16,8 @@ import { gzipSync } from 'node:zlib'
 import { bookHook, bookNotes } from './lib/book-hook.mjs'
 
 /** Lead whose opening 《title》 names a different work (a data error upstream). */
+const COVERS = JSON.parse(await readFile(new URL('../data/covers.json', import.meta.url), 'utf8'))
+const ALIASES = JSON.parse(await readFile(new URL('../data/search-aliases.json', import.meta.url), 'utf8'))
 export const leadIssues = new Map()
 // Hand-checked: the Wikipedia lead fetched for this id describes a sibling work.
 const CONFIRMED_MISMATCH = new Set(JSON.parse(await readFile(new URL('../data/issues/lead-confirmed.json', import.meta.url), 'utf8')))
@@ -52,7 +54,6 @@ function slimBook(book) {
     id: book.id,
     title: book.title,
     wikipediaTitle: book.wikipediaTitle,
-    aliases: book.aliases,
     instanceOf: book.instanceOf?.map(({ id, label }) => ({ id, label })),
     eligibility: book.eligibility ? { accepted: book.eligibility.accepted, reason: book.eligibility.status ?? '' } : undefined,
     originalTitle: book.originalTitle,
@@ -72,9 +73,11 @@ function slimBook(book) {
     sourceUrl: book.sourceUrl,
     wikidataUrl: book.wikidataUrl,
     openLibraryId: book.openLibraryId,
-    coverUrl: book.coverUrl,
-    coverSourceUrl: book.coverSourceUrl,
-    imageKind: book.imageKind,
+    // Self-hosted 400px WebP covers (scripts/build-covers.py); credits in public/covers/ATTRIBUTION.md.
+    coverUrl: COVERS[book.id]?.file,
+    coverSourceUrl: COVERS[book.id]?.sourceUrl,
+    imageKind: COVERS[book.id] ? 'cover' : undefined,
+    aliases: [...new Set([...(book.aliases ?? []), ...(ALIASES[book.id] ?? [])])].slice(0, 10),
     popularity: round(book.popularity),
     contentLength: book.contentLength,
     provenance: book.provenance?.wikipediaRevisionUrl
