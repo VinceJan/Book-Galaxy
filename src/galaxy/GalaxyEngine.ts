@@ -79,6 +79,19 @@ interface SemanticRegionLabel {
   aspect: number
   detail: { sprite: Sprite; material: SpriteMaterial; texture: CanvasTexture; aspect: number }
   anchor: Vector3
+  /** Region centre; the label returns here whenever it is on screen. */
+  home: Vector3
+  /** A spread of member stars the label may sit on when the centre is off screen. */
+  members: Vector3[]
+  target: Vector3
+}
+
+/** Up to `count` member positions spread from the centre outwards. */
+function spreadMembers(points: Vector3[], centre: Vector3, count: number): Vector3[] {
+  if (points.length <= count) return points
+  const sorted = [...points].sort((left, right) => left.distanceToSquared(centre) - right.distanceToSquared(centre))
+  const step = sorted.length / count
+  return Array.from({ length: count }, (_, index) => sorted[Math.floor(index * step)])
 }
 
 const BOOK_WHITE = new Color('#d8d3c5')
@@ -536,6 +549,10 @@ export class GalaxyEngine {
           label: region.name,
           subtitle: region.subtitle ?? '',
           count: region.bookIds.length,
+          points: region.bookIds.flatMap((id) => {
+            const point = this.positions.get(id)
+            return point ? [point.clone()] : []
+          }),
           center: robustCenter(region.bookIds.flatMap((id) => {
             const book = booksById.get(id)
             const point = book ? positionOf(book) : undefined
@@ -547,6 +564,7 @@ export class GalaxyEngine {
           label: region.label,
           subtitle: '',
           count: region.count,
+          points: [] as Vector3[],
           center: region.center,
         }))
 
@@ -570,6 +588,9 @@ export class GalaxyEngine {
         aspect: name.aspect,
         detail,
         anchor,
+        home: anchor.clone(),
+        members: spreadMembers(region.points, anchor, 36),
+        target: anchor.clone(),
       })
     })
   }
@@ -640,12 +661,18 @@ export class GalaxyEngine {
       { left: 0, top: 0, right: width, bottom: 70 },
       { left: 0, top: height - 44, right: width, bottom: height },
       ...(phone ? [{ left: 0, top: 70, right: width, bottom: 150 }] : [{ left: 0, top: height - 150, right: 320, bottom: height }]),
-      // An open book panel owns the right column (desktop) or the bottom sheet (phone).
-      ...(this.bookOpen ? [phone ? { left: 0, top: height * 0.32, right: width, bottom: height } : { left: width - Math.min(720, width * 0.46), top: 0, right: width, bottom: height }] : []),
+      // Real chrome on screen (book panel, compass, librarian, trail rail), measured each frame.
+      ...this.chromeRects(),
+      // Fallback when the panel has not laid out yet.
+      ...(this.bookOpen && !document.querySelector('.book-observatory') ? [phone ? { left: 0, top: height * 0.32, right: width, bottom: height } : { left: width - Math.min(720, width * 0.46), top: 0, right: width, bottom: height }] : []),
       // The intro copy owns the left column (the whole screen on phones).
       ...(this.introOpen ? [{ left: 0, top: 0, right: phone ? width : Math.min(940, width * 0.74) * 0.82, bottom: height }] : []),
     ]
+    this.labelFrame = (this.labelFrame + 1) % 12
+    if (this.labelFrame === 0) this.retargetRegionAnchors(width, height, reserved)
     const candidates: LabelCandidate[] = this.semanticRegionLabels.map((label) => {
+      label.anchor.lerp(label.target, this.reducedMotion ? 1 : 0.12)
+      label.sprite.position.copy(label.anchor)
       const depth = this.camera.position.distanceTo(label.anchor)
       const unit = worldPerPixel(depth)
       label.sprite.scale.set(GalaxyEngine.LABEL_PX * label.aspect * unit, GalaxyEngine.LABEL_PX * unit, 1)
@@ -670,12 +697,56 @@ export class GalaxyEngine {
     placements.forEach((placement, index) => {
       const label = this.semanticRegionLabels[index]
       const ease = (material: SpriteMaterial, target: number) => {
-        material.opacity = this.reducedMotion ? target : material.opacity + (target - material.opacity) * 0.14
+        // Fade in gently, but leave fast so a name never lingers half under a panel or off the edge.
+        const rate = target < material.opacity ? 0.45 : 0.14
+        material.opacity = this.reducedMotion || target === 0 && material.opacity < 0.05 ? target : material.opacity + (target - material.opacity) * rate
         material.visible = material.opacity > 0.01
       }
       ease(label.material, placement.opacity)
       ease(label.detail.material, placement.showSubtitle ? placement.opacity * 0.9 : 0)
     })
+  }
+
+  private labelFrame = 0
+
+  /** Keep each name on screen: centre if visible, else the member star nearest to it on screen. */
+  private retargetRegionAnchors(width: number, height: number, reserved: Array<{ left: number; top: number; right: number; bottom: number }>): void {
+    const margin = 90
+    const safe = (point: Vector3) => {
+      const projected = point.clone().project(this.camera)
+      if (projected.z <= -1 || projected.z >= 1) return undefined
+      const x = (projected.x * 0.5 + 0.5) * width
+      const y = (-projected.y * 0.5 + 0.5) * height
+      if (x < margin || x > width - margin || y < 40 || y > height - 40) return undefined
+      if (reserved.some((area) => x > area.left - margin && x < area.right + margin && y > area.top - 20 && y < area.bottom + 20)) return undefined
+      return { x, y }
+    }
+    for (const label of this.semanticRegionLabels) {
+      if (safe(label.home)) { label.target.copy(label.home); continue }
+      if (safe(label.target) && label.target !== label.home) continue
+      const homeProjected = label.home.clone().project(this.camera)
+      const hx = (homeProjected.x * 0.5 + 0.5) * width
+      const hy = (-homeProjected.y * 0.5 + 0.5) * height
+      let best: Vector3 | undefined
+      let bestDistance = Infinity
+      for (const member of label.members) {
+        const point = safe(member)
+        if (!point) continue
+        const distance = Math.hypot(point.x - hx, point.y - hy)
+        if (distance < bestDistance) { best = member; bestDistance = distance }
+      }
+      label.target.copy(best ?? label.home)
+    }
+  }
+
+  private chromeRects(): Array<{ left: number; top: number; right: number; bottom: number }> {
+    if (typeof document === 'undefined') return []
+    const origin = this.container.getBoundingClientRect()
+    const pad = 12
+    return [...document.querySelectorAll('.book-observatory, .detour-compass, .librarian-band, .journey-rail, .intro-panel')]
+      .map((element) => element.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+      .map((rect) => ({ left: rect.left - origin.left - pad, top: rect.top - origin.top - pad, right: rect.right - origin.left + pad, bottom: rect.bottom - origin.top + pad }))
   }
 
   setRegionFocus(regionId: string | undefined, bookOpen: boolean, introOpen = false): void {
@@ -975,6 +1046,9 @@ export class GalaxyEngine {
     this.updateRelationBeacon()
     this.updateArrivalFlash(performance.now())
     this.updateSemanticRegionLabels()
+    // The landing view drifts: a slow turn of the whole sea behind the intro copy.
+    this.controls.autoRotate = this.introOpen && !this.reducedMotion && !this.flight
+    this.controls.autoRotateSpeed = 0.28
     this.controls.update()
     if (this.needsPick) this.pick()
     this.composer.render()

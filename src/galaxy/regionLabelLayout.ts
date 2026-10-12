@@ -59,7 +59,7 @@ export interface LabelPlacement {
 
 const GAP_X = 12
 const GAP_Y = 10
-const EDGE = 8
+const EDGE = 16
 
 export function labelCap(level: LabelLevel, phone: boolean): number {
   if (level === 0) return phone ? 4 : 6

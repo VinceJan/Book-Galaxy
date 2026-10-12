@@ -37,6 +37,9 @@ def source_texts(patterns):
             yield path.read_text(encoding='utf-8')
 
 
+KAI_GLYPHS = 2600
+
+
 def build_family(src, out_dir, family, weight, style, counter, slice_size, first_chars=None):
     font = TTFont(src, lazy=True)
     cmap = font.getBestCmap()
@@ -93,6 +96,11 @@ def main():
     summaries = [b.get('summary', '') for b in catalog['books']]
     sentences = [r.get('sentence', '') for r in catalog['relations']]
 
+    notes = [v for b in catalog['books'] for v in (b.get('notes') or {}).values()]
+    librarian_voice = ''.join(source_texts(['src/ai/offlineCurator.ts'])) + ''.join(regions)
+    kai_all = chars_of(notes + sentences + titles + [librarian_voice])
+    kai_counter = collections.Counter(dict(kai_all.most_common(KAI_GLYPHS)))
+
     out = ROOT / 'public/fonts'
     first_screen = (ROOT / 'data/fonts/first-screen.txt').read_text(encoding='utf-8')
     first_screen += ''.join(f"{r['name']}{r.get('subtitle', '')}" for r in catalog.get('regions', []))
@@ -103,7 +111,10 @@ def main():
         ('BG Serif', 'NotoSerifSC-Regular.otf', 'serif', 400, chars_of(summaries + hooks + titles + ui), 260, None, css),
         # WenKai is the librarian's voice only; its stylesheet is injected
         # when the librarian opens (src/lib/lazyFonts.ts).
-        ('BG Kai', 'LXGWWenKai-Regular.ttf', 'kai', 400, chars_of(hooks + sentences + regions + ui), 220, None, kai_css),
+        # Subset to the librarian's own words: its templates first (slice 00), then the
+        # most frequent glyphs of the notes and relation lines it quotes. Rare glyphs
+        # fall back to BG Serif, which is already on the page.
+        ('BG Kai', 'LXGWWenKai-Regular.ttf', 'kai', 400, kai_counter, 900, librarian_voice, kai_css),
     ]
     for family, file, folder, weight, counter, size, first, sink in jobs:
         faces, count, total, glyphs = build_family(source / file, out / folder, family, weight, 'normal', counter, size, first)

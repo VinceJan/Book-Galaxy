@@ -12,7 +12,7 @@ describe('offline librarian', () => {
   })
   it('builds a book note only from catalog values and the verbatim hook', () => {
     const note = offlineBookNote(to, { sleeping: true, nearest: from })
-    expect(note.lead).toBe('乙讲述了一条河。')
+    expect([note.lead, ...note.lines].join('')).not.toContain('乙讲述了一条河')
     expect(note.lines.join('')).toContain('美国，1960 年')
     expect(note.lines.join('')).toContain('《甲》')
   })
@@ -21,7 +21,7 @@ describe('offline librarian', () => {
     expect(text).toContain('阶级与贫困')
     expect(text).toContain('相隔约 60 年')
     expect(text).toContain('从法国到美国')
-    expect(text).toContain('乙讲述了一条河。')
+    expect(text).not.toContain('乙讲述了一条河。')
   })
   it('never names an unknown country', () => {
     const unknown = { ...to, country: '未注明' }
@@ -36,8 +36,18 @@ describe('offline librarian', () => {
     expect(offlineAnswer('about', { to: b })).toContain('再往下读')
   })
   it('answers preset questions without a server', () => {
-    expect(offlineAnswer('about', { to })).toContain('乙讲述了一条河。')
+    expect(offlineAnswer('about', { to })).not.toContain('乙讲述了一条河')
     expect(offlineAnswer('why', { to })).toContain('还没有前一站')
     expect(offlineAnswer('next', { to, nearest: from })).toContain('《甲》')
+  })
+})
+
+describe('regionSpeaksTo', () => {
+  it('only when the book is in the region and shares vocabulary', async () => {
+    const { regionSpeaksTo } = await import('./offlineCurator')
+    const region = { name: '贫穷街区', subtitle: '阶级与城市', question: '谁在底层？', bookIds: ['b'] }
+    expect(regionSpeaksTo(to, region)).toBe(true)
+    expect(regionSpeaksTo(to, { ...region, subtitle: '星舰', name: '远港' })).toBe(false)
+    expect(regionSpeaksTo(to, { ...region, bookIds: [] })).toBe(false)
   })
 })

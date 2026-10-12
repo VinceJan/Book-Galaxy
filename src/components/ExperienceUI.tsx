@@ -3,7 +3,7 @@ import type { Book, BookRelation, MapRegion } from '../types'
 import { otherBookId } from '../lib/galaxyMath'
 import { generativeCover } from '../lib/generativeCover'
 import { ensureLibrarianFont } from '../lib/lazyFonts'
-import { offlineAnswer, offlineBookNote, offlineQuestions, offlineTransitionNote, type OfflineQuestion } from '../ai/offlineCurator'
+import { regionSpeaksTo, offlineAnswer, offlineBookNote, offlineQuestions, offlineTransitionNote, type OfflineQuestion } from '../ai/offlineCurator'
 
 function Icon({ name }: { name: 'sound' | 'mute' | 'expand' | 'motion' | 'close' | 'arrow' | 'signal' }) {
   const paths: Record<typeof name, React.ReactNode> = {
@@ -713,8 +713,10 @@ export function BookObservatory({
          <span className="book-record-label book-record-label-primary">书页一瞥</span>
         {contentReady ? (
           <>
-            <p className="book-summary book-summary-primary book-hook">{book.hook?.trim() || summary}</p>
-            {book.hook?.trim() && book.hook.trim() !== summary && (
+            {book.hook?.trim()
+              ? <p className="book-summary book-summary-primary book-hook">{book.hook.trim()}</p>
+              : <p className="book-summary book-hook-absent">馆藏导语多在记录出版与系列，这一瞥先留白——由你翻开它。</p>}
+            {book.hook?.trim() !== summary && (
               <details className="book-fulltext">
                 <summary>展开馆藏导语全文</summary>
                 <p className="book-summary">{summary}</p>
@@ -1199,7 +1201,7 @@ export function LibrarianBand({
               {note.lines.map((line) => <li key={line}>{line}</li>)}
             </ul>
           )}
-          {region && <p className="signal-question-line"><span>{region.name}在问</span>{region.question}</p>}
+          {region && regionSpeaksTo(to, region) && <p className="signal-question-line"><span>{region.name}在问</span>{region.question}</p>}
           {!relation && <p className="signal-next">再偏航一次，馆员便能说说两本书为何相遇。</p>}
         </>
       )}
@@ -1287,7 +1289,7 @@ export function StarChartReveal({
       <div className="exposure-curtain" />
       <div className="chart-copy">
         <small>书架星系 · 私人星图</small>
-        <h2 id="chart-title" ref={headingRef} tabIndex={-1}>你的迷路，已经显影。</h2>
+        <h2 id="chart-title" ref={headingRef} tabIndex={-1}><span className="nobreak">你的迷路，</span><span className="nobreak">已经显影。</span></h2>
         <p>空间被压成纸面，经过的书成为一幅只属于本次航行的未刊星图。</p>
         <div>
           <button className="ink-action" type="button" onClick={onDownload}>保存高清星图</button>
@@ -1295,7 +1297,6 @@ export function StarChartReveal({
         </div>
       </div>
       <figure className="chart-plate"><img src={dataUrl} alt="本次阅读旅程生成的未刊星图" /></figure>
-      <div className="vermilion-seal" aria-hidden="true">迷<br />路</div>
     </section>
   )
 }

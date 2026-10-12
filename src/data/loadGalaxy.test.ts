@@ -96,7 +96,8 @@ describe('catalog relation resolver', () => {
     expect(data.books).toHaveLength(1_000)
     expect(data.catalogEdges).toHaveLength(5_385)
     expect(data.curatedRelations).toHaveLength(3_002)
-    expect(data.books.every((book) => Boolean(book.hook))).toBe(true)
+    // Books whose lead is only publication or series detail carry no hook (留白), never a noisy one.
+    expect(data.books.filter((book) => book.hook).length).toBeGreaterThan(850)
     expect(data.books[0].provenance?.wikipediaRevisionUrl).toContain('oldid=')
     expect(data.regions).toHaveLength(12)
     expect(new Set(data.regions?.flatMap((region) => region.bookIds)).size).toBe(1_000)

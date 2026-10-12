@@ -43,6 +43,17 @@ export function quotableNote(book: Book, prefer: Array<'story' | 'setting' | 'id
   return undefined
 }
 
+/** Show a region's question only when the book belongs there and shares its vocabulary. */
+export function regionSpeaksTo(book: Book, region: { name: string; subtitle?: string; question: string; bookIds: string[] } | undefined): boolean {
+  if (!region || !region.bookIds.includes(book.id)) return false
+  const place = `${region.name}${region.subtitle ?? ''}${region.question}`
+  return meaningfulThemes(book).some((theme) => {
+    const chars = [...theme]
+    for (let index = 0; index + 1 < chars.length; index += 1) if (place.includes(chars[index] + chars[index + 1])) return true
+    return chars.length === 1 && place.includes(theme)
+  })
+}
+
 export interface OfflineNote {
   lead: string
   lines: string[]
@@ -64,7 +75,14 @@ export function offlineBookNote(book: Book, options: { sleeping?: boolean; neare
     '很少有人从这里出发——这正是它值得一读的理由。',
   ], book.id))
   if (options.nearest) lines.push(`如果想留在附近，《${options.nearest.title}》离它最近。`)
-  return { lead: hook || `你正在观测《${book.title}》。`, lines }
+  // The hook is already on the page (书页一瞥); the librarian never reads it back.
+  void hook
+  const lead = pick([
+    `《${book.title}》——我替它记着几句原话，不多，但都是馆藏里写着的。`,
+    `你停在《${book.title}》前面了。我不替书下结论，只把架上的句子递给你。`,
+    `这颗星我认得。关于《${book.title}》，我只说导语里有的话。`,
+  ], book.id)
+  return { lead, lines }
 }
 
 function eraPhrase(from: Book, to: Book): string | undefined {
@@ -96,8 +114,6 @@ export function offlineTransitionNote(relation: BookRelation, from?: Book, to?: 
   if (meaningful.length > 0) lines.push(`它们共同经过「${meaningful.slice(0, 2).join('」与「')}」。`)
   else if (themes.length > 0) lines.push(`它们同属「${themes[0]}」的星群。`)
   if (facts.length > 0) lines.push(`${facts.join('，')}。`)
-  const toHook = to ? bookHookText(to) : ''
-  if (toHook) lines.push(`抵达处：${toHook}`)
   // Two verbatim lines side by side: the reader draws the connection.
   const fromQuote = from ? quotableNote(from, ['idea', 'story', 'setting']) : undefined
   const toQuote = to ? quotableNote(to, ['idea', 'story', 'setting']) : undefined
@@ -108,6 +124,19 @@ export function offlineTransitionNote(relation: BookRelation, from?: Book, to?: 
     : band === 'mid'
       ? '这是一座桥：一半熟悉，一半陌生，正适合换一种目光。'
       : '这是一次远行：相遇的理由很少，所以每一条都值得细读。')
+  // The librarian's own voice: a sign-off about the trip, never a claim about the books.
+  const seed = `${from?.id ?? ''}${to?.id ?? ''}`
+  lines.push(pick(band === 'near' ? [
+    '我常把它们放在同一层，你大概也会。',
+    '近路走得快，不妨在这一本多停一会儿。',
+  ] : band === 'mid' ? [
+    '书线是我搭的，过不过河由你。',
+    '这座桥我只搭一半，另一半等你读出来。',
+  ] : [
+    '说实话，这一跳连我也没料到——这正是我喜欢的部分。',
+    '离家很远了。别急着找路标，先读第一页。',
+    '我不保证你会喜欢它，只保证你本来不会遇见它。',
+  ], seed))
   const lead = relation.provenance === 'reading-hypothesis' && relation.sentence?.trim()
     ? relation.sentence.trim()
     : `从《${from?.title ?? '出发星'}》到《${to?.title ?? '远方书星'}》。`
@@ -128,10 +157,9 @@ export function offlineAnswer(
 ): string {
   const { relation, from, to, nearest } = context
   if (question === 'about') {
-    const hook = bookHookText(to)
     const more = quotableNote(to, ['story', 'setting', 'idea'])
-    if (hook && more) return `馆藏导语这样写：${hook}再往下读：「${more.replace(/。$/u, '')}」`
-    return hook ? `馆藏导语这样写：${hook}` : `《${to.title}》的导语还未显影，可以从出处链接读到全文。`
+    if (more) return `书页一瞥之外，导语再往下读是：「${more.replace(/。$/u, '')}」`
+    return `关于《${to.title}》，馆藏导语只有书页上那一句——我不往下编。想读全文，出处链接就在书页底部。`
   }
   if (question === 'why') {
     if (!relation) return `《${to.title}》还没有前一站。偏航一次，馆员就能说说两本书为何相遇。`

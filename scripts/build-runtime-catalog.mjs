@@ -14,6 +14,26 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 import { bookHook, bookNotes } from './lib/book-hook.mjs'
+
+/** Lead whose opening 《title》 names a different work (a data error upstream). */
+export const leadIssues = new Map()
+// Hand-checked: the Wikipedia lead fetched for this id describes a sibling work.
+const CONFIRMED_MISMATCH = new Set(JSON.parse(await readFile(new URL('../data/issues/lead-confirmed.json', import.meta.url), 'utf8')))
+function leadMismatch(book) {
+  const first = (book.summary ?? '').slice(0, 4).includes('《') ? /《([^》]+)》/u.exec(book.summary)?.[1] : undefined
+  if (!first) return false
+  const norm = (value) => value.replace(/[\s·：:（）()]/gu, '')
+  const a = norm(first)
+  const b = norm(book.title)
+  if (a.includes(b) || b.includes(a)) return false
+  const shared = [...new Set(b)].filter((ch) => a.includes(ch)).length
+  if (shared / new Set(b).size >= 0.6) return false
+  // Alternate translations (三剑客 / 三个火枪手) are the same work; only flag leads that point at a sibling work.
+  if (norm(book.summary).includes(b) || !/系列|选集|合集|续作|前作|第[一二三四五六七八九十\d]+(?:部|卷|集)(?!经)/u.test(book.summary.slice(0, 120))) return false
+  const confirmed = CONFIRMED_MISMATCH.has(book.id)
+  leadIssues.set(book.id, { id: book.id, title: book.title, leadNames: first, status: confirmed ? 'confirmed: lead is about another work, hook dropped' : 'review: likely an alternate translation' })
+  return confirmed
+}
 import { buildRegions } from './lib/regions.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -42,8 +62,8 @@ function slimBook(book) {
     language: book.language,
     country: book.country,
     summary: book.summary,
-    hook: bookHook(book.summary),
-    notes: (() => {
+    hook: leadMismatch(book) ? '' : bookHook(book.summary),
+    notes: leadMismatch(book) ? undefined : (() => {
       const notes = bookNotes(book.summary, bookHook(book.summary))
       return Object.keys(notes).length ? notes : undefined
     })(),
@@ -147,6 +167,7 @@ const report = {
   audited: { raw: kb(Buffer.byteLength(sourceText)), gzip: kb(gzipSync(sourceText).length) },
   runtime: { raw: kb(Buffer.byteLength(text)), gzip: kb(gzipSync(text).length) },
   hooks: runtime.books.filter((book) => book.hook).length,
+  leadIssues: leadIssues.size,
   regions: regions.map((region) => `${region.name}(${region.size})`).join(' '),
 }
 
@@ -159,5 +180,6 @@ if (check) {
   console.log(JSON.stringify({ mode: 'check', ...report }, null, 2))
 } else {
   await writeFile(OUTPUT, text)
+  await writeFile(new URL('../data/issues/lead-mismatch.json', import.meta.url), `${JSON.stringify([...leadIssues.values()], null, 2)}\n`)
   console.log(JSON.stringify({ mode: 'write', output: 'public/data/catalog.runtime.json', ...report }, null, 2))
 }
