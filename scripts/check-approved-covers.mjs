@@ -133,7 +133,7 @@ async function main() {
   const [sidecarBuffer, richBuffer, catalogBuffer, manifestBuffer] = await Promise.all([
     readFile(resolve(ROOT, 'data/covers/approved-v1.json')),
     readFile(resolve(ROOT, 'data/rich/books.json')),
-    readFile(resolve(ROOT, 'public/data/catalog.json')),
+    readFile(resolve(ROOT, 'data/catalog.json')),
     readFile(resolve(ROOT, 'public/data/manifest.json')),
   ])
   const sidecar = JSON.parse(sidecarBuffer.toString('utf8'))

@@ -739,6 +739,24 @@ export class GalaxyEngine {
     }
   }
 
+  /** Wheel over a floating panel scrolls it only if it can scroll that way; otherwise it zooms the map. */
+  private readonly handlePanelWheel = (event: WheelEvent): void => {
+    if (!(event.target instanceof Element) || !this.controls.enabled || !this.controls.enableZoom) return
+    const panel = event.target.closest('.book-observatory, .librarian-band, .detour-compass, .journey-rail')
+    if (!panel) return
+    for (let node: Element | null = event.target; node && panel.contains(node); node = node.parentElement) {
+      const style = getComputedStyle(node)
+      if (!/(auto|scroll)/u.test(style.overflowY) || node.scrollHeight <= node.clientHeight + 1) continue
+      // An overflowing panel keeps the wheel (even at its end) so the map never jumps mid-read.
+      return
+    }
+    event.preventDefault()
+    this.renderer.domElement.dispatchEvent(new WheelEvent('wheel', {
+      deltaX: event.deltaX, deltaY: event.deltaY, deltaMode: event.deltaMode,
+      clientX: event.clientX, clientY: event.clientY, ctrlKey: event.ctrlKey, bubbles: true, cancelable: true,
+    }))
+  }
+
   private chromeRects(): Array<{ left: number; top: number; right: number; bottom: number }> {
     if (typeof document === 'undefined') return []
     const origin = this.container.getBoundingClientRect()
@@ -764,6 +782,7 @@ export class GalaxyEngine {
     this.renderer.domElement.addEventListener('click', this.handleClick)
     this.renderer.domElement.addEventListener('webglcontextlost', this.handleContextLost)
     window.addEventListener('keydown', this.handleKeyDown)
+    window.addEventListener('wheel', this.handlePanelWheel, { passive: false, capture: true })
     document.addEventListener('visibilitychange', this.handleVisibility)
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(this.container)
@@ -1318,6 +1337,7 @@ export class GalaxyEngine {
     this.renderer.domElement.removeEventListener('pointerleave', this.handlePointerLeave)
     this.renderer.domElement.removeEventListener('click', this.handleClick)
     this.renderer.domElement.removeEventListener('webglcontextlost', this.handleContextLost)
+    window.removeEventListener('wheel', this.handlePanelWheel, { capture: true })
     this.controls.dispose()
     this.starGeometry.dispose()
     this.starMaterial.dispose()

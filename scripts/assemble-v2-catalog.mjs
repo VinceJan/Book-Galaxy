@@ -4,7 +4,7 @@
  * Assemble the rich Chinese-first source snapshot and the offline semantic
  * layout into the browser payload.  This script is deliberately fail-closed:
  * a missing layout, an incomplete book, or a dangling relation never produces
- * a partial public/data/catalog.json.
+ * a partial data/catalog.json.
  */
 
 import { createHash } from 'node:crypto'
@@ -25,7 +25,7 @@ import { applyApprovedCoversToSnapshot } from './lib/cover-policy.mjs'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DEFAULT_BOOKS = resolve(ROOT, 'data/rich/books.json')
 const DEFAULT_LAYOUT = resolve(ROOT, 'data/rich/layout.json')
-const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
+const DEFAULT_CATALOG = resolve(ROOT, 'data/catalog.json')
 const DEFAULT_MANIFEST = resolve(ROOT, 'public/data/manifest.json')
 const DEFAULT_APPROVED_COVERS = resolve(ROOT, 'data/covers/approved-v1.json')
 

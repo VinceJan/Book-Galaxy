@@ -97,7 +97,7 @@ function galleryCandidateFromSnapshot(snapshot) {
 }
 
 const [catalogBuffer, manifestBuffer, committedBuffer, richBuffer, fixtureBuffer] = await Promise.all([
-  readFile(resolve(ROOT, 'public/data/catalog.json')),
+  readFile(resolve(ROOT, 'data/catalog.json')),
   readFile(resolve(ROOT, 'public/data/manifest.json')),
   readFile(resolve(ROOT, 'data/covers/approved-v1.json')),
   readFile(resolve(ROOT, 'data/rich/books.json')),

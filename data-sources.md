@@ -4,7 +4,7 @@
 
 ## 先看正式快照
 
-正式浏览器资源是 public/data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%），其中 6 本使用人工批准并绑定 exact Edition 的封面资产。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `6eaacc96bd72a440fba7188bf64c93ebc9b099f81b9bd121d11e6ad537d2dd02`；精确数值仍以 manifest 与策展检查器输出为准。
+正式浏览器资源是 data/catalog.json，schema 为 bookshelf-galaxy/catalog-v2。对应的 public/data/manifest.json 记录生成时间、SHA-256、书数、语义关系数、来源、模型、覆盖率和关系统计。当前提交的正式快照为 **1,000 本书、5,385 条语义关系**；中文摘要覆盖率 100%，中位数 213 个汉字；567 本有 Open Library 封面（56.7%），其中 6 本使用人工批准并绑定 exact Edition 的封面资产。921 本具有可核查的具名作者记录；其余按来源标明佚名、多人合著或传统归属。每本书的最小语义关系度数为 6，1,000 本全部覆盖 `near`、`bridge`、`far` 三档。另有独立的引力书线策展层，共 **3,002 条有效书线**，覆盖 1,000 / 1,000 本书且每本至少一条。当前 catalog 的 SHA-256 为 `6eaacc96bd72a440fba7188bf64c93ebc9b099f81b9bd121d11e6ad537d2dd02`；精确数值仍以 manifest 与策展检查器输出为准。
 
 正式 v2 的默认目标是 1,000 部中文主标题、内容完整的真实作品。每颗进入星海的书星都必须有可核查中文内容、来源和资格证明；如果某一批来源不能满足硬门槛，构建器会停止，不会用只有书名的记录填充数量。
 
@@ -17,7 +17,7 @@
 | data/rich/eligibility-report.json | 候选接受、拒绝、隔离的审计报告 | 随仓库保存 |
 | data/rich/layout.json | 语义坐标、星体参数、近邻和关系证据 | 构建中间产物 |
 | src/data/curatedThreads.ts + src/data/curatedThreads/*.ts | 引力书线 / `reading-hypothesis` 独立策展层及其分片 | 随源码发布，浏览器最多取三条展示 |
-| public/data/catalog.json | 富书目与语义布局的最终合并资源 | Demo 直接载入 |
+| data/catalog.json | 富书目与语义布局的最终合并资源 | Demo 直接载入 |
 | public/data/manifest.json | 当前发布快照的机器可读统计和来源信息 | 在线体验与版本核验 |
 | public/data/ATTRIBUTION.json | 逐本作品的来源、固定修订、Wikidata 与封面回链 | 发布归属侧车 |
 | data/raw/rich-catalog/ | 网络响应缓存 | 被 gitignore，不发布 |
@@ -290,8 +290,8 @@ scripts/build-attribution.mjs 会从当前 catalog-v2 生成 public/data/ATTRIBU
 catalog 发生变化后必须重新生成并执行检查，不能手工编辑归属清单：
 
 ```powershell
-node scripts/build-attribution.mjs --catalog public/data/catalog.json --output public/data/ATTRIBUTION.json
-node scripts/build-attribution.mjs --check --catalog public/data/catalog.json --output public/data/ATTRIBUTION.json
+node scripts/build-attribution.mjs --catalog data/catalog.json --output public/data/ATTRIBUTION.json
+node scripts/build-attribution.mjs --check --catalog data/catalog.json --output public/data/ATTRIBUTION.json
 ```
 
 DATA_LICENSE.md 进一步说明各字段的归属和再分发边界。对于未来真实图书馆数据，馆藏机构自己的 API、OPAC 导出、封面和借阅字段必须单独获得许可；当前 Demo 没有连接任何真实馆藏数据库，也不把外部开放数据等同于图书馆授权。

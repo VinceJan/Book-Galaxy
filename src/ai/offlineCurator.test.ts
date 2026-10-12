@@ -17,8 +17,13 @@ describe('offline librarian', () => {
     expect(note.lines.join('')).toContain('《甲》')
   })
   it('names shared themes, era gap and places for a transition', () => {
+    const mid = { ...relation, distanceBand: 'mid' } as BookRelation
+    expect(offlineTransitionNote(mid, from, to).lines.join('')).toContain('阶级与贫困')
+    // A far jump never claims a shared bridge, nor does an umbrella tag.
     const text = [offlineTransitionNote(relation, from, to).lead, ...offlineTransitionNote(relation, from, to).lines].join('')
-    expect(text).toContain('阶级与贫困')
+    expect(text).not.toContain('共同经过')
+    const broad = { ...mid, evidence: { sharedThemes: ['科学与技术'] } } as unknown as BookRelation
+    expect(offlineTransitionNote(broad, from, to).lines.join('')).not.toContain('科学与技术')
     expect(text).toContain('相隔约 60 年')
     expect(text).toContain('从法国到美国')
     expect(text).not.toContain('乙讲述了一条河。')

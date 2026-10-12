@@ -90,11 +90,22 @@ export function cleanPrefix(sentence) {
   return [...text].length >= 10 && /是|为|乃/u.test(text) ? clip(`${text}。`, MAX_HOOK + 12) : ''
 }
 
+/** Sentences that point back at text we would cut ("同时这些非议……", "该名杀人犯", "这一卷"). */
+const ANAPHORA = /^(?:同时|此外|另外|然而|但是?|因此|所以|根据|其中|后来|随后|而|并且|故事的标题)|该名|这些|上述|前述|这一卷|此事|这一点/u
+
 export function bookHook(summary = '') {
+  const hook = pickHook(summary)
+  // Only alternate names, nothing about the book: an honest blank beats a roll-call.
+  const bare = hook.replace(/《[^》]*》/gu, '')
+  if (/译为|又称|又译|简称|或译|全称/u.test(hook) && !/是|讲述|描写|记述|记载|描述|收录|论述/u.test(bare)) return ''
+  return hook
+}
+
+function pickHook(summary = '') {
   const sentences = splitSentences(stripBrackets(summary))
   if (sentences.length === 0) return ''
   const ranked = sentences
-    .map((sentence, index) => ({ sentence, index, score: scoreSentence(sentence, index) - (isRejectedSentence(sentence) ? 100 : 0) }))
+    .map((sentence, index) => ({ sentence, index, score: scoreSentence(sentence, index) - (isRejectedSentence(sentence) || (index > 0 && ANAPHORA.test(sentence)) ? 100 : 0) }))
     .sort((left, right) => right.score - left.score || left.index - right.index)
   const best = ranked[0]
   const identity = sentences[0]

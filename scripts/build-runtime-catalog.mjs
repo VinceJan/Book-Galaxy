@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Derive the browser snapshot (public/data/catalog.runtime.json) from the
- * audited catalog (public/data/catalog.json).
+ * audited catalog (data/catalog.json).
  *
  * The audited catalog keeps every eligibility trace, provenance record and
  * edge statistic for review.  The browser needs only what it renders or
@@ -39,7 +39,7 @@ function leadMismatch(book) {
 import { buildRegions } from './lib/regions.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const INPUT = resolve(ROOT, 'public/data/catalog.json')
+const INPUT = resolve(ROOT, 'data/catalog.json')
 const OUTPUT = resolve(ROOT, 'public/data/catalog.runtime.json')
 const check = process.argv.includes('--check')
 

@@ -12,6 +12,8 @@ assert.equal(isRejectedSentence('三明经，南传上座部佛教《巴利文�
 assert.equal(isRejectedSentence('《娜娜》是法国作家左拉的《卢贡-马卡尔家族》系列作品的第九部。'), true)
 assert.equal(isRejectedSentence('他经历了一系列冒险。'), false)
 assert.equal(bookHook(''), '')
+// A context-dependent sentence never stands alone.
+assert.equal(bookHook('《甲》是某作家的小说。小说引来许多评论家的非议。同时这些非议或许也是因为此书描写了阶级的缘故。').includes('同时这些'), false)
 
 const runtime = JSON.parse(await readFile(new URL('../public/data/catalog.runtime.json', import.meta.url), 'utf8'))
 const strip = stripBrackets

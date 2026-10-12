@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import catalogSnapshot from '../../public/data/catalog.json'
+import catalogSnapshot from '../../data/catalog.json'
 import runtimeSnapshot from '../../public/data/catalog.runtime.json'
 import type { Book } from '../types'
 import {

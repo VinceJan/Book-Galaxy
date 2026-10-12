@@ -33,7 +33,7 @@ import {
 import { loadGalleryProvenanceFixture } from './lib/git-object-provenance.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
+const DEFAULT_CATALOG = resolve(ROOT, 'data/catalog.json')
 const DEFAULT_MANIFEST = resolve(ROOT, 'public/data/manifest.json')
 const DEFAULT_OUTPUT = resolve(ROOT, 'data/covers/approved-v1.json')
 export const DEFAULT_GALLERY_PROVENANCE_FIXTURE = resolve(ROOT, 'data/covers/provenance/gallery-5de3eff-v1.json')

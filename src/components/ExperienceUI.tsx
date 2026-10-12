@@ -909,7 +909,8 @@ export function directionCopy(
   return {
     band,
     title: target ? `向 ${targetHint} 偏航` : '向远方偏航',
-    reveal: hidden && target ? `抵达后揭晓书名 · ${[...maskedTitle(target.title)][0]}字开头` : undefined,
+    // The far star stays unnamed: the clue is only where it comes from, never part of its title.
+    reveal: hidden && target ? `抵达后揭晓书名${target.country && !/^(?:未注明|未知|不详)$/u.test(target.country) ? ` · 一颗来自${target.country}的星` : ''}` : undefined,
     description: relation.provenance === 'reading-hypothesis'
       ? relationReading(relation, undefined, target) || '一条尚未命名的阅读假说。'
       : routeCopy,

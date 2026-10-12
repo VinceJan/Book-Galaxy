@@ -10,6 +10,9 @@ import type { Book, BookRelation } from '../types'
 
 const GENERIC_THEME = /^(?:\d+世纪作品|文本叙事|作品语境|.{1,6}文学)$/u
 
+/** Catalog-wide umbrella tags; true of many books, so never offered as the reason two met. */
+const BROAD_THEME = /^(?:科学与技术|文明与未来|神话与超自然|哲学与信仰|权力与政治|宗教经典|历史记忆|文本叙事|作品语境)$/u
+
 export function meaningfulThemes(book: Book): string[] {
   return book.themes.map((theme) => theme.trim()).filter((theme) => theme && !GENERIC_THEME.test(theme))
 }
@@ -111,8 +114,10 @@ export function offlineTransitionNote(relation: BookRelation, from?: Book, to?: 
   const themes = sharedThemes(relation, from, to)
   const meaningful = themes.filter((theme) => !GENERIC_THEME.test(theme))
   const facts = from && to ? [eraPhrase(from, to), placePhrase(from, to)].filter(Boolean) : []
-  if (meaningful.length > 0) lines.push(`它们共同经过「${meaningful.slice(0, 2).join('」与「')}」。`)
-  else if (themes.length > 0) lines.push(`它们同属「${themes[0]}」的星群。`)
+  // Umbrella tags (科学与技术 on 《蝇王》) are too coarse to explain a jump, and a far
+  // jump by definition shares little: say nothing rather than overclaim a bridge.
+  const specific = meaningful.filter((theme) => !BROAD_THEME.test(theme))
+  if (relation.distanceBand !== 'far' && specific.length > 0) lines.push(`它们共同经过「${specific.slice(0, 2).join('」与「')}」。`)
   if (facts.length > 0) lines.push(`${facts.join('，')}。`)
   // Two verbatim lines side by side: the reader draws the connection.
   const fromQuote = from ? quotableNote(from, ['idea', 'story', 'setting']) : undefined
