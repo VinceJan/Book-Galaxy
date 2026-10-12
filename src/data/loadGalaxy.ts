@@ -26,6 +26,7 @@ interface CatalogBook {
   language?: string
   country?: string
   summary?: string
+  hook?: string
   subjects?: string[]
   themes?: string[]
   themeProvenance?: Book['themeProvenance']
@@ -155,6 +156,7 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
     originalTitle: book.originalTitle ?? book.foreignTitle,
     aliases: book.aliases,
     summary: book.summary?.trim(),
+    hook: book.hook?.trim() || undefined,
     instanceOf: book.instanceOf,
     eligibility: book.eligibility,
     wikipediaTitle: book.wikipediaTitle,
@@ -189,7 +191,7 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
 }
 
 export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.json`, { signal })
+  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.runtime.json`, { signal })
   if (!response.ok) throw new Error(`真实书目载入失败（${response.status}）`)
   const payload = await response.json() as CatalogPayload
   if (payload.schemaVersion !== 'bookshelf-galaxy/catalog-v2') {

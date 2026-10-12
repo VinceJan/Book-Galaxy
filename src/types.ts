@@ -133,6 +133,8 @@ export interface Book {
   language?: string
   country?: string
   summary?: string
+  /** Verbatim 1–2 sentence span of the lead, chosen offline (scripts/lib/book-hook.mjs). */
+  hook?: string
   themes: string[]
   /** Auditable origin for every user-visible theme label. */
   themeProvenance?: Record<string, ThemeProvenance>
