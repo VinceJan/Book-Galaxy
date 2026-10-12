@@ -552,11 +552,11 @@ export class GalaxyEngine {
 
     named.forEach((region) => {
       if (!region.center.every(Number.isFinite)) return
-      const name = this.makeLabelSprite(region.label, '600 44px "Noto Serif SC", "Songti SC", "STSong", serif', 'rgba(216, 211, 197, 0.92)', true)
+      const name = this.makeLabelSprite(region.label, '600 44px "BG Display", "Noto Serif SC", "Songti SC", serif', 'rgba(236, 228, 210, 0.95)', true)
       const detailText = region.subtitle
         ? `${region.subtitle}  ·  书星 × ${String(region.count).padStart(3, '0')}`
         : `书星 × ${String(region.count).padStart(3, '0')}`
-      const detail = this.makeLabelSprite(detailText, '500 24px "IBM Plex Mono", "Noto Sans SC", monospace', 'rgba(138, 164, 159, 0.9)', false)
+      const detail = this.makeLabelSprite(detailText, '600 22px "BG Display", "Noto Serif SC", "Songti SC", serif', 'rgba(150, 184, 176, 0.9)', false)
       const anchor = new Vector3(...region.center)
       name.sprite.position.copy(anchor)
       detail.sprite.position.copy(anchor)
@@ -584,7 +584,7 @@ export class GalaxyEngine {
     const sample = this.regions.map((region) => `${region.name}${region.subtitle ?? ''}`).join('') || '书星'
     const ready = Promise.all([
       fonts.load('600 44px "BG Display"', sample),
-      fonts.load('400 24px "BG Kai"', sample),
+      fonts.load('600 22px "BG Display"', sample),
     ])
     const timeout = new Promise((resolve) => window.setTimeout(resolve, 1500))
     void Promise.race([ready, timeout]).catch(() => undefined).then(() => {
@@ -633,13 +633,15 @@ export class GalaxyEngine {
     const width = Math.max(1, this.container.clientWidth)
     const height = Math.max(1, this.container.clientHeight)
     const distance = this.camera.position.distanceTo(this.controls.target)
-    this.labelLevel = labelLevelFor(distance, this.labelLevel, this.bookOpen)
+    this.labelLevel = labelLevelFor(distance, this.labelLevel)
     const worldPerPixel = (depth: number) => (2 * Math.max(1, depth) * Math.tan((this.camera.fov * Math.PI) / 360)) / height
     const phone = width < 760
     const reserved = [
       { left: 0, top: 0, right: width, bottom: 70 },
       { left: 0, top: height - 44, right: width, bottom: height },
       ...(phone ? [{ left: 0, top: 70, right: width, bottom: 150 }] : [{ left: 0, top: height - 150, right: 320, bottom: height }]),
+      // An open book panel owns the right column (desktop) or the bottom sheet (phone).
+      ...(this.bookOpen ? [phone ? { left: 0, top: height * 0.32, right: width, bottom: height } : { left: width - Math.min(720, width * 0.46), top: 0, right: width, bottom: height }] : []),
       // The intro copy owns the left column (the whole screen on phones).
       ...(this.introOpen ? [{ left: 0, top: 0, right: phone ? width : Math.min(940, width * 0.74) * 0.82, bottom: height }] : []),
     ]

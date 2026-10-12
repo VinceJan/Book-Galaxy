@@ -10,7 +10,6 @@ describe('region label levels', () => {
     expect(labelLevelFor(130, undefined)).toBe(1)
     expect(labelLevelFor(80, undefined)).toBe(2)
     expect(labelLevelFor(40, undefined)).toBe(3)
-    expect(labelLevelFor(200, undefined, true)).toBe(3)
   })
   it('applies hysteresis around boundaries', () => {
     expect(labelLevelFor(155, 0)).toBe(0)
@@ -42,8 +41,13 @@ describe('region label layout', () => {
     expect(layoutRegionLabels(many, desktop, 1).filter((item) => item.showSubtitle)).toHaveLength(8)
     expect(layoutRegionLabels(many, { width: 390, height: 844 }, 0).filter((item) => item.visible).length).toBeLessThanOrEqual(4)
   })
-  it('shows only the focused region when a book is open', () => {
-    const placements = layoutRegionLabels([candidate('a', 400, 400, 50, true), candidate('b', 900, 400, 90)], desktop, 3)
-    expect(placements.map((item) => item.visible)).toEqual([true, false])
+  it('keeps up to three names when close, focused first', () => {
+    const placements = layoutRegionLabels([candidate('a', 400, 400, 50, true), candidate('b', 900, 400, 90), candidate('c', 700, 700, 80), candidate('d', 1100, 200, 70)], desktop, 3)
+    expect(placements.map((item) => item.visible)).toEqual([true, true, true, false])
+    expect(placements[0].opacity).toBeGreaterThan(placements[1].opacity)
+  })
+  it('relaxes spacing rather than showing fewer than three names', () => {
+    const tight = [candidate('a', 400, 400, 90), candidate('b', 400, 436, 80), candidate('c', 400, 472, 70)]
+    expect(layoutRegionLabels(tight, desktop, 0).filter((item) => item.visible)).toHaveLength(3)
   })
 })
