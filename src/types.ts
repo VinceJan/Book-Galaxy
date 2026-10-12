@@ -149,6 +149,8 @@ export interface Book {
   summary?: string
   /** Verbatim 1–2 sentence span of the lead, chosen offline (scripts/lib/book-hook.mjs). */
   hook?: string
+  /** More verbatim lead sentences, tagged by what they tell (scripts/lib/book-hook.mjs). */
+  notes?: { story?: string; setting?: string; idea?: string }
   themes: string[]
   /** Auditable origin for every user-visible theme label. */
   themeProvenance?: Record<string, ThemeProvenance>

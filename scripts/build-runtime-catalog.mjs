@@ -13,7 +13,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
-import { bookHook } from './lib/book-hook.mjs'
+import { bookHook, bookNotes } from './lib/book-hook.mjs'
 import { buildRegions } from './lib/regions.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -43,6 +43,10 @@ function slimBook(book) {
     country: book.country,
     summary: book.summary,
     hook: bookHook(book.summary),
+    notes: (() => {
+      const notes = bookNotes(book.summary, bookHook(book.summary))
+      return Object.keys(notes).length ? notes : undefined
+    })(),
     themes: book.themes,
     source: book.source,
     sourceUrl: book.sourceUrl,

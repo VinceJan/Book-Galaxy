@@ -28,6 +28,13 @@ describe('offline librarian', () => {
     expect(offlineTransitionNote(relation, from, unknown).lines.join('')).not.toContain('未注明')
     expect(offlineBookNote(unknown).lines.join('')).not.toContain('未注明')
   })
+  it('quotes verbatim lead notes for one book and side by side for a jump', () => {
+    const a = { ...from, notes: { idea: '甲探讨了城市。' } }
+    const b = { ...to, notes: { story: '乙的主人公是渡船人。' } }
+    expect(offlineBookNote(b).lines.join('')).toContain('「乙的主人公是渡船人」')
+    expect(offlineTransitionNote(relation, a, b).lines.join('')).toContain('对读：「甲探讨了城市」——「乙的主人公是渡船人」')
+    expect(offlineAnswer('about', { to: b })).toContain('再往下读')
+  })
   it('answers preset questions without a server', () => {
     expect(offlineAnswer('about', { to })).toContain('乙讲述了一条河。')
     expect(offlineAnswer('why', { to })).toContain('还没有前一站')

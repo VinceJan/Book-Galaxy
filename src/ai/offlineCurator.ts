@@ -34,6 +34,15 @@ export function bookHookText(book: Book): string {
   return book.hook?.trim() || ''
 }
 
+/** A verbatim lead sentence the librarian can quote, best first. */
+export function quotableNote(book: Book, prefer: Array<'story' | 'setting' | 'idea'> = ['story', 'setting', 'idea']): string | undefined {
+  for (const kind of prefer) {
+    const note = book.notes?.[kind]?.trim()
+    if (note) return note
+  }
+  return undefined
+}
+
 export interface OfflineNote {
   lead: string
   lines: string[]
@@ -47,6 +56,8 @@ export function offlineBookNote(book: Book, options: { sleeping?: boolean; neare
   const origin = [known(book.country), year].filter(Boolean).join('，')
   if (origin) lines.push(`它来自${origin}，由${book.author}写下。`)
   if (themes.length > 0) lines.push(`读它时，可以把注意力放在「${themes.slice(0, 2).join('」与「')}」上。`)
+  const quote = quotableNote(book)
+  if (quote) lines.push(`导语里还写着：「${quote.replace(/。$/u, '')}」`)
   if (options.sleeping) lines.push(pick([
     '这颗星很少被人造访。今晚，你是它的第一位来客。',
     '它在星海里安静了很久，很少有书线经过这里。',
@@ -87,6 +98,10 @@ export function offlineTransitionNote(relation: BookRelation, from?: Book, to?: 
   if (facts.length > 0) lines.push(`${facts.join('，')}。`)
   const toHook = to ? bookHookText(to) : ''
   if (toHook) lines.push(`抵达处：${toHook}`)
+  // Two verbatim lines side by side: the reader draws the connection.
+  const fromQuote = from ? quotableNote(from, ['idea', 'story', 'setting']) : undefined
+  const toQuote = to ? quotableNote(to, ['idea', 'story', 'setting']) : undefined
+  if (fromQuote && toQuote) lines.push(`对读：「${fromQuote.replace(/。$/u, '')}」——「${toQuote.replace(/。$/u, '')}」`)
   const band = relation.distanceBand
   lines.push(band === 'near'
     ? '这是一段近路：熟悉的气息还在，只是换了一扇窗。'
@@ -114,6 +129,8 @@ export function offlineAnswer(
   const { relation, from, to, nearest } = context
   if (question === 'about') {
     const hook = bookHookText(to)
+    const more = quotableNote(to, ['story', 'setting', 'idea'])
+    if (hook && more) return `馆藏导语这样写：${hook}再往下读：「${more.replace(/。$/u, '')}」`
     return hook ? `馆藏导语这样写：${hook}` : `《${to.title}》的导语还未显影，可以从出处链接读到全文。`
   }
   if (question === 'why') {
