@@ -65,7 +65,7 @@
   background: linear-gradient(180deg, #f3ecdc 10%, #cdbf9f 120%);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
-.intro-thesis { font-family: var(--literary); font-size: clamp(1.25rem, 2.1vw, 2.2rem); letter-spacing: 0.22em; color: rgba(230, 223, 207, 0.86); }
+.intro-thesis { font-family: var(--display); font-weight: 600; font-size: clamp(1.25rem, 2.1vw, 2.2rem); letter-spacing: 0.22em; color: rgba(230, 223, 207, 0.86); }
 .search-line { border-bottom-color: var(--hairline-strong) !important; transition: border-color 240ms ease; }
 .search-line:focus-within { border-bottom-color: var(--gold) !important; }
 .search-line input { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
@@ -80,7 +80,7 @@
 .intro-presets button:hover:not(:disabled) { color: var(--gold); }
 .intro-proof strong { font-family: var(--mono); font-weight: 500; color: var(--paper); }
 .intro-wake { border-color: var(--gold-soft); background: linear-gradient(90deg, rgba(200, 169, 107, 0.07), rgba(4, 7, 10, 0.4)); }
-.intro-wake span:not(.intro-wake-star) { font-family: var(--literary); font-size: 1rem; letter-spacing: 0.1em; }
+.intro-wake span:not(.intro-wake-star) { font-family: var(--display); font-weight: 600; font-size: 1rem; letter-spacing: 0.1em; }
 
 /* ---------- Header ---------- */
 .observatory-header { background: linear-gradient(180deg, rgba(4, 7, 10, 0.86), rgba(4, 7, 10, 0)); border-bottom: 0 !important; }
@@ -127,7 +127,7 @@
   border-left: 0;
   background: none;
   color: rgba(240, 233, 216, 0.94);
-  font-family: var(--literary);
+  font-family: var(--serif);
   font-size: 1.12rem;
   line-height: 1.95;
   letter-spacing: 0.02em;
@@ -136,11 +136,11 @@
   position: absolute; top: 4px; left: 0; color: var(--gold); font-family: var(--display); font-size: 1.9rem; line-height: 1; opacity: 0.7; content: "「";
 }
 .book-fulltext > p { font-family: var(--serif); line-height: 1.95; }
-.whyhere-copy { font-family: var(--literary); font-size: 0.95rem; color: rgba(230, 223, 207, 0.78); }
+.whyhere-copy { font-family: var(--serif); font-size: 0.95rem; color: rgba(230, 223, 207, 0.78); }
 .hidden-thread-item { transition: background 220ms ease, padding 220ms var(--ease-out); }
 .hidden-thread-item:hover { background: linear-gradient(90deg, rgba(200, 169, 107, 0.07), transparent); }
 .hidden-thread-item strong, .nearby-book-list button span { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
-.hidden-thread-item span { font-family: var(--literary); font-size: 0.86rem; line-height: 1.8; color: rgba(230, 223, 207, 0.7); }
+.hidden-thread-item span { font-family: var(--serif); font-size: 0.86rem; line-height: 1.8; color: rgba(230, 223, 207, 0.7); }
 .hidden-thread-item small { color: var(--jade); font-family: var(--mono); letter-spacing: 0.24em; }
 .gravity-thread-record { border: 1px solid var(--hairline) !important; background: linear-gradient(180deg, rgba(200, 169, 107, 0.035), transparent 70%) !important; }
 .panel-actions > button { border-top-color: var(--hairline); font-size: 0.74rem; letter-spacing: 0.12em; transition: color 180ms ease, background 220ms ease; }
@@ -185,7 +185,7 @@
 .direction-list button { transition: background 240ms ease, padding 240ms var(--ease-out); }
 .direction-list button:hover { background: linear-gradient(180deg, rgba(200, 169, 107, 0.06), transparent); }
 .direction-list strong { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
-.direction-list span { font-family: var(--literary); color: rgba(230, 223, 207, 0.66); }
+.direction-list span { font-family: var(--serif); color: rgba(230, 223, 207, 0.66); }
 .direction-list small { color: var(--gold); font-family: var(--mono); letter-spacing: 0.24em; }
 
 /* ---------- Voyage narration ---------- */
@@ -217,7 +217,7 @@
 
 /* ---------- Star chart ---------- */
 .chart-copy h2 { font-family: var(--display); font-weight: 600; }
-.chart-copy p { font-family: var(--literary); }
+.chart-copy p { font-family: var(--serif); }
 
 /* ---------- Hover label ---------- */
 .hover-label strong { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
@@ -230,4 +230,18 @@
 }
 @media (max-width: 760px) {
   .intro h1 { font-size: clamp(2.2rem, 10.4vw, 3rem); letter-spacing: -0.02em; }
+}
+
+/* ---------- Batch 3 fixes ---------- */
+/* Detour compass / librarian open on desktop: the panel behind steps back. */
+.app-shell:has(.detour-compass) .book-observatory,
+.app-shell:has(.librarian-band) .book-observatory { opacity: 0.18; filter: blur(2px) saturate(0.6); transition: opacity 260ms ease, filter 260ms ease; }
+.direction-reveal { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; color: var(--gold); font-family: var(--mono); font-size: 0.56rem; font-style: normal; letter-spacing: 0.16em; }
+.direction-reveal::before { width: 6px; height: 6px; border: 1px solid var(--gold); border-radius: 50%; content: ""; box-shadow: 0 0 8px var(--gold-soft); }
+.journey-rail li span, .journey-rail li button { white-space: nowrap; }
+@media (max-width: 760px) {
+  .journey-rail ol { scroll-snap-type: x proximity; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent); }
+  .journey-rail ol::-webkit-scrollbar { display: none; }
+  .journey-rail li { scroll-snap-align: end; max-width: none; }
+  .journey-rail li span, .journey-rail li button { overflow: visible; text-overflow: clip; max-width: none; }
 }
