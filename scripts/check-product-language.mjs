@@ -19,6 +19,7 @@ const REQUIRED_SOURCE_FILES = [
   'src/components/ExperienceUI.tsx',
   'src/App.tsx',
   'src/ai/curator.ts',
+  'src/ai/offlineCurator.ts',
 ]
 const OPTIONAL_SOURCE_FILES = [
   'src/lib/starChart.ts',
