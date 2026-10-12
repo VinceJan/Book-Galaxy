@@ -28,8 +28,9 @@ import { otherBookId } from './lib/galaxyMath'
 import { getIntroLoadingPhase, Soundscape, syncSoundscapeVisibility } from './lib/soundscape'
 import { downloadStarChart, renderStarChart } from './lib/starChart'
 import { askOnlineCurator, hasOnlineCurator } from './ai/curator'
+import { galaxyStats, loadMyGalaxy, saveMyGalaxy, upsertTrail, type MyGalaxy } from './lib/myGalaxy'
 import { isSleepingStar, pickSleepingStar, rankSleepingStars } from './lib/sleepingStars'
-import type { Book, BookRelation } from './types'
+import type { Book, BookRelation, MapRegion } from './types'
 
 type SemanticNeighbour = CatalogNeighbour & { book: RuntimeBook }
 type SelectionSource = 'pointer' | 'keyboard'
@@ -108,8 +109,9 @@ function eraLocationLabel(year: number | undefined): string | undefined {
   return `${Math.floor(year / 10) * 10}年代`
 }
 
-function locationLabel(book: RuntimeBook | undefined): string {
+function locationLabel(book: RuntimeBook | undefined, region?: MapRegion): string {
   if (!book) return '未命名星域'
+  if (region) return region.name
   const labelled = (book as RuntimeBook & { clusterLabels?: string[] }).clusterLabels?.filter(Boolean)
   if (labelled?.length) return labelled.slice(0, 2).join(' · ')
   const theme = book.themes.find(Boolean)
@@ -130,6 +132,7 @@ const emptyData: GalaxyData = {
   curated: [],
   curatedRelations: [],
   catalogEdges: [],
+  regions: [],
   relationCount: 0,
   source: '正在载入中文书海',
 }
@@ -250,7 +253,13 @@ export default function App() {
       .filter((book): book is RuntimeBook => Boolean(book))
       .slice(0, 3)
   }, [booksById, selected, semanticNeighbors])
-  const selectedLocationLabel = useMemo(() => locationLabel(selected), [selected])
+  const regionByBook = useMemo(() => {
+    const map = new Map<string, MapRegion>()
+    ;(data.regions ?? []).forEach((region) => region.bookIds.forEach((id) => map.set(id, region)))
+    return map
+  }, [data.regions])
+  const selectedRegion = selected ? regionByBook.get(selected.id) : undefined
+  const selectedLocationLabel = useMemo(() => locationLabel(selected, selectedRegion), [selected, selectedRegion])
   const journeyBooks = state.journeyIds.map((id) => booksById.get(id)).filter((book): book is Book => Boolean(book))
   const visited = useMemo(() => new Set(state.journeyIds), [state.journeyIds])
   const directions = useMemo(() => {
@@ -318,7 +327,7 @@ export default function App() {
     startTravel(target.coverUrl, relation, dispatch)
     galaxyRef.current?.revealRelation(selected.id, targetId)
     soundRef.current?.detour(Math.floor(relation.surprise * 100))
-    const completed = await galaxyRef.current?.focusBook(targetId, reducedMotion ? 0 : 1_650)
+    const completed = await galaxyRef.current?.focusBook(targetId, reducedMotion ? 0 : 1_900, { ceremony: true })
     if (completed === false) {
       dispatch({ type: 'CANCEL_TRAVEL', sequence })
       galaxyRef.current?.clearRelation()
@@ -400,6 +409,35 @@ export default function App() {
     }, controller.signal)
   }, [journeyBooks, observedFrom, observedRelation, selected])
 
+  const [myGalaxy, setMyGalaxy] = useState<MyGalaxy>({ version: 1, trails: [] })
+  const [showMyGalaxy, setShowMyGalaxy] = useState(true)
+  const trailIdRef = useRef<string>('')
+  const lastStartRef = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (data.books.length === 0) return
+    setMyGalaxy(loadMyGalaxy(new Set(data.books.map((book) => book.id))))
+  }, [data.books])
+  useEffect(() => {
+    const first = state.journeyIds[0]
+    if (!first) return
+    // A new START (journey of one, or a different origin) opens a new trail.
+    if (state.journeyIds.length === 1 && lastStartRef.current !== `${first}:${state.travelSequence}`) {
+      trailIdRef.current = `${Date.now().toString(36)}-${first}`
+      lastStartRef.current = `${first}:${state.travelSequence}`
+    }
+    if (state.journeyIds.length < 2 || !trailIdRef.current) return
+    setMyGalaxy((current) => {
+      const next = upsertTrail(current, { id: trailIdRef.current, bookIds: state.journeyIds })
+      saveMyGalaxy(next)
+      return next
+    })
+  }, [state.journeyIds, state.travelSequence])
+  const pastTrails = useMemo(
+    () => showMyGalaxy ? myGalaxy.trails.filter((trail) => trail.id !== trailIdRef.current).map((trail) => trail.bookIds) : [],
+    [myGalaxy, showMyGalaxy],
+  )
+  const myGalaxySummary = galaxyStats(myGalaxy)
+
   const sleepingRanking = useMemo(
     () => rankSleepingStars(data.books, data.curatedRelations),
     [data.books, data.curatedRelations],
@@ -426,6 +464,10 @@ export default function App() {
       <GalaxyCanvas
         ref={galaxyRef}
         books={data.books}
+        regions={data.regions}
+        trails={pastTrails}
+        focusRegionId={selectedRegion?.id}
+        bookOpen={Boolean(selected) && state.status !== 'intro'}
         emphasisIds={emphasisIds}
         keyboardEnabled={stageKeyboardEnabled}
         reducedMotion={reducedMotion}
@@ -459,8 +501,9 @@ export default function App() {
             onReset={reset}
           />
           {state.status === 'exploring' && <HoverLabel book={hovered?.book ?? null} position={hovered?.position} />}
-          <OnboardingHint step={Math.min(3, journeyBooks.length)} />
-          <JourneyRail books={journeyBooks} onSelect={state.status === 'exploring' ? selectBook : undefined} />
+          <JourneyRail
+            books={journeyBooks}
+            myGalaxy={myGalaxySummary.trails > 0 ? { ...myGalaxySummary, visible: showMyGalaxy, onToggle: () => setShowMyGalaxy((value) => !value) } : undefined} onSelect={state.status === 'exploring' ? selectBook : undefined} />
           {selected && state.status !== 'travelling' && (
             <BookObservatory
               book={selected}
@@ -474,6 +517,7 @@ export default function App() {
               canDetour={selectedIsJourneyHead}
               hasRelationship={Boolean(observedRelation)}
               journeyLength={journeyBooks.length}
+              hint={<OnboardingHint step={Math.min(3, journeyBooks.length)} />}
               isAtOrigin={selectedJourneyIndex === 0}
               onClose={() => {
                 keyboardSelectionRef.current = false
@@ -508,6 +552,7 @@ export default function App() {
               to={selected}
               nearest={nearbyBooks[0]}
               sleeping={selectedIsSleeping}
+              region={selectedRegion}
               onlineAvailable={hasOnlineCurator()}
               onAskOnline={askOnline}
               onClose={() => dispatch({ type: 'TOGGLE_LIBRARIAN', open: false })}

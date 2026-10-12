@@ -277,8 +277,8 @@ describe('product depth - contract', () => {
     expect(panel.indexOf('书页一瞥')).toBeGreaterThan(-1)
     expect(panel.indexOf('引力书线')).toBeGreaterThan(panel.indexOf('书页一瞥'))
     expect(panel.indexOf('附近书星')).toBeGreaterThan(panel.indexOf('引力书线'))
-    expect(panel.indexOf('为什么在这里')).toBeGreaterThan(panel.indexOf('附近书星'))
-    expect(panel.indexOf('panel-footer')).toBeGreaterThan(panel.indexOf('为什么在这里'))
+    expect(panel.indexOf('此地何处')).toBeGreaterThan(panel.indexOf('附近书星'))
+    expect(panel.indexOf('panel-footer')).toBeGreaterThan(panel.indexOf('此地何处'))
 
     // humility: visible meta keeps hypothesis, redundant inline details removed
     expect(ui).toContain('逐书策展 · 阅读假说')

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type FormEvent } from 'react'
-import type { Book, BookRelation } from '../types'
+import type { Book, BookRelation, MapRegion } from '../types'
 import { otherBookId } from '../lib/galaxyMath'
 import { generativeCover } from '../lib/generativeCover'
 import { offlineAnswer, offlineBookNote, offlineQuestions, offlineTransitionNote, type OfflineQuestion } from '../ai/offlineCurator'
@@ -547,10 +547,10 @@ export function whyHereCopy(
 ): string {
   if (!nearest) {
     if (locationLabel === densityWord) return `它位于${densityWord}。附近暂未显出可命名的相遇。`
-    return `它位于“${locationLabel}”的${densityWord}。附近暂未显出可命名的相遇。`
+    return `它位于「${locationLabel}」的${densityWord}。附近暂未显出可命名的相遇。`
   }
   if (locationLabel === densityWord) return `它位于${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
-  return `它位于“${locationLabel}”的${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
+  return `它位于「${locationLabel}」的${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
 }
 
 interface BookPanelProps {
@@ -566,6 +566,7 @@ interface BookPanelProps {
   hasRelationship: boolean
   journeyLength?: number
   isAtOrigin?: boolean
+  hint?: React.ReactNode
   onClose: () => void
   onObserveNearby: (book: Book) => void
   onFollowCuratedThread: (relation: BookRelation) => void
@@ -626,6 +627,7 @@ export function BookObservatory({
   hasRelationship,
   journeyLength = 0,
   isAtOrigin = false,
+  hint,
   onClose,
   onObserveNearby,
   onFollowCuratedThread,
@@ -647,10 +649,10 @@ export function BookObservatory({
   const densityWord = density === undefined
     ? '书云交界处'
     : density >= 0.72
-      ? '书云深处'
+      ? '腹地'
       : density <= 0.3
-        ? '星群边缘'
-        : '书云过渡带'
+        ? '边缘'
+        : '过渡地带'
   const whyHere = whyHereCopy(locationLabel, densityWord, nearestSemantic)
 
   const imprintDisabled = !canImprint
@@ -689,6 +691,7 @@ export function BookObservatory({
         <span>观测对象 {String(index + 1).padStart(2, '0')} / {total.toLocaleString('zh-CN')}</span>
         <button type="button" onClick={onClose} aria-label="收起书籍信息"><Icon name="close" /></button>
       </div>
+      {hint}
       <div className="book-identity">
         <BookCover book={book} />
         <div className="book-title-stack">
@@ -762,7 +765,7 @@ export function BookObservatory({
         </div>
       )}
       <div className="book-record whyhere-record" aria-label="星域定位">
-         <span className="book-record-label">为什么在这里</span>
+         <span className="book-record-label">此地何处</span>
         <p className="book-summary whyhere-copy">{whyHere}</p>
       </div>
       <footer className="panel-footer">
@@ -1088,7 +1091,11 @@ export function VoyageNarration({ relation, from, to }: { relation: BookRelation
   )
 }
 
-export function JourneyRail({ books, onSelect }: { books: Book[]; onSelect?: (book: Book) => void }) {
+export function JourneyRail({ books, onSelect, myGalaxy }: {
+  books: Book[]
+  onSelect?: (book: Book) => void
+  myGalaxy?: { trails: number; stars: number; visible: boolean; onToggle: () => void }
+}) {
   if (books.length === 0) return null
   const visibleBooks = books.slice(-6)
   const omitted = books.length - visibleBooks.length
@@ -1113,6 +1120,13 @@ export function JourneyRail({ books, onSelect }: { books: Book[]; onSelect?: (bo
           )
         })}
       </ol>
+      {myGalaxy && (
+        <button className="my-galaxy-toggle" type="button" aria-pressed={myGalaxy.visible} onClick={myGalaxy.onToggle}>
+          <i aria-hidden="true" />
+          我的星系 · {myGalaxy.trails} 段航迹 · {myGalaxy.stars} 颗星
+          <small>{myGalaxy.visible ? '隐去旧航迹' : '显影旧航迹'}</small>
+        </button>
+      )}
     </aside>
   )
 }
@@ -1126,12 +1140,14 @@ export function LibrarianBand({
   onAskOnline,
   nearest,
   sleeping = false,
+  region,
 }: {
   relation?: BookRelation
   from?: Book
   to: Book
   nearest?: Book
   sleeping?: boolean
+  region?: MapRegion
   onClose: () => void
   onlineAvailable?: boolean
   onAskOnline?: (question: string) => Promise<string | undefined>
@@ -1158,7 +1174,7 @@ export function LibrarianBand({
   return (
     <section ref={dialogRef} className="librarian-band" role="dialog" aria-modal="true" aria-labelledby="librarian-title" onKeyDown={handleKeyDown}>
       <div className="signal-rule"><span /><i /><span /></div>
-      <div className="signal-meta"><Icon name="signal" /> 馆员来信</div>
+      <div className="signal-meta"><Icon name="signal" /> 馆员来信{region ? ` · 来自${region.name}` : ''}</div>
       <button className="signal-close" type="button" onClick={onClose} aria-label="关闭馆员来信"><Icon name="close" /></button>
       <h2 id="librarian-title" ref={headingRef} tabIndex={-1}>{relation ? '为什么是这一本？' : '这颗书星正在说什么？'}</h2>
       {answer ? <p>{answer}</p> : mode === 'basis' && relation ? null : (
@@ -1169,6 +1185,7 @@ export function LibrarianBand({
               {note.lines.map((line) => <li key={line}>{line}</li>)}
             </ul>
           )}
+          {region && <p className="signal-question-line"><span>{region.name}在问</span>{region.question}</p>}
           {!relation && <p className="signal-next">再偏航一次，馆员便能说说两本书为何相遇。</p>}
         </>
       )}
