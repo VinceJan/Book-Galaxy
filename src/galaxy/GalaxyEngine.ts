@@ -587,8 +587,10 @@ export class GalaxyEngine {
         bottom: screenY + halfHeight,
       }
       const onScreen = projected.z > -1 && projected.z < 1
-        && box.right > 10 && box.left < width - 10
-        && box.bottom > 18 && box.top < height - 18
+        // Region labels are only shown whole: a half-clipped serif label at
+        // the viewport edge reads as a rendering fault, especially on phones.
+        && box.left >= 8 && box.right <= width - 8
+        && box.top >= 18 && box.bottom <= height - 18
       const overlaps = occupied.some((other) => !(box.right + 12 < other.left
         || box.left - 12 > other.right
         || box.bottom + 10 < other.top

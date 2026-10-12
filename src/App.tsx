@@ -9,6 +9,7 @@ import {
   IntroScreen,
   JourneyRail,
   LibrarianBand,
+  OnboardingHint,
   ObservatoryHeader,
   preloadCover,
   StarChartReveal,
@@ -27,6 +28,7 @@ import { otherBookId } from './lib/galaxyMath'
 import { getIntroLoadingPhase, Soundscape, syncSoundscapeVisibility } from './lib/soundscape'
 import { downloadStarChart, renderStarChart } from './lib/starChart'
 import { askOnlineCurator, hasOnlineCurator } from './ai/curator'
+import { isSleepingStar, pickSleepingStar, rankSleepingStars } from './lib/sleepingStars'
 import type { Book, BookRelation } from './types'
 
 type SemanticNeighbour = CatalogNeighbour & { book: RuntimeBook }
@@ -398,6 +400,19 @@ export default function App() {
     }, controller.signal)
   }, [journeyBooks, observedFrom, observedRelation, selected])
 
+  const sleepingRanking = useMemo(
+    () => rankSleepingStars(data.books, data.curatedRelations),
+    [data.books, data.curatedRelations],
+  )
+  const wakeSleepingStar = useCallback(() => {
+    const book = pickSleepingStar(data.books, data.curatedRelations)
+    if (book) startFrom(book)
+  }, [data.books, data.curatedRelations, startFrom])
+  const selectedIsSleeping = useMemo(
+    () => Boolean(selected && isSleepingStar(selected, sleepingRanking)),
+    [selected, sleepingRanking],
+  )
+
   const handleHover = useCallback((book: Book | null, position?: { x: number; y: number }) => {
     setHovered(book && position ? { book, position } : undefined)
   }, [])
@@ -429,6 +444,7 @@ export default function App() {
           curatedRelationCount={curatedRelationCount}
           loadingPhase={loadingPhase}
           onStart={startFrom}
+          onWake={wakeSleepingStar}
         />
       ) : (
         <>
@@ -443,6 +459,7 @@ export default function App() {
             onReset={reset}
           />
           {state.status === 'exploring' && <HoverLabel book={hovered?.book ?? null} position={hovered?.position} />}
+          <OnboardingHint step={Math.min(3, journeyBooks.length)} />
           <JourneyRail books={journeyBooks} onSelect={state.status === 'exploring' ? selectBook : undefined} />
           {selected && state.status !== 'travelling' && (
             <BookObservatory
@@ -489,6 +506,8 @@ export default function App() {
               relation={observedRelation}
               from={observedFrom}
               to={selected}
+              nearest={nearbyBooks[0]}
+              sleeping={selectedIsSleeping}
               onlineAvailable={hasOnlineCurator()}
               onAskOnline={askOnline}
               onClose={() => dispatch({ type: 'TOGGLE_LIBRARIAN', open: false })}
