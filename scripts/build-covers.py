@@ -63,7 +63,8 @@ def main():
         'wikipedia-infobox': 'Wikipedia infobox image; free or non-free (fair use) per file page.',
     }
     lines = ['# Cover credits', '', 'Covers are self-hosted copies (resized to 400px WebP) of images from the sources below.',
-             'Each entry links to its source page, where the licence is stated. Rights holders may request removal via a repository issue.', '']
+             'Each entry links to its source page, where the licence is stated.', '',
+             '**Use and takedown.** Cover art remains © its publisher, artist or uploader. These copies are used only for non-commercial showcase and bibliographic identification of the books in this project; they are not covered by the repository\'s MIT licence. Rights holders who want an image removed can open an issue at https://github.com/VinceJan/Book-Galaxy/issues and it will be taken down promptly.', '']
     for key, text in providers.items():
         lines.append(f'- **{key}**: {text}')
     lines += ['', '| id | title | provider | licence class | source |', '|---|---|---|---|---|']

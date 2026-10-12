@@ -64,7 +64,7 @@
   <strong>3,002</strong> 条引力书线
 </p>
 
-书目来自 Wikidata 与中文维基百科的可核查记录，封面来自可靠匹配的 Open Library 条目。布局在离线完成；浏览器只载入已检查、固定版本的数据快照。每本书都保留来源与修订回链。
+书目来自 Wikidata 与中文维基百科的可核查记录，封面为 902 张自托管的缩略图（Open Library、Wikimedia Commons 与维基百科），其余以生成藏书票代替。布局在离线完成；浏览器只载入已检查、固定版本的数据快照。每本书都保留来源与修订回链。
 
 ## 在本地打开
 
@@ -84,4 +84,5 @@ npm ci && npm run dev
 - [星海地名](docs/region-naming.md)
 - [数据与来源](data-sources.md)
 - [数据归属与许可](DATA_LICENSE.md)
+- [封面来源与许可](public/covers/ATTRIBUTION.md)：封面版权归出版方或原作者，仅用于非商业的作品展示与书籍识别；权利人如需撤下，请提 issue，我们会尽快移除。
 - [MIT License](LICENSE)
