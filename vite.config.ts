@@ -8,5 +8,17 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: false,
     chunkSizeWarningLimit: 900,
+    rolldownOptions: {
+      output: {
+        // Curated reading threads are editorial data: split them into two
+        // lazily loaded chunks so no single chunk crosses the size budget.
+        advancedChunks: {
+          groups: [
+            { name: 'curated-a', test: /curatedThreads[\\/](?:shard-0[0-5]|world|ideas|chinese)/ },
+            { name: 'curated-b', test: /curatedThreads[\\/]/ },
+          ],
+        },
+      },
+    },
   },
 })

@@ -1,6 +1,6 @@
 import type { MapRegion, Book, BookRelation, BookPosition, BookShape, RelationKind, BookEligibility, BookInstanceType } from '../types'
 import { chooseRelations, otherBookId } from '../lib/galaxyMath'
-import { buildCuratedRelationsWithStats, type CuratedRelationBuildStats } from './curatedThreads'
+import type { CuratedRelationBuildStats } from './curatedThreads'
 
 export interface CatalogNeighbour {
   id: string
@@ -27,6 +27,7 @@ interface CatalogBook {
   country?: string
   summary?: string
   hook?: string
+  notes?: Book['notes']
   subjects?: string[]
   themes?: string[]
   themeProvenance?: Book['themeProvenance']
@@ -160,6 +161,7 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
     aliases: book.aliases,
     summary: book.summary?.trim(),
     hook: book.hook?.trim() || undefined,
+    notes: book.notes,
     instanceOf: book.instanceOf,
     eligibility: book.eligibility,
     wikipediaTitle: book.wikipediaTitle,
@@ -206,6 +208,8 @@ export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> 
     throw new Error('真实书目快照不完整')
   }
   const catalogBooks = catalogSourceBooks.map(normalizeCatalogBook)
+  // Hand-written threads are ~0.9 MB of source; load them as their own chunk.
+  const { buildCuratedRelationsWithStats } = await import('./curatedThreads')
   const curatedBuild = buildCuratedRelationsWithStats(catalogBooks)
   return {
     books: catalogBooks,

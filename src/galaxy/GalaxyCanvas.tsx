@@ -1,6 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { Book, MapRegion } from '../types'
-import { GalaxyEngine } from './GalaxyEngine'
+import type { GalaxyEngine } from './GalaxyEngine'
+
+// three.js and the engine ship as their own chunk; start fetching it as soon
+// as this module loads so it arrives alongside the catalog.
+const engineModule = typeof window === 'undefined' ? undefined : import('./GalaxyEngine')
 
 export interface GalaxyCanvasHandle {
   focusBook: (id: string, duration?: number, options?: { ceremony?: boolean }) => Promise<boolean | undefined>
@@ -35,29 +39,48 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
   const engineRef = useRef<GalaxyEngine | null>(null)
   const callbacksRef = useRef({ onHover, onSelect, onReady, onError })
   callbacksRef.current = { onHover, onSelect, onReady, onError }
+  // Latest props for an engine that finishes loading after they changed.
+  const reducedMotionRef = useRef(reducedMotion)
+  reducedMotionRef.current = reducedMotion
+  const emphasisRef = useRef(emphasisIds)
+  emphasisRef.current = emphasisIds
+  const trailsRef = useRef(trails)
+  trailsRef.current = trails
+  const focusRef = useRef({ focusRegionId, bookOpen, introOpen })
+  focusRef.current = { focusRegionId, bookOpen, introOpen }
 
   useEffect(() => {
-    if (!containerRef.current || books.length === 0) return
-    try {
-      const engine = new GalaxyEngine(
-        containerRef.current,
-        books,
-        {
-          onHover: (...args) => callbacksRef.current.onHover(...args),
-          onSelect: (...args) => callbacksRef.current.onSelect(...args),
-          onReady: () => callbacksRef.current.onReady(),
-          onError: (...args) => callbacksRef.current.onError(...args),
-        },
-        reducedMotion,
-        { regions },
-      )
-      engineRef.current = engine
-      return () => {
-        engine.dispose()
-        engineRef.current = null
+    const container = containerRef.current
+    if (!container || books.length === 0 || !engineModule) return
+    let cancelled = false
+    let engine: GalaxyEngine | undefined
+    engineModule.then(({ GalaxyEngine: Engine }) => {
+      if (cancelled) return
+      try {
+        engine = new Engine(
+          container,
+          books,
+          {
+            onHover: (...args) => callbacksRef.current.onHover(...args),
+            onSelect: (...args) => callbacksRef.current.onSelect(...args),
+            onReady: () => callbacksRef.current.onReady(),
+            onError: (...args) => callbacksRef.current.onError(...args),
+          },
+          reducedMotionRef.current,
+          { regions },
+        )
+        engineRef.current = engine
+        engine.setEmphasis(emphasisRef.current)
+        engine.setTrails(trailsRef.current ?? [])
+        engine.setRegionFocus(focusRef.current.focusRegionId, focusRef.current.bookOpen, focusRef.current.introOpen)
+      } catch (error) {
+        callbacksRef.current.onError(error instanceof Error ? error.message : '星海初始化失败')
       }
-    } catch (error) {
-      callbacksRef.current.onError(error instanceof Error ? error.message : '星海初始化失败')
+    }, () => callbacksRef.current.onError('星海模块载入失败'))
+    return () => {
+      cancelled = true
+      engine?.dispose()
+      engineRef.current = null
     }
   }, [books, regions])
 
