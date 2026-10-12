@@ -1,0 +1,230 @@
+/* ============================================================
+   Art direction v2 — "夜航图书馆"
+   One layer over styles.css: type roles, palette, hairline
+   panels, glow and staggered motion. Remove this import to
+   return to v1.
+   ============================================================ */
+:root {
+  /* Palette: a deeper sea-ink, warmer paper, champagne instead of brass,
+     a cool jade for secondary signals and a single cinnabar accent. */
+  --black: #04070a;
+  --ink: #0a1117;
+  --ink-raised: #0d151c;
+  --paper: #e6dfcf;
+  --paper-dim: rgba(230, 223, 207, 0.62);
+  --paper-faint: rgba(230, 223, 207, 0.14);
+  --gold: #c8a96b;
+  --gold-soft: rgba(200, 169, 107, 0.34);
+  --jade: #84aaa1;
+  --seal: #b4513c;
+  --hairline: rgba(230, 223, 207, 0.09);
+  --hairline-strong: rgba(230, 223, 207, 0.18);
+
+  /* Type roles */
+  --display: "BG Display", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  --serif: "BG Serif", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  --literary: "BG Kai", "LXGW WenKai", "Kaiti SC", "STKaiti", "KaiTi", serif;
+  --latin: "BG Latin", "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --sans: "PingFang SC", "HarmonyOS Sans SC", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --mono: "BG Mono", "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--sans);
+  color: var(--paper);
+  background: var(--black);
+}
+
+::selection { background: rgba(200, 169, 107, 0.32); color: var(--paper); }
+
+/* ---------- Atmosphere ---------- */
+.app-shell::after {
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 46%, rgba(2, 4, 6, 0.55) 100%),
+    linear-gradient(90deg, rgba(4, 7, 10, 0.42), transparent 24%, transparent 76%, rgba(4, 7, 10, 0.3));
+}
+.app-shell::before {
+  /* Film grain keeps large dark fields from banding. */
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  content: "";
+}
+
+/* ---------- Intro ---------- */
+.intro { background: linear-gradient(90deg, rgba(4, 7, 10, 0.96) 0%, rgba(4, 7, 10, 0.78) 58%, transparent 100%); }
+.intro::before { background: linear-gradient(transparent, var(--gold-soft) 20%, rgba(200, 169, 107, 0.08) 80%, transparent); }
+.intro-kicker { color: var(--gold); font-size: 0.64rem; letter-spacing: 0.32em; }
+.intro h1 {
+  color: rgba(230, 223, 207, 0.52);
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.04;
+}
+.intro h1 span {
+  color: var(--paper);
+  background: linear-gradient(180deg, #f3ecdc 10%, #cdbf9f 120%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.intro-thesis { font-family: var(--literary); font-size: clamp(1.25rem, 2.1vw, 2.2rem); letter-spacing: 0.22em; color: rgba(230, 223, 207, 0.86); }
+.search-line { border-bottom-color: var(--hairline-strong) !important; transition: border-color 240ms ease; }
+.search-line:focus-within { border-bottom-color: var(--gold) !important; }
+.search-line input { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
+.search-line input::placeholder { color: rgba(230, 223, 207, 0.34); font-family: var(--sans); font-weight: 400; }
+.search-line button {
+  background: linear-gradient(180deg, #efe6d2, #d6c7a3) !important; color: #0b0f12 !important;
+  box-shadow: 0 0 0 1px rgba(255, 245, 220, 0.25) inset, 0 10px 30px -12px rgba(200, 169, 107, 0.6);
+  transition: transform 200ms var(--ease-out), box-shadow 200ms ease;
+}
+.search-line button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(255, 245, 220, 0.35) inset, 0 16px 36px -12px rgba(200, 169, 107, 0.75); }
+.intro-presets button { font-family: var(--display); font-weight: 600; color: rgba(230, 223, 207, 0.62); transition: color 180ms ease; }
+.intro-presets button:hover:not(:disabled) { color: var(--gold); }
+.intro-proof strong { font-family: var(--mono); font-weight: 500; color: var(--paper); }
+.intro-wake { border-color: var(--gold-soft); background: linear-gradient(90deg, rgba(200, 169, 107, 0.07), rgba(4, 7, 10, 0.4)); }
+.intro-wake span:not(.intro-wake-star) { font-family: var(--literary); font-size: 1rem; letter-spacing: 0.1em; }
+
+/* ---------- Header ---------- */
+.observatory-header { background: linear-gradient(180deg, rgba(4, 7, 10, 0.86), rgba(4, 7, 10, 0)); border-bottom: 0 !important; }
+.wordmark strong { font-family: var(--display); font-weight: 600; letter-spacing: 0.14em; }
+.wordmark-mark { border-color: var(--gold-soft) !important; color: var(--gold) !important; font-family: var(--display); }
+
+/* ---------- Observatory panel ---------- */
+.book-observatory {
+  background:
+    radial-gradient(120% 50% at 100% 0%, rgba(132, 170, 161, 0.07), transparent 60%),
+    linear-gradient(180deg, var(--ink-raised), var(--ink) 40%, #070c10);
+  border-left: 1px solid transparent;
+  border-image: linear-gradient(180deg, rgba(200, 169, 107, 0.4), var(--hairline) 30%, var(--hairline) 80%, transparent) 1;
+  box-shadow: -40px 0 120px rgba(0, 0, 0, 0.5);
+  padding-left: clamp(26px, 3vw, 44px);
+  padding-right: clamp(26px, 3vw, 44px);
+}
+.panel-heading { color: rgba(230, 223, 207, 0.4); }
+.book-identity { gap: 22px; }
+.book-cover {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 22px 40px -18px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(230, 223, 207, 0.08);
+  transform: perspective(600px) rotateY(-4deg);
+  transform-origin: left center;
+  transition: transform 400ms var(--ease-out);
+}
+.book-cover:hover { transform: perspective(600px) rotateY(0deg); }
+.book-title-label { color: var(--gold); font-family: var(--mono); letter-spacing: 0.2em; }
+.book-observatory h2 {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.12;
+  text-shadow: 0 0 40px rgba(200, 169, 107, 0.18);
+}
+.original-title { font-family: var(--latin); font-size: 0.95rem; color: rgba(230, 223, 207, 0.6); }
+.book-byline { font-family: var(--display); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.16em; color: rgba(230, 223, 207, 0.86); }
+.book-meta-chips { font-family: var(--mono); color: rgba(230, 223, 207, 0.5); }
+.book-record { border-top-color: var(--hairline); }
+.book-record-label, .book-record-label-primary { color: var(--gold); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.24em; }
+.book-hook, .book-summary-primary.book-hook {
+  position: relative;
+  max-width: 30em;
+  padding: 14px 0 6px 22px;
+  border-left: 0;
+  background: none;
+  color: rgba(240, 233, 216, 0.94);
+  font-family: var(--literary);
+  font-size: 1.12rem;
+  line-height: 1.95;
+  letter-spacing: 0.02em;
+}
+.book-hook::before {
+  position: absolute; top: 4px; left: 0; color: var(--gold); font-family: var(--display); font-size: 1.9rem; line-height: 1; opacity: 0.7; content: "「";
+}
+.book-fulltext > p { font-family: var(--serif); line-height: 1.95; }
+.whyhere-copy { font-family: var(--literary); font-size: 0.95rem; color: rgba(230, 223, 207, 0.78); }
+.hidden-thread-item { transition: background 220ms ease, padding 220ms var(--ease-out); }
+.hidden-thread-item:hover { background: linear-gradient(90deg, rgba(200, 169, 107, 0.07), transparent); }
+.hidden-thread-item strong, .nearby-book-list button span { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
+.hidden-thread-item span { font-family: var(--literary); font-size: 0.86rem; line-height: 1.8; color: rgba(230, 223, 207, 0.7); }
+.hidden-thread-item small { color: var(--jade); font-family: var(--mono); letter-spacing: 0.24em; }
+.gravity-thread-record { border: 1px solid var(--hairline) !important; background: linear-gradient(180deg, rgba(200, 169, 107, 0.035), transparent 70%) !important; }
+.panel-actions > button { border-top-color: var(--hairline); font-size: 0.74rem; letter-spacing: 0.12em; transition: color 180ms ease, background 220ms ease; }
+.panel-actions > button:hover:not(:disabled) { background: rgba(230, 223, 207, 0.03); }
+.panel-actions .primary-action {
+  background: linear-gradient(180deg, #efe6d2, #d3c39d);
+  color: #0b0f12;
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  box-shadow: 0 0 0 1px rgba(255, 245, 220, 0.25) inset, 0 14px 34px -16px rgba(200, 169, 107, 0.8);
+}
+.panel-actions .primary-action:hover:not(:disabled) { background: linear-gradient(180deg, #f6eedc, #dccca6); }
+
+/* Staggered entrance for panel sections. */
+@media (prefers-reduced-motion: no-preference) {
+  .book-observatory > * { animation: section-rise 620ms var(--ease-out) both; }
+  .book-observatory > :nth-child(2) { animation-delay: 40ms; }
+  .book-observatory > :nth-child(3) { animation-delay: 90ms; }
+  .book-observatory > :nth-child(4) { animation-delay: 140ms; }
+  .book-observatory > :nth-child(5) { animation-delay: 190ms; }
+  .book-observatory > :nth-child(n+6) { animation-delay: 240ms; }
+}
+@keyframes section-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.reduced-motion .book-observatory > * { animation: none !important; }
+
+/* ---------- Onboarding (now inside the panel) ---------- */
+.onboarding-hint {
+  position: static; max-width: none; margin: 4px 0 18px; padding: 12px 14px;
+  border: 1px solid var(--hairline); background: rgba(132, 170, 161, 0.04); backdrop-filter: none; animation: none;
+}
+.onboarding-hint strong { font-family: var(--display); font-weight: 600; }
+.onboarding-hint li.is-active small { color: var(--gold); }
+@media (max-width: 760px) {
+  .onboarding-hint { position: static; bottom: auto; left: auto; right: auto; flex-direction: row; align-items: center; }
+  .onboarding-hint span { display: none; }
+}
+
+/* ---------- Detour compass ---------- */
+.detour-compass { background: linear-gradient(180deg, var(--ink-raised), #05090c); border-color: var(--hairline-strong); }
+.detour-compass h2 { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
+.direction-list button { transition: background 240ms ease, padding 240ms var(--ease-out); }
+.direction-list button:hover { background: linear-gradient(180deg, rgba(200, 169, 107, 0.06), transparent); }
+.direction-list strong { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
+.direction-list span { font-family: var(--literary); color: rgba(230, 223, 207, 0.66); }
+.direction-list small { color: var(--gold); font-family: var(--mono); letter-spacing: 0.24em; }
+
+/* ---------- Voyage narration ---------- */
+.voyage-narration p { font-family: var(--display); font-weight: 600; letter-spacing: 0.12em; text-shadow: 0 0 30px rgba(200, 169, 107, 0.35); }
+
+/* ---------- Librarian ---------- */
+.librarian-band {
+  background: linear-gradient(180deg, rgba(13, 21, 28, 0.985), rgba(5, 9, 12, 0.995));
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, rgba(132, 170, 161, 0.55), rgba(200, 169, 107, 0.4), transparent) 1;
+}
+.librarian-band h2 { font-family: var(--display); font-weight: 600; letter-spacing: 0.06em; color: var(--gold); font-size: 0.95rem; }
+.librarian-band > p { font-family: var(--literary); color: rgba(240, 233, 216, 0.92); font-size: clamp(1.05rem, 1.5vw, 1.4rem); line-height: 1.9; }
+.signal-notes { font-family: var(--literary); font-size: 0.92rem; color: rgba(230, 223, 207, 0.7); }
+.signal-question-line { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin: 18px 0 0; font-family: var(--display); font-weight: 600; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--paper); }
+.signal-question-line span { color: var(--jade); font-family: var(--mono); font-size: 0.58rem; font-weight: 400; letter-spacing: 0.24em; }
+.signal-presets button { font-family: var(--sans); border-color: var(--hairline-strong); }
+
+/* ---------- Journey rail & my galaxy ---------- */
+.journey-rail li span, .journey-rail li button { font-family: var(--display); font-weight: 600; }
+.my-galaxy-toggle {
+  display: inline-flex; gap: 8px; align-items: center; margin-top: 10px; padding: 6px 10px;
+  border: 1px solid var(--hairline); background: rgba(132, 170, 161, 0.05);
+  color: rgba(230, 223, 207, 0.7); font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; cursor: pointer;
+}
+.my-galaxy-toggle i { width: 14px; height: 1px; background: var(--jade); box-shadow: 0 0 6px var(--jade); }
+.my-galaxy-toggle small { color: var(--jade); }
+.my-galaxy-toggle[aria-pressed="false"] i { opacity: 0.3; box-shadow: none; }
+
+/* ---------- Star chart ---------- */
+.chart-copy h2 { font-family: var(--display); font-weight: 600; }
+.chart-copy p { font-family: var(--literary); }
+
+/* ---------- Hover label ---------- */
+.hover-label strong { font-family: var(--display); font-weight: 600; letter-spacing: 0.04em; }
+
+/* Wordmark as a cinnabar seal. */
+.wordmark-mark {
+  border: 0 !important; background: var(--seal); color: #f3e9d6 !important;
+  font-family: var(--display); font-size: 1.05rem; font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(255, 220, 200, 0.12) inset, 0 6px 18px -8px rgba(180, 81, 60, 0.8);
+}
