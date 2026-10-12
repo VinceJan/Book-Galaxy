@@ -225,6 +225,7 @@ export class GalaxyEngine {
   private labelLevel?: LabelLevel
   private focusRegionId?: string
   private bookOpen = false
+  private introOpen = false
   private trailLines: Line[] = []
   private arrivalFlash?: { sprite: Sprite; material: SpriteMaterial; texture: CanvasTexture; startedAt: number }
 
@@ -639,6 +640,8 @@ export class GalaxyEngine {
       { left: 0, top: 0, right: width, bottom: 70 },
       { left: 0, top: height - 44, right: width, bottom: height },
       ...(phone ? [{ left: 0, top: 70, right: width, bottom: 150 }] : [{ left: 0, top: height - 150, right: 320, bottom: height }]),
+      // The intro copy owns the left column (the whole screen on phones).
+      ...(this.introOpen ? [{ left: 0, top: 0, right: phone ? width : Math.min(940, width * 0.74) * 0.82, bottom: height }] : []),
     ]
     const candidates: LabelCandidate[] = this.semanticRegionLabels.map((label) => {
       const depth = this.camera.position.distanceTo(label.anchor)
@@ -673,9 +676,10 @@ export class GalaxyEngine {
     })
   }
 
-  setRegionFocus(regionId: string | undefined, bookOpen: boolean): void {
+  setRegionFocus(regionId: string | undefined, bookOpen: boolean, introOpen = false): void {
     this.focusRegionId = regionId
     this.bookOpen = bookOpen
+    this.introOpen = introOpen
   }
 
   private bindEvents(): void {

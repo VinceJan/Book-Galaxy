@@ -16,6 +16,7 @@ interface GalaxyCanvasProps {
   trails?: string[][]
   focusRegionId?: string
   bookOpen?: boolean
+  introOpen?: boolean
   emphasisIds: string[]
   keyboardEnabled: boolean
   reducedMotion: boolean
@@ -26,7 +27,7 @@ interface GalaxyCanvasProps {
 }
 
 export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(function GalaxyCanvas(
-  { books, regions, trails, focusRegionId, bookOpen = false, emphasisIds, keyboardEnabled, reducedMotion, onHover, onSelect, onReady, onError },
+  { books, regions, trails, focusRegionId, bookOpen = false, introOpen = false, emphasisIds, keyboardEnabled, reducedMotion, onHover, onSelect, onReady, onError },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -65,8 +66,8 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
   }, [trails, books, regions])
 
   useEffect(() => {
-    engineRef.current?.setRegionFocus(focusRegionId, bookOpen)
-  }, [focusRegionId, bookOpen, books, regions])
+    engineRef.current?.setRegionFocus(focusRegionId, bookOpen, introOpen)
+  }, [focusRegionId, bookOpen, introOpen, books, regions])
 
   useEffect(() => {
     engineRef.current?.setEmphasis(emphasisIds)

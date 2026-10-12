@@ -468,6 +468,7 @@ export default function App() {
         trails={pastTrails}
         focusRegionId={selectedRegion?.id}
         bookOpen={Boolean(selected) && state.status !== 'intro'}
+        introOpen={state.status === 'intro'}
         emphasisIds={emphasisIds}
         keyboardEnabled={stageKeyboardEnabled}
         reducedMotion={reducedMotion}
