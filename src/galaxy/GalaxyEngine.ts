@@ -233,7 +233,6 @@ export class GalaxyEngine {
   private reducedMotion = false
   private disposed = false
   private elapsed = 0
-  private readyTimer?: number
   private readonly regions: MapRegion[]
   private labelLevel?: LabelLevel
   private focusRegionId?: string
@@ -315,9 +314,10 @@ export class GalaxyEngine {
     this.bindEvents()
     this.resize()
     this.animate()
-    this.readyTimer = window.setTimeout(() => {
+    // Ready once two frames have actually been drawn (no fixed delay).
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
       if (!this.disposed) callbacks.onReady()
-    }, 240)
+    }))
   }
 
   private createBookStars(): { geometry: BufferGeometry; material: ShaderMaterial; points: Points } {
@@ -616,24 +616,28 @@ export class GalaxyEngine {
   private makeLabelSprite(text: string, font: string, color: string, rule: boolean): { sprite: Sprite; material: SpriteMaterial; texture: CanvasTexture; aspect: number } {
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
+    // Draw at device resolution (capped) so names stay crisp on phones and retina screens.
+    const scale = typeof window === 'undefined' ? 1 : Math.min(2, Math.max(1, window.devicePixelRatio || 1))
     const height = rule ? 72 : 40
     let width = 32
     if (context) {
       context.font = font
       width = Math.ceil(context.measureText(text).width) + (rule ? 40 : 8)
     }
-    canvas.width = Math.max(32, width)
-    canvas.height = height
+    width = Math.max(32, width)
+    canvas.width = Math.round(width * scale)
+    canvas.height = Math.round(height * scale)
     if (context) {
+      context.scale(scale, scale)
       context.font = font
       context.textBaseline = 'middle'
       context.textAlign = 'center'
       if (rule) {
         context.fillStyle = 'rgba(169, 147, 96, 0.62)'
-        context.fillRect(canvas.width / 2 - 11, height - 4, 22, 2)
+        context.fillRect(width / 2 - 11, height - 4, 22, 2)
       }
       context.fillStyle = color
-      context.fillText(text, canvas.width / 2, rule ? height / 2 - 4 : height / 2)
+      context.fillText(text, width / 2, rule ? height / 2 - 4 : height / 2)
     }
     const texture = new CanvasTexture(canvas)
     texture.colorSpace = SRGBColorSpace
@@ -761,7 +765,7 @@ export class GalaxyEngine {
     if (typeof document === 'undefined') return []
     const origin = this.container.getBoundingClientRect()
     const pad = 12
-    return [...document.querySelectorAll('.book-observatory, .detour-compass, .librarian-band, .journey-rail, .intro-panel')]
+    return [...document.querySelectorAll('.book-observatory, .detour-compass, .librarian-band, .journey-rail, .intro h1, .intro-thesis, .departure-search, .intro-presets, .intro-wake, .intro-proof')]
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
       .map((rect) => ({ left: rect.left - origin.left - pad, top: rect.top - origin.top - pad, right: rect.right - origin.left + pad, bottom: rect.bottom - origin.top + pad }))
@@ -1311,7 +1315,6 @@ export class GalaxyEngine {
 
   dispose(): void {
     this.disposed = true
-    if (this.readyTimer) window.clearTimeout(this.readyTimer)
     if (this.frame) cancelAnimationFrame(this.frame)
     this.frame = undefined
     this.timer.dispose()

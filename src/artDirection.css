@@ -245,3 +245,18 @@
   .journey-rail li { scroll-snap-align: end; max-width: none; }
   .journey-rail li span, .journey-rail li button { overflow: visible; text-overflow: clip; max-width: none; }
 }
+
+/* ---------- Batch 5: judge-facing polish ---------- */
+/* 1. The headline never strands a lone 书。 — each line is one unbroken phrase. */
+.intro h1 { font-size: clamp(2.5rem, 4.4vw, 4.6rem); text-wrap: balance; }
+.intro h1 span { display: inline-block; white-space: nowrap; }
+@media (max-width: 760px) {
+  .intro h1 { font-size: clamp(2rem, 9.6vw, 2.75rem); }
+  /* 2. Proof line: three even columns, numeral over label, no ragged wrap. */
+  .intro-proof { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 12px !important; }
+  .intro-proof span { display: grid; gap: 3px; white-space: nowrap; font-size: 0.56rem; letter-spacing: 0.08em; }
+  .intro-proof strong { font-size: 0.86rem; }
+}
+/* 4. A detour or the librarian takes the stage alone: the panel behind leaves, nothing peeks through. */
+.app-shell:has(.detour-compass) .book-observatory,
+.app-shell:has(.librarian-band) .book-observatory { opacity: 0; visibility: hidden; filter: none; transition: opacity 220ms ease, visibility 0s linear 220ms; }

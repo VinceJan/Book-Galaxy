@@ -137,6 +137,8 @@ export interface MapRegion {
 export interface Book {
   id: string
   title: string
+  /** Han-character count of the summary, shipped in the first-paint slice. */
+  summaryChars?: number
   /** Canonical page title when the source keeps a traditional-variant name. */
   wikipediaTitle?: string
   originalTitle?: string

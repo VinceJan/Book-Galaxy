@@ -12,8 +12,22 @@ assert.equal(isRejectedSentence('三明经，南传上座部佛教《巴利文�
 assert.equal(isRejectedSentence('《娜娜》是法国作家左拉的《卢贡-马卡尔家族》系列作品的第九部。'), true)
 assert.equal(isRejectedSentence('他经历了一系列冒险。'), false)
 assert.equal(bookHook(''), '')
+assert.equal(bookHook('《罗马书》，全称《使徒保罗达罗马人书》、《圣保禄宗徒致罗马人书》，意思是《保罗致罗马城基督徒的书信》。'), '')
+assert.equal(bookHook('《海底两万里》，或译为《海底历险记》、《海底六万里》，法国科幻小说家儒勒·凡尔纳的代表作之一，是一部出色的科幻小说。'), '《海底两万里》，法国科幻小说家儒勒·凡尔纳的代表作之一，是一部出色的科幻小说。')
 // A context-dependent sentence never stands alone.
 assert.equal(bookHook('《甲》是某作家的小说。小说引来许多评论家的非议。同时这些非议或许也是因为此书描写了阶级的缘故。').includes('同时这些'), false)
+
+// A clause is verbatim, or two verbatim spans in lead order (an alias run cut from between).
+const fromLead = (clause, lead) => {
+  if (lead.includes(clause)) return true
+  const chars = [...clause]
+  for (let k = 2; k < chars.length - 1; k += 1) {
+    const head = chars.slice(0, k).join('')
+    const at = lead.indexOf(head)
+    if (at >= 0 && lead.indexOf(chars.slice(k).join(''), at + head.length) >= 0) return true
+  }
+  return false
+}
 
 const runtime = JSON.parse(await readFile(new URL('../public/data/catalog.runtime.json', import.meta.url), 'utf8'))
 const strip = stripBrackets
@@ -27,7 +41,7 @@ for (const book of runtime.books) {
   const hook = (book.hook ?? '').replace(/……$/u, '')
   const pieces = splitSentences(hook)
   if (!book.hook) { empty += 1; continue }
-  if ([...book.hook].length > 120 || pieces.some((piece) => !lead.includes(piece.replace(/……$/u, '').replace(/。$/u, '')))) {
+  if ([...book.hook].length > 120 || pieces.some((piece) => piece.replace(/……$/u, '').replace(/[。！？]$/u, '').split(/[，；]/u).some((clause) => clause && !fromLead(clause, lead)))) {
     failures += 1
     if (failures <= 5) console.error(`hook not verbatim: ${book.id} ${book.title}: ${book.hook}`)
   }

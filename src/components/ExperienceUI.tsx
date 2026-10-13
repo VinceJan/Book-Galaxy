@@ -37,6 +37,11 @@ function chineseCharacterCount(value: string | undefined): number {
   return (value?.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/gu) ?? []).length
 }
 
+/** Summary length that is stable before and after the full catalog lands. */
+function summaryCharacterCount(book: Book): number {
+  return book.summaryChars ?? chineseCharacterCount(book.summary)
+}
+
 function bookAliases(book: Book): string[] {
   const runtime = book as Book & {
     aliases?: unknown
@@ -100,7 +105,7 @@ function searchBooks(books: Book[], query: string, limit = 5): Book[] {
       book,
       rank: rankedMatch(book, normalized),
       chinese: chineseCharacterCount(book.title),
-      content: chineseCharacterCount(book.summary),
+      content: summaryCharacterCount(book),
       cover: book.coverUrl ? 1 : 0,
     }))
     .filter((item) => Number.isFinite(item.rank))
@@ -118,7 +123,7 @@ function searchBooks(books: Book[], query: string, limit = 5): Book[] {
 
 function featuredBooks(books: Book[], limit = 5): Book[] {
   const score = (book: Book) => (
-    chineseCharacterCount(book.summary) * 2
+    summaryCharacterCount(book) * 2
     + book.themes.length * 16
     + (book.coverUrl ? 50 : 0)
     + (book.originalTitle ? 12 : 0)
@@ -256,10 +261,10 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
       )}
       <div className="intro-proof" aria-label="数据规模">
         <span><strong>{ready ? bookCount.toLocaleString('zh-CN') : '—'}</strong> 本真实书籍</span>
-        <span><strong>{ready ? relationCount.toLocaleString('zh-CN') : '—'}</strong> 条书海暗线</span>
+        <span><strong>{ready && relationCount > 0 ? relationCount.toLocaleString('zh-CN') : '—'}</strong> 条书海暗线</span>
         <span><strong>{ready && curatedRelationCount > 0 ? curatedRelationCount.toLocaleString('zh-CN') : '—'}</strong> 条引力书线</span>
       </div>
-      {loadingPhase && !ready && (
+      {loadingPhase && (
         <p className="intro-loading-phase" role="status">{loadingPhase}</p>
       )}
       <div className="intro-challenges">双题合流 · 02 × 03</div>
@@ -647,7 +652,9 @@ export function BookObservatory({
   const contentReady = summaryChineseCharacters >= 120
   const hasSecondaryTitle = Boolean(book.originalTitle && book.originalTitle !== book.title)
   const collectionType = specificInstanceType(book)
-  const country = book.country?.trim()
+  const rawCountry = book.country?.trim()
+  // Placeholder values never reach the page.
+  const country = rawCountry && !/^(?:未注明|未知|不详)$/u.test(rawCountry) ? rawCountry : undefined
   const nearestSemantic = semanticNeighbors[0]
   const density = typeof book.localDensity === 'number' ? book.localDensity : undefined
   const densityWord = density === undefined
@@ -1126,7 +1133,8 @@ export function JourneyRail({ books, onSelect, myGalaxy }: {
         {omitted > 0 && <li className="omitted"><span>此前 {omitted} 站 ···</span></li>}
         {visibleBooks.map((book, index) => {
           const isCurrent = index === visibleBooks.length - 1
-          const clickable = Boolean(onSelect) && !isCurrent
+          // The current stop stays tappable: on phones it is the way back to a closed sheet.
+          const clickable = Boolean(onSelect)
           return (
             <li key={`${book.id}:${index}`} className={isCurrent ? 'current' : ''} aria-current={isCurrent ? 'step' : undefined}>
               <i />
@@ -1160,6 +1168,7 @@ export function LibrarianBand({
   nearest,
   sleeping = false,
   region,
+  fromRegion,
 }: {
   relation?: BookRelation
   from?: Book
@@ -1167,6 +1176,8 @@ export function LibrarianBand({
   nearest?: Book
   sleeping?: boolean
   region?: MapRegion
+  /** Region of the previous stop, so a far jump can name what it crossed. */
+  fromRegion?: MapRegion
   onClose: () => void
   onlineAvailable?: boolean
   onAskOnline?: (question: string) => Promise<string | undefined>
@@ -1189,7 +1200,13 @@ export function LibrarianBand({
         : '单书观测'
   const basis = relation ? readableRelationBasis(relation, to) : []
   const note = relation
-    ? { ...offlineTransitionNote(relation, from, to), lead: relationReading(relation, from, to) }
+    ? (() => {
+      const transition = offlineTransitionNote(relation, from, to, { fromRegion, toRegion: region })
+      // Far jumps carry their own lead (what was crossed); others keep the voyage line.
+      return relation.distanceBand === 'far' && relation.provenance !== 'reading-hypothesis'
+        ? transition
+        : { ...transition, lead: relationReading(relation, from, to) }
+    })()
     : offlineBookNote(to, { sleeping, nearest })
   return (
     <section ref={dialogRef} className="librarian-band" role="dialog" aria-modal="true" aria-labelledby="librarian-title" onKeyDown={handleKeyDown}>
@@ -1219,7 +1236,7 @@ export function LibrarianBand({
               onClick={() => {
                 setMode('reading')
                 setAsked(item.id)
-                setAnswer(offlineAnswer(item.id, { relation, from, to, nearest, sleeping }))
+                setAnswer(offlineAnswer(item.id, { relation, from, to, nearest, sleeping, fromRegion, toRegion: region }))
               }}
             >
               {item.label}

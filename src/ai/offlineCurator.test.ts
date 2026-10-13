@@ -47,6 +47,41 @@ describe('offline librarian', () => {
   })
 })
 
+describe('far drift note', () => {
+  const regionA = { name: '忏悔谷', question: '人能被救赎吗？', bookIds: ['a'] }
+  const regionB = { name: '机械群岛', question: '机器会做梦吗？', bookIds: ['b'] }
+  const a: Book = { ...from, themes: ['城市生活', '阶级与贫困'], instanceOf: [{ id: 'Q1', label: '佛经' }] } as Book
+  const b: Book = { ...to, themes: ['太空探索', '阶级与贫困'], instanceOf: [{ id: 'Q2', label: '文学作品' }], outlierScore: 0.9 } as Book
+
+  it('names what was crossed and why it is far, from data only', () => {
+    const note = offlineTransitionNote(relation, a, b, { fromRegion: regionA, toRegion: regionB })
+    const text = [note.lead, ...note.lines].join('')
+    expect(note.lead).toMatch(/忏悔谷.*机械群岛/u)
+    expect(text).toContain('「城市生活」')
+    expect(text).toContain('「太空探索」')
+    expect(text).toContain('只剩一根细线：「阶级与贫困」')
+    expect(text).toContain('一部是佛经，一部是文学作品')
+    expect(text).toMatch(/边缘|很空/u)
+    expect(text).not.toContain('共同经过')
+    expect(text).not.toContain('乙讲述了一条河')
+  })
+
+  it('is honest when the only overlap is an umbrella tag, and in the same region', () => {
+    const broad = { ...relation, evidence: { sharedThemes: ['科学与技术'] } } as unknown as BookRelation
+    const same = offlineTransitionNote(broad, { ...from, themes: ['城市生活'] }, { ...to, themes: ['太空探索'] }, { fromRegion: regionB, toRegion: regionB })
+    expect(same.lead).toBe('同在「机械群岛」，内容上却离得很远。')
+    expect(same.lines.join('')).toContain('宽到不足以解释这一跳')
+  })
+
+  it('reads differently for different pairs and never edits the relation', () => {
+    const frozen = Object.freeze({ ...relation, sentence: '原有书线文本。' }) as BookRelation
+    const pairs = ['c', 'd', 'e', 'f', 'g', 'h'].map((id, index) => offlineTransitionNote(frozen, { ...from, id: `${id}1` }, { ...to, id, year: 1900 + index * 90 }, { fromRegion: regionA, toRegion: regionB }))
+    expect(new Set(pairs.map((note) => note.lead)).size).toBeGreaterThan(1)
+    expect(new Set(pairs.map((note) => note.lines.at(-1))).size).toBeGreaterThan(1)
+    expect(frozen.sentence).toBe('原有书线文本。')
+  })
+})
+
 describe('regionSpeaksTo', () => {
   it('only when the book is in the region and shares vocabulary', async () => {
     const { regionSpeaksTo } = await import('./offlineCurator')

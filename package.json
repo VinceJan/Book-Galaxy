@@ -10,7 +10,7 @@
     "build:data:rich": "node scripts/build-rich-catalog.mjs --limit 1000 --candidate-multiplier 8",
     "build:data:layout": "python scripts/build-semantic-layout.py --input data/rich/books.json --output data/rich/layout.json",
     "build:data:assemble": "node scripts/assemble-v2-catalog.mjs && node scripts/build-attribution.mjs && npm run build:data:runtime",
-    "build:data:runtime": "node scripts/build-runtime-catalog.mjs",
+    "build:data:runtime": "node scripts/build-runtime-catalog.mjs && node scripts/build-core-catalog.mjs",
     "build:data": "npm run build:data:rich && npm run build:data:layout && npm run build:data:assemble",
     "build:data:legacy": "node scripts/build-catalog.mjs",
     "apply:data:covers": "node scripts/apply-approved-covers.mjs",
@@ -20,7 +20,7 @@
     "check:data:layout": "node scripts/check-semantic-layout.mjs",
     "check:data:catalog": "node scripts/check-v2-catalog.mjs",
     "check:data:attribution": "node scripts/build-attribution.mjs --check",
-    "check:data:runtime": "node scripts/build-runtime-catalog.mjs --check && node scripts/test-book-hook.mjs",
+    "check:data:runtime": "node scripts/build-runtime-catalog.mjs --check && node scripts/build-core-catalog.mjs --check && node scripts/test-book-hook.mjs",
     "check:data:eligibility": "node scripts/check-rich-eligibility-fixtures.mjs",
     "check:data": "npm run check:data:eligibility && npm run check:data:covers && npm run check:data:rich && npm run check:data:layout && npm run check:data:catalog && npm run check:data:attribution && npm run check:data:runtime",
     "check:curated": "node scripts/check-curated-threads.mjs",
@@ -29,7 +29,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false",
-    "check": "npm run test && npm run check:data && npm run check:curated && npm run check:copy && npm run build"
+    "check": "npm run test && npm run check:data && npm run check:curated && npm run check:copy && npm run build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "react": "19.2.8",
@@ -37,6 +38,7 @@
     "three": "0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@types/three": "0.185.0",

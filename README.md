@@ -3,24 +3,12 @@
 <p align="center"><strong>从一本熟悉的书出发，在一千部真实作品之间，有意义地迷路。</strong></p>
 
 <p align="center">
-  <a href="https://vincejan.github.io/Book-Galaxy/">进入星海</a>
-  &nbsp;·&nbsp;
-  <a href="docs/architecture.md">技术手册</a>
-  &nbsp;·&nbsp;
-  <a href="data-sources.md">数据与来源</a>
+  <a href="https://vincejan.github.io/Book-Galaxy/"><strong>进入星海 → vincejan.github.io/Book-Galaxy</strong></a>
 </p>
 
-[![书架星系：由真实书籍构成的三维星海](docs/hero-preview.png)](https://vincejan.github.io/Book-Galaxy/)
-
-## 30 秒速览
-
-> **一句话**：一千部真实作品排成三维星海，从熟悉的书出发，用“近 / 桥 / 远”三档偏航，走出一张只属于你的阅读星图。
-
-[![观看 51 秒演示：三体 → 第五波 → 黑暗的左手 → 蝇王](docs/demo-poster.jpg)](docs/demo.mp4)
-
-| 黄金路线（动图节选） | 偏航罗盘 | 三站之后的星图 |
-|---|---|---|
-| ![黄金路线动图](docs/demo.gif) | ![偏航罗盘](docs/detour-preview.jpg) | ![未刊星图](docs/star-chart-preview.png) |
+<p align="center">
+  <a href="https://vincejan.github.io/Book-Galaxy/"><img src="docs/hero-preview.jpg" alt="书架星系：由真实书籍构成的三维星海" width="100%"></a>
+</p>
 
 | 命题要求 | 星海里的对应 |
 |---|---|
@@ -28,9 +16,26 @@
 | 意外发现而非推荐 | 近 / 桥 / 远三档偏航；远行只揭晓首字，抵达才见书名 |
 | 书与书的关联可解释 | 3,002 条引力书线，馆员只引用馆藏导语原句，不编造 |
 | 留下个人轨迹 | 三站显影未刊星图，“我的星系”跨次保留航迹 |
-| 无服务器也完整 | 离线馆员、本地存储；首屏字体约 139 KB |
+| 无服务器也完整 | 纯静态页面；慢速 3G 下约 1 秒见首屏、4 秒可搜索出发 |
+
+<p align="center">
+  <a href="docs/demo.mp4"><img src="docs/demo-poster.jpg" alt="播放 51 秒演示：三体 → 第五波 → 黑暗的左手 → 蝇王" width="100%"></a>
+  <br><sub>▶ 51 秒演示（点击在 GitHub 内播放）：三体 → 第五波 → 黑暗的左手 → 蝇王</sub>
+</p>
 
 **30 秒试一试**：打开 [在线星海](https://vincejan.github.io/Book-Galaxy/) → 输入「三体」→ 开始偏航 → 点「从这里偏航」选一档 → 连走三站，看航迹显影成星图。
+
+| 黄金路线（动图节选） | 偏航罗盘 | 三站之后的星图 |
+|---|---|---|
+| ![黄金路线动图](docs/demo.gif) | ![偏航罗盘](docs/detour-preview.jpg) | ![未刊星图](docs/star-chart-preview.png) |
+
+<p align="center">
+  <a href="docs/architecture.md">技术手册</a>
+  &nbsp;·&nbsp;
+  <a href="data-sources.md">数据与来源</a>
+  &nbsp;·&nbsp;
+  <a href="public/covers/ATTRIBUTION.md">封面来源</a>
+</p>
 
 ## 阅读不是一条直线
 
@@ -64,7 +69,7 @@
   <strong>3,002</strong> 条引力书线
 </p>
 
-书目来自 Wikidata 与中文维基百科的可核查记录，封面为 902 张自托管的缩略图（Open Library、Wikimedia Commons 与维基百科），其余以生成藏书票代替。布局在离线完成；浏览器只载入已检查、固定版本的数据快照。每本书都保留来源与修订回链。
+书目来自 Wikidata 与中文维基百科的可核查记录，封面为 929 张自托管的缩略图（Open Library、Wikimedia Commons 与维基百科），其余以生成藏书票代替。布局在离线完成；浏览器只载入已检查、固定版本的数据快照。每本书都保留来源与修订回链。
 
 ## 在本地打开
 

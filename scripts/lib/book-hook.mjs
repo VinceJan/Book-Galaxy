@@ -93,8 +93,42 @@ export function cleanPrefix(sentence) {
 /** Sentences that point back at text we would cut ("同时这些非议……", "该名杀人犯", "这一卷"). */
 const ANAPHORA = /^(?:同时|此外|另外|然而|但是?|因此|所以|根据|其中|后来|随后|而|并且|故事的标题)|该名|这些|上述|前述|这一卷|此事|这一点/u
 
+const ALIAS_INLINE = /[，、]?(?:（[^）]*）)?(?:也被翻译成|又译作|又译为|或译为|或译作|也译作|也译为|又译|或译|也译|亦译|又称为|又称|也称|或称为|或称|简称为|简称|全称为|全称|全名是|通称|原题为|原题|最早称为|天主教通称|天主教译为|东正教译为|唐朝景教译为|又作|亦作)\s*《[^》]+》(?:\s*[、或和与]\s*《[^》]+》)*/gu
+const ALIAS_CLAUSE = /^(?:也|又|或|亦)?(?:被)?(?:翻译成|译为|译作|称为|简称|全称|全名|通称|原题|最早称|也称|又称|又作|或称|或译|也译|又译|天主教|东正教|唐朝景教|意思是)/u
+
+/** Drop alternate-title clauses (又称《乙》、《丙》); what remains is still verbatim, clause by clause. */
+export function stripAliases(hook) {
+  if (!hook) return hook
+  const sentences = hook.match(/[^。！？]+[。！？]?/gu) ?? []
+  if (sentences.length > 1) {
+    return sentences.map((sentence, index) => index === 0 ? stripAliasSentence(sentence) : (/^(?:又|或|也)?(?:称|译)/u.test(sentence) ? '' : sentence)).filter(Boolean).join('')
+  }
+  return stripAliasSentence(hook)
+}
+
+function stripAliasSentence(hook) {
+  const end = /[。！？]$/u.test(hook) ? hook.at(-1) : ''
+  const body = end ? hook.slice(0, -1) : hook
+  const clauses = body.replace(ALIAS_INLINE, '').replace(/（[，、；\s]*）|\([，、；\s]*\)/gu, '').split(/(?<=[，；])/u)
+    .map((clause) => clause.replace(ALIAS_INLINE, '').replace(/（[，、；\s]*）|\([，、；\s]*\)/gu, ''))
+    .filter((clause, index) => {
+      const bare = clause.replace(/[，；\s]/gu, '')
+      if (index === 0 && /^《[^》]+》$/u.test(bare)) return true
+      return bare && !ALIAS_CLAUSE.test(bare) && !/^(?:《[^》]+》[、或]?)+$/u.test(bare)
+    })
+  let text = clauses.join('').replace(/（[，、；\s]*）|\([，、；\s]*\)/gu, '').replace(/[，；]$/u, '')
+  if (/^《[^》]+》$/u.test(text)) text = ''
+  if (text && !/[。！？…]$/u.test(text)) text += end || '。'
+  return text
+}
+
 export function bookHook(summary = '') {
-  const hook = pickHook(summary)
+  const picked = pickHook(summary)
+  const stripped = stripAliases(picked)
+  const aliased = stripped !== picked
+  const hook = stripped
+  // Nothing about the book itself survived the alias strip: an honest blank.
+  if (aliased && (!/是|为|讲述|描写|记述|记载|描述|收录|论述|探讨|小说|著作|经典|史书/u.test(hook.replace(/《[^》]*》/gu, '')) || [...hook].length < 12)) return ''
   // Only alternate names, nothing about the book: an honest blank beats a roll-call.
   const bare = hook.replace(/《[^》]*》/gu, '')
   if (/译为|又称|又译|简称|或译|全称/u.test(hook) && !/是|讲述|描写|记述|记载|描述|收录|论述/u.test(bare)) return ''

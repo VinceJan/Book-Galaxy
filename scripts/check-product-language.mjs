@@ -61,7 +61,7 @@ const README_FORBIDDEN_HEADINGS = new Set([
 ])
 const README_REQUIRED_REFERENCES = [
   'https://vincejan.github.io/Book-Galaxy/',
-  'docs/hero-preview.png',
+  'docs/hero-preview.jpg',
   'docs/star-chart-preview.png',
   'docs/architecture.md',
 ]
