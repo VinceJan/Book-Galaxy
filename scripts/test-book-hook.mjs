@@ -29,6 +29,16 @@ const fromLead = (clause, lead) => {
   return false
 }
 
+
+assert.equal(bookHook('《甲书》是1900年创作、1901年出版的著作。该书主要论述指导如何通过阅读增进理解力。'), '该书主要论述指导如何通过阅读增进理解力。')
+assert.equal(bookHook('该书讲述了北京一个回族家庭六十余年间的兴衰历史，是一个爱情悲剧。'), '该书讲述了北京一个回族家庭六十余年间的兴衰历史，是一个爱情悲剧。')
+assert.equal(bookHook('保罗认为这些初代加拉太信徒不需要遵守摩西律法的规条。'), '保罗认为这些初代加拉太信徒不需要遵守摩西律法的规条。')
+assert.equal(bookHook('《甲书》是一部长篇小说，于1900年出版，1901年再版。'), '《甲书》是一部长篇小说。')
+assert.equal(bookHook('《甲书》是1900年创作、1901年出版的著作。该书讲述了一部电影的制作过程。'), '')
+assert.equal(bookHook('《甲书》是1900年创作、1901年出版的著作。此书论述阅读的方法。'), '此书论述阅读的方法。')
+assert.equal(bookHook('《致命中国》，台湾译为《致命中国：中共赤龙对人类社会的危害》。'), '')
+assert.equal(bookHook('《群魔》系俄国作家陀思妥耶夫斯基的长篇小说，另译为《附魔者》。'), '《群魔》系俄国作家陀思妥耶夫斯基的长篇小说。')
+
 const runtime = JSON.parse(await readFile(new URL('../public/data/catalog.runtime.json', import.meta.url), 'utf8'))
 const strip = stripBrackets
 let failures = 0

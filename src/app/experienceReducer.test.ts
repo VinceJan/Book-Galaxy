@@ -114,4 +114,14 @@ describe('experienceReducer', () => {
     expect(curatedArrival.journeyRelations).toEqual([curatedRelation])
     expect(curatedArrival.journeyRelations[curatedArrival.journeyIds.lastIndexOf('curated-destination') - 1]).toEqual(curatedRelation)
   })
+  it('restores a shared route and observes the last book', () => {
+    const restored = experienceReducer(initialExperienceState, {
+      type: 'RESTORE_ROUTE',
+      bookIds: ['a', 'b', 'c'],
+    })
+    expect(restored.status).toBe('exploring')
+    expect(restored.journeyIds).toEqual(['a', 'b', 'c'])
+    expect(restored.selectedId).toBe('c')
+    expect(restored.journeyRelations).toEqual([])
+  })
 })

@@ -44,7 +44,7 @@ def main():
                 source.parent.mkdir(parents=True, exist_ok=True)
                 request = urllib.request.Request(item['imageUrl'], headers={'User-Agent': 'BookGalaxyCovers/1.0 (https://github.com/VinceJan/Book-Galaxy)'})
                 source.write_bytes(urllib.request.urlopen(request, timeout=60).read())
-            cover = {'provider': 'wikimedia-commons', 'sourceUrl': item['sourceUrl'], 'licenseClass': item['license']}
+            cover = {'provider': item.get('provider') or 'wikimedia-commons', 'sourceUrl': item['sourceUrl'], 'licenseClass': item.get('license') or item.get('licenseClass') or 'see-source'}
         if not cover:
             continue
         if source is None:

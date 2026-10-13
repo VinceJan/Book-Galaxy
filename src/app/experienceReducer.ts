@@ -28,6 +28,7 @@ export type ExperienceAction =
   | { type: 'SHOW_CHART'; dataUrl: string }
   | { type: 'CLOSE_CHART' }
   | { type: 'RESET' }
+  | { type: 'RESTORE_ROUTE'; bookIds: string[] }
   | { type: 'ERROR'; message?: string }
 
 export const initialExperienceState: ExperienceState = {
@@ -107,6 +108,17 @@ export function experienceReducer(
       return { ...state, status: 'exploring', chartDataUrl: undefined }
     case 'RESET':
       return initialExperienceState
+    case 'RESTORE_ROUTE': {
+      const bookIds = action.bookIds.filter(Boolean)
+      if (bookIds.length === 0) return state
+      return {
+        ...initialExperienceState,
+        status: 'exploring',
+        selectedId: bookIds.at(-1),
+        journeyIds: bookIds,
+        journeyRelations: [],
+      }
+    }
     case 'ERROR':
       return { ...state, error: action.message }
   }

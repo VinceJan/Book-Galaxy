@@ -1101,17 +1101,21 @@ export function VoyageNarration({ relation, from, to }: { relation: BookRelation
   )
 }
 
-export function JourneyRail({ books, onSelect, myGalaxy }: {
+export function JourneyRail({ books, onSelect, myGalaxy, onCopyRoute }: {
   books: Book[]
   onSelect?: (book: Book) => void
+  onCopyRoute?: () => void
   myGalaxy?: { trails: number; stars: number; visible: boolean; onToggle: () => void }
 }) {
   const railRef = useRef<HTMLOListElement>(null)
+  const [copied, setCopied] = useState(false)
   // On phones the rail scrolls sideways; keep the newest stop in view.
   useEffect(() => {
     const rail = railRef.current
     if (rail && rail.scrollWidth > rail.clientWidth) rail.scrollTo({ left: rail.scrollWidth, behavior: 'smooth' })
   }, [books.length])
+  const routeKey = books.map((book) => book.id).join(',')
+  useEffect(() => { setCopied(false) }, [routeKey])
   if (books.length === 0) return null
   const visibleBooks = books.slice(-6)
   const omitted = books.length - visibleBooks.length
@@ -1144,6 +1148,18 @@ export function JourneyRail({ books, onSelect, myGalaxy }: {
           <i aria-hidden="true" />
           我的星系 · {myGalaxy.trails} 段航迹 · {myGalaxy.stars} 颗星
           <small>{myGalaxy.visible ? '隐去旧航迹' : '显影旧航迹'}</small>
+        </button>
+      )}
+      {onCopyRoute && books.length >= 1 && (
+        <button
+          className="ink-action voyage-copy-route"
+          type="button"
+          onClick={() => {
+            onCopyRoute()
+            setCopied(true)
+          }}
+        >
+          {copied ? '航迹已抄进剪贴板' : '复制航迹'}
         </button>
       )}
     </aside>
@@ -1288,14 +1304,17 @@ export function LibrarianBand({
 export function StarChartReveal({
   dataUrl,
   onDownload,
+  onShareRoute,
   onClose,
 }: {
   dataUrl: string
   onDownload: () => void
+  onShareRoute?: () => void
   onClose: () => void
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const { dialogRef, handleKeyDown } = useModalFocusTrap(headingRef, onClose, '[data-overlay-trigger="chart"]')
+  const [shared, setShared] = useState(false)
 
   return (
     <section ref={dialogRef} className="star-chart-reveal" role="dialog" aria-modal="true" aria-labelledby="chart-title" onKeyDown={handleKeyDown}>
@@ -1306,6 +1325,18 @@ export function StarChartReveal({
         <p>空间被压成纸面，经过的书成为一幅只属于本次航行的未刊星图。</p>
         <div>
           <button className="ink-action" type="button" onClick={onDownload}>保存高清星图</button>
+          {onShareRoute && (
+            <button
+              className="ink-action"
+              type="button"
+              onClick={() => {
+                onShareRoute()
+                setShared(true)
+              }}
+            >
+              {shared ? '航迹已抄进剪贴板' : '分享这次迷路'}
+            </button>
+          )}
           <button type="button" onClick={onClose}>返回星海</button>
         </div>
       </div>
