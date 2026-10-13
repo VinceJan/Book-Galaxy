@@ -29,7 +29,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false",
-    "check": "npm run test && npm run check:data && npm run check:curated && npm run check:copy && npm run build"
+    "check": "npm run test && npm run check:data && npm run check:curated && npm run check:copy && npm run build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "react": "19.2.8",
@@ -37,6 +38,7 @@
     "three": "0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@types/three": "0.185.0",

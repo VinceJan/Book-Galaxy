@@ -647,7 +647,9 @@ export function BookObservatory({
   const contentReady = summaryChineseCharacters >= 120
   const hasSecondaryTitle = Boolean(book.originalTitle && book.originalTitle !== book.title)
   const collectionType = specificInstanceType(book)
-  const country = book.country?.trim()
+  const rawCountry = book.country?.trim()
+  // Placeholder values never reach the page.
+  const country = rawCountry && !/^(?:未注明|未知|不详)$/u.test(rawCountry) ? rawCountry : undefined
   const nearestSemantic = semanticNeighbors[0]
   const density = typeof book.localDensity === 'number' ? book.localDensity : undefined
   const densityWord = density === undefined
@@ -1126,7 +1128,8 @@ export function JourneyRail({ books, onSelect, myGalaxy }: {
         {omitted > 0 && <li className="omitted"><span>此前 {omitted} 站 ···</span></li>}
         {visibleBooks.map((book, index) => {
           const isCurrent = index === visibleBooks.length - 1
-          const clickable = Boolean(onSelect) && !isCurrent
+          // The current stop stays tappable: on phones it is the way back to a closed sheet.
+          const clickable = Boolean(onSelect)
           return (
             <li key={`${book.id}:${index}`} className={isCurrent ? 'current' : ''} aria-current={isCurrent ? 'step' : undefined}>
               <i />
