@@ -29,6 +29,11 @@ import { demoJourneys } from './data/demoJourneys'
 import { otherBookId } from './lib/galaxyMath'
 import { getIntroLoadingPhase, Soundscape, syncSoundscapeVisibility } from './lib/soundscape'
 import { downloadStarChart, renderStarChart } from './lib/starChart'
+import {
+  copyVoyageRoute,
+  readVoyageRouteFromSearch,
+  resolveVoyageRoute,
+} from './lib/voyageRoute'
 import { askOnlineCurator, hasOnlineCurator } from './ai/curator'
 import { galaxyStats, loadMyGalaxy, saveMyGalaxy, upsertTrail, type MyGalaxy } from './lib/myGalaxy'
 import { isSleepingStar, pickSleepingStar, rankSleepingStars } from './lib/sleepingStars'
@@ -213,6 +218,35 @@ export default function App() {
   }, [reportFailure])
 
   const booksById = useMemo(() => new Map(data.books.map((book) => [book.id, book])), [data.books])
+
+  const routeRestoredRef = useRef(false)
+  const routeFocusDoneRef = useRef(false)
+  useEffect(() => {
+    if (routeRestoredRef.current || catalogState !== 'ready' || data.books.length === 0) return
+    if (state.status !== 'intro') return
+    const known = new Set(data.books.map((book) => book.id))
+    const ids = resolveVoyageRoute(readVoyageRouteFromSearch(window.location.search), known)
+    if (ids.length === 0) {
+      routeRestoredRef.current = true
+      return
+    }
+    routeRestoredRef.current = true
+    routeFocusDoneRef.current = false
+    dispatch({ type: 'RESTORE_ROUTE', bookIds: ids })
+  }, [catalogState, data.books, state.status])
+
+  useEffect(() => {
+    if (!engineReady || routeFocusDoneRef.current) return
+    if (state.status !== 'exploring' || state.journeyIds.length === 0) return
+    // Only auto-focus for shared routes (no travel relations yet).
+    if (state.journeyRelations.length > 0) return
+    if (!routeRestoredRef.current) return
+    const last = state.journeyIds.at(-1)
+    if (!last) return
+    routeFocusDoneRef.current = true
+    void galaxyRef.current?.focusBook(last, reducedMotion ? 0 : 1_200)
+  }, [engineReady, reducedMotion, state.journeyIds, state.journeyRelations.length, state.status])
+
   const indexById = useMemo(() => new Map(data.books.map((book, index) => [book.id, index])), [data.books])
   const resolver = useMemo(() => makeRelationResolver(data), [data])
   const selected = state.selectedId ? booksById.get(state.selectedId) : undefined
@@ -393,6 +427,10 @@ export default function App() {
     })
   }, [])
 
+  const shareRoute = useCallback(() => {
+    void copyVoyageRoute(state.journeyIds)
+  }, [state.journeyIds])
+
   const imprint = useCallback(() => {
     if (journeyBooks.length < 3) return
     const demo = demoJourneys.find((journey) => (
@@ -552,6 +590,7 @@ export default function App() {
           {state.status === 'exploring' && <HoverLabel book={hovered?.book ?? null} position={hovered?.position} />}
           <JourneyRail
             books={journeyBooks}
+            onCopyRoute={journeyBooks.length >= 1 ? shareRoute : undefined}
             myGalaxy={myGalaxySummary.trails > 0 ? { ...myGalaxySummary, visible: showMyGalaxy, onToggle: () => setShowMyGalaxy((value) => !value) } : undefined} onSelect={state.status === 'exploring' ? selectBook : undefined} />
           {selected && state.status !== 'travelling' && (
             <BookObservatory
@@ -616,6 +655,7 @@ export default function App() {
             <StarChartReveal
               dataUrl={state.chartDataUrl}
               onDownload={() => downloadStarChart(state.chartDataUrl!)}
+              onShareRoute={shareRoute}
               onClose={() => dispatch({ type: 'CLOSE_CHART' })}
             />
           )}

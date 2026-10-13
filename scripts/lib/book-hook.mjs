@@ -8,7 +8,7 @@
 
 const PUBLISHING_NOISE = /出版|连载|发表|刊行|印行|发行|再版|译本|翻译|译者|获得|获颁|荣获|奖|改编|电影|电视|舞台剧|上映|销量|畅销|ISBN|今本|原本为|\d+卷|增订|版本|抄本|全集|评为|入选|提名|排行/u
 const SECOND_HAND = /学者多(?:数)?认为|^信徒认为|^现代学者|^“[^”]{1,8}”由|^在《|^当中|^其中|视为|认为是|评价|撰文|批评家|评论家|学者认为|被认为|誉为|称赞|赞誉|抄本/u
-const CONTENT_SIGNAL = /内容以|讲述|描写|描述|叙述|刻画|记录|记述|探讨|论述|讨论|阐述|主人公|故事|围绕|以.{1,16}为(?:中心|主线|背景|题材)|认为|揭示|描绘|追溯|关于|控诉|批判|反思/u
+const CONTENT_SIGNAL = /内容以|讲述|描写|描述|叙述|刻画|记录|记述|记载|探讨|探究|论述|讨论|阐述|主人公|故事|围绕|以.{1,16}为(?:中心|主线|背景|题材)|认为|揭示|描绘|追溯|关于|控诉|批判|反思|透过|反映/u
 const MAX_HOOK = 96
 // Hard gate: series lists, sequel/adaptation news and release calendars are
 // never a hook, whatever else the sentence says.
@@ -82,7 +82,7 @@ export function cleanPrefix(sentence) {
   for (const [index, clause] of clauses.entries()) {
     // The opening identity clause may carry a date when it still says what the book is
     // (“…连载的一部长篇科幻小说”); later date clauses are publication detail.
-    const identity = index === 0 && /是.*(?:小说|作品|著作|诗集|戏剧|经典|故事集|散文集|史书)[，；]?$/u.test(clause) && !isRejectedSentence(clause)
+    const identity = index === 0 && /(?:是|为).*?(?:小说|作品|著作|诗集|诗歌|史诗|戏剧|经典|故事集|散文集|史书|典籍|经|论|集)[，；]?$/u.test(clause) && !isRejectedSentence(clause)
     if (!identity && dirtyClause(clause)) break
     kept.push(clause)
   }
@@ -91,10 +91,10 @@ export function cleanPrefix(sentence) {
 }
 
 /** Sentences that point back at text we would cut ("同时这些非议……", "该名杀人犯", "这一卷"). */
-const ANAPHORA = /^(?:同时|此外|另外|然而|但是?|因此|所以|根据|其中|后来|随后|而|并且|故事的标题)|该名|这些|上述|前述|这一卷|此事|这一点/u
+const ANAPHORA = /^(?:同时|此外|另外|然而|但是?|因此|所以|根据|其中|后来|随后|而|并且|故事的标题|这些|上述|前述)|该名|这一卷|此事|这一点/u
 
-const ALIAS_INLINE = /[，、]?(?:（[^）]*）)?(?:也被翻译成|又译作|又译为|或译为|或译作|也译作|也译为|又译|或译|也译|亦译|又称为|又称|也称|或称为|或称|简称为|简称|全称为|全称|全名是|通称|原题为|原题|最早称为|天主教通称|天主教译为|东正教译为|唐朝景教译为|又作|亦作)\s*《[^》]+》(?:\s*[、或和与]\s*《[^》]+》)*/gu
-const ALIAS_CLAUSE = /^(?:也|又|或|亦)?(?:被)?(?:翻译成|译为|译作|称为|简称|全称|全名|通称|原题|最早称|也称|又称|又作|或称|或译|也译|又译|天主教|东正教|唐朝景教|意思是)/u
+const ALIAS_INLINE = /[，、]?(?:（[^）]*）)?(?:也被翻译成|又译作|又译为|或译为|或译作|也译作|也译为|另译为|汉译为|台[湾灣]译为|又译|或译|也译|亦译|另译|汉译|又称为|又称|也称|或称为|或称|简称为|简称|全称为|全称|全名是|通称|原题为|原题|最早称为|天主教通称|天主教译为|东正教译为|唐朝景教译为|又作|亦作)\s*《[^》]+》(?:\s*[、或和与]\s*《[^》]+》)*/gu
+const ALIAS_CLAUSE = /^(?:也|又|或|亦|另|汉|台[湾灣])?(?:被)?(?:翻译成|译为|译作|称为|简称|全称|全名|通称|原题|最早称|也称|又称|又作|或称|或译|也译|又译|另译|汉译|天主教|东正教|唐朝景教|意思是)/u
 
 /** Drop alternate-title clauses (又称《乙》、《丙》); what remains is still verbatim, clause by clause. */
 export function stripAliases(hook) {
@@ -128,10 +128,10 @@ export function bookHook(summary = '') {
   const aliased = stripped !== picked
   const hook = stripped
   // Nothing about the book itself survived the alias strip: an honest blank.
-  if (aliased && (!/是|为|讲述|描写|记述|记载|描述|收录|论述|探讨|小说|著作|经典|史书/u.test(hook.replace(/《[^》]*》/gu, '')) || [...hook].length < 12)) return ''
+  if (aliased && (!/是|为|讲述|描写|记述|记载|描述|收录|论述|探讨|透过|反映|小说|著作|经典|史书|史诗|诗歌|诗集/u.test(hook.replace(/《[^》]*》/gu, '')) || [...hook].length < 12)) return ''
   // Only alternate names, nothing about the book: an honest blank beats a roll-call.
   const bare = hook.replace(/《[^》]*》/gu, '')
-  if (/译为|又称|又译|简称|或译|全称/u.test(hook) && !/是|讲述|描写|记述|记载|描述|收录|论述/u.test(bare)) return ''
+  if (/(?:译为|又称|又译|另译|汉译|简称|或译|全称)/u.test(hook) && !/是|为|系|讲述|描写|记述|记载|描述|论述|探讨|透过|反映|小说|著作|史诗|经典/u.test(bare)) return ''
   return hook
 }
 
@@ -161,7 +161,13 @@ function pickHook(summary = '') {
   const pieces = splitSentences(hook)
   if (pieces.some((piece) => isRejectedSentence(piece) || isBareFact(piece))) {
     // Prefer a clean content sentence on its own; else the clean opening clauses of the identity.
-    const clean = ranked.find((item) => item.score > 0 && !isRejectedSentence(item.sentence) && !isBareFact(item.sentence) && !/^(?:该|此|这|其|他|她|它)/u.test(item.sentence))
+    const content = ranked.find((item) =>
+      item.score > 0
+      && CONTENT_SIGNAL.test(item.sentence)
+      && !isRejectedSentence(item.sentence)
+      && !isBareFact(item.sentence)
+      && !PUBLISHING_NOISE.test(item.sentence))
+    const clean = content ?? ranked.find((item) => item.score > 0 && !isRejectedSentence(item.sentence) && !isBareFact(item.sentence) && !/^(?:该|此|这|其|他|她|它)/u.test(item.sentence))
     if (clean) return clip(clean.sentence, MAX_HOOK + 12)
     return cleanPrefix(identity)
   }

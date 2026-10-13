@@ -159,6 +159,14 @@
   "sourceUrl": "https://openlibrary.org/works/OL21745884W",
   "licenseClass": "publisher-copyright"
  },
+ "Q10691734": {
+  "file": "covers/Q10691734.webp",
+  "width": 400,
+  "height": 420,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL3769881W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
+ },
  "Q1072975": {
   "file": "covers/Q1072975.webp",
   "width": 253,
@@ -350,6 +358,14 @@
   "provider": "wikimedia-commons",
   "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sutra_of_Ultimate_and_Mysterious_Happiness.jpg",
   "licenseClass": "free"
+ },
+ "Q11117637": {
+  "file": "covers/Q11117637.webp",
+  "width": 356,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL125822W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q111207760": {
   "file": "covers/Q111207760.webp",
@@ -630,6 +646,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/works/OL722544W",
   "licenseClass": "publisher-copyright"
+ },
+ "Q1169371": {
+  "file": "covers/Q1169371.webp",
+  "width": 333,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL2164993W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q1170032": {
   "file": "covers/Q1170032.webp",
@@ -1062,6 +1086,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/works/OL20844W",
   "licenseClass": "publisher-copyright"
+ },
+ "Q1219278": {
+  "file": "covers/Q1219278.webp",
+  "width": 319,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL1161262W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q1229792": {
   "file": "covers/Q1229792.webp",
@@ -1839,6 +1871,14 @@
   "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E8%8F%A9%E6%8F%90%E7%92%8E%E7%8F%9E%E6%9C%AC%E4%B8%9A%E7%BB%8F_%E5%8D%B7%E4%B8%8A.jpg",
   "licenseClass": "Public domain"
  },
+ "Q15926431": {
+  "file": "covers/Q15926431.webp",
+  "width": 319,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL29308066W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
+ },
  "Q15932815": {
   "file": "covers/Q15932815.webp",
   "width": 326,
@@ -1966,6 +2006,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/works/OL1165001W",
   "licenseClass": "publisher-copyright"
+ },
+ "Q16385145": {
+  "file": "covers/Q16385145.webp",
+  "width": 305,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL17793941W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q16385821": {
   "file": "covers/Q16385821.webp",
@@ -3007,6 +3055,14 @@
   "sourceUrl": "https://openlibrary.org/works/OL448959W",
   "licenseClass": "publisher-copyright"
  },
+ "Q2142181": {
+  "file": "covers/Q2142181.webp",
+  "width": 400,
+  "height": 345,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL14852259W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
+ },
  "Q21427286": {
   "file": "covers/Q21427286.webp",
   "width": 324,
@@ -3398,6 +3454,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/works/OL627004W",
   "licenseClass": "publisher-copyright"
+ },
+ "Q2502188": {
+  "file": "covers/Q2502188.webp",
+  "width": 315,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL24574882W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q2518946": {
   "file": "covers/Q2518946.webp",
@@ -4431,6 +4495,14 @@
   "sourceUrl": "https://en.wikipedia.org/wiki/File:Bring_the_Jubilee_%28Farrar%2C_Straus_%26_Young%29_dust_jacket_%28cropped%29.png",
   "licenseClass": "free"
  },
+ "Q4147595": {
+  "file": "covers/Q4147595.webp",
+  "width": 315,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL679929W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
+ },
  "Q41490": {
   "file": "covers/Q41490.webp",
   "width": 400,
@@ -4678,6 +4750,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/books/OL6220775M",
   "licenseClass": "publisher-copyright"
+ },
+ "Q4692184": {
+  "file": "covers/Q4692184.webp",
+  "width": 128,
+  "height": 206,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL23793843W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q470098": {
   "file": "covers/Q470098.webp",
@@ -5158,6 +5238,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/works/OL24591181W",
   "licenseClass": "publisher-copyright"
+ },
+ "Q5367772": {
+  "file": "covers/Q5367772.webp",
+  "width": 400,
+  "height": 24,
+  "provider": "wikimedia-commons",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:%E5%AE%89%E5%BC%98%E5%B5%A9%E9%9A%B6%E6%A5%B7%E4%B9%A6%E5%A4%A7%E6%99%BA%E5%BA%A6%E8%AE%BA%E7%BB%8F%E5%8D%B7.png",
+  "licenseClass": "Public domain"
  },
  "Q5379616": {
   "file": "covers/Q5379616.webp",
@@ -6103,6 +6191,14 @@
   "sourceUrl": "https://openlibrary.org/books/OL12225796M",
   "licenseClass": "publisher-copyright"
  },
+ "Q7191563": {
+  "file": "covers/Q7191563.webp",
+  "width": 128,
+  "height": 169,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL743248W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
+ },
  "Q7228769": {
   "file": "covers/Q7228769.webp",
   "width": 326,
@@ -6559,6 +6655,14 @@
   "sourceUrl": "https://openlibrary.org/works/OL926829W",
   "licenseClass": "publisher-copyright"
  },
+ "Q7743953": {
+  "file": "covers/Q7743953.webp",
+  "width": 400,
+  "height": 298,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL2327954W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
+ },
  "Q7744886": {
   "file": "covers/Q7744886.webp",
   "width": 329,
@@ -6734,6 +6838,14 @@
   "provider": "open-library",
   "sourceUrl": "https://openlibrary.org/works/OL15330907W",
   "licenseClass": "publisher-copyright"
+ },
+ "Q794975": {
+  "file": "covers/Q794975.webp",
+  "width": 353,
+  "height": 500,
+  "provider": "open-library",
+  "sourceUrl": "https://openlibrary.org/works/OL28599789W",
+  "licenseClass": "Cover art © publisher/artist; used for bibliographic identification"
  },
  "Q7978020": {
   "file": "covers/Q7978020.webp",

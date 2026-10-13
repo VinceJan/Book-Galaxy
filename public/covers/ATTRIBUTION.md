@@ -31,6 +31,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1068054 | 印斯茅斯疑云 | open-library | publisher-copyright | https://openlibrary.org/works/OL21999815W |
 | Q1068344 | 全息玫瑰碎片 | open-library | publisher-copyright | https://openlibrary.org/books/OL7259173M |
 | Q106852836 | 极限返航 | open-library | publisher-copyright | https://openlibrary.org/works/OL21745884W |
+| Q10691734 | 汉字王国 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL3769881W |
 | Q1072975 | 博士热爱的算式 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Housekeeper_and_the_Professor_%28Paperback%29.jpg |
 | Q1075382 | 韩非子 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Hanfeizi_or_Han_Feizi,_Qing_dynasty,_Hunan_Museum.jpg |
 | Q1076715 | 大乘起信论 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:CADAL07005552_%E5%A4%A7%E4%B9%98%E8%B5%B7%E4%BF%A1%E8%AB%96.djvu |
@@ -55,6 +56,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1106019 | 佛罗伦萨手抄本 | open-library | publisher-copyright | https://openlibrary.org/works/OL34943955W |
 | Q110646 | 维摩诘所说经 | open-library | publisher-copyright | https://openlibrary.org/books/OL29717329M |
 | Q11072250 | 志玄安乐经 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Sutra_of_Ultimate_and_Mysterious_Happiness.jpg |
+| Q11117637 | 椿说弓张月 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL125822W |
 | Q111207760 | 女人们的谈话 | open-library | publisher-copyright | https://openlibrary.org/works/OL20937995W |
 | Q11143573 | 法显传 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Faxian_zhuan.JPG |
 | Q11172835 | 鳄鱼手记 | open-library | publisher-copyright | https://openlibrary.org/books/OL27234937M |
@@ -90,6 +92,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1167737 | 一个幻觉的未来 | open-library | publisher-copyright | https://openlibrary.org/works/OL1069670W |
 | Q11678 | 饥饿游戏 | open-library | publisher-copyright | https://openlibrary.org/works/OL5735363W |
 | Q11690969 | 玛莉亚娜·比内达 | open-library | publisher-copyright | https://openlibrary.org/works/OL722544W |
+| Q1169371 | 神圣正义之降临 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL2164993W |
 | Q1170032 | 妇女乐园 | open-library | publisher-copyright | https://openlibrary.org/works/OL118981W |
 | Q117035719 | 真夏方程式 | open-library | publisher-copyright | https://openlibrary.org/works/OL20898707W |
 | Q1170423 | 天使游戏 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:El_Juego_del_Angel.jpg |
@@ -144,6 +147,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1217507 | 昨日的世界 | open-library | publisher-copyright | https://openlibrary.org/works/OL9079322W |
 | Q1218663 | 八卦珠宝 | open-library | publisher-copyright | https://openlibrary.org/works/OL397751W |
 | Q1219239 | 红色英勇勋章 | open-library | publisher-copyright | https://openlibrary.org/works/OL20844W |
+| Q1219278 | 肮脏的手 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL1161262W |
 | Q1229792 | 微暗的火 | open-library | publisher-copyright | https://openlibrary.org/works/OL627081W |
 | Q1233830 | 新大西岛 | open-library | publisher-copyright | https://openlibrary.org/works/OL69453W |
 | Q1241741 | 莫瑞斯 | open-library | publisher-copyright | https://openlibrary.org/works/OL88877W |
@@ -241,6 +245,7 @@ Each entry links to its source page, where the licence is stated.
 | Q157150 | 布兰诗歌 | open-library | publisher-copyright | https://openlibrary.org/books/OL977227M |
 | Q15805843 | 风信鸡的优点 | open-library | publisher-copyright | https://openlibrary.org/books/OL32987920M |
 | Q15898384 | 璎珞本业经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E8%8F%A9%E6%8F%90%E7%92%8E%E7%8F%9E%E6%9C%AC%E4%B8%9A%E7%BB%8F_%E5%8D%B7%E4%B8%8A.jpg |
+| Q15926431 | 穆斯林的葬礼 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL29308066W |
 | Q15932815 | 迦因小传 | open-library | publisher-copyright | https://openlibrary.org/books/OL7039193M |
 | Q15963772 | 梦幻花 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:Wdreamflower.jpg |
 | Q16050727 | 天堂的证据 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Proof_of_Heaven_A_Neurosurgeon%27s_Journey_into_the_Afterlife.jpg |
@@ -257,6 +262,7 @@ Each entry links to its source page, where the licence is stated.
 | Q16335108 | 第五波 | open-library | publisher-copyright | https://openlibrary.org/books/OL28501251M |
 | Q1633953 | 士兵的重负 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:The_Things_They_Carried.jpg |
 | Q1638194 | 通往奴役之路 | open-library | publisher-copyright | https://openlibrary.org/works/OL1165001W |
+| Q16385145 | 黑色笔记 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL17793941W |
 | Q16385821 | 狗狗冲冲冲 | open-library | publisher-copyright | https://openlibrary.org/books/OL9519913M |
 | Q16386032 | 人子 | open-library | publisher-copyright | https://openlibrary.org/works/OL1673984W |
 | Q16387208 | 我的男仆吉福斯 | open-library | publisher-copyright | https://openlibrary.org/works/OL1337124W |
@@ -387,6 +393,7 @@ Each entry links to its source page, where the licence is stated.
 | Q212898 | 魔山 | open-library | publisher-copyright | https://openlibrary.org/works/OL14866824W |
 | Q2133625 | 拉维尔斯坦 | open-library | publisher-copyright | https://openlibrary.org/works/OL506063W |
 | Q2136077 | 红兔子 | open-library | publisher-copyright | https://openlibrary.org/works/OL448959W |
+| Q2142181 | 死亡陷阱 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL14852259W |
 | Q21427286 | 疯狂亚洲富豪 | open-library | publisher-copyright | https://openlibrary.org/works/OL17924837W |
 | Q214371 | 了不起的盖茨比 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:The_Great_Gatsby_Cover_1925_Retouched.jpg |
 | Q215894 | 憨第德 | open-library | publisher-copyright | https://openlibrary.org/works/OL100672W |
@@ -436,6 +443,7 @@ Each entry links to its source page, where the licence is stated.
 | Q247372 | 夜色温柔 | open-library | publisher-copyright | https://openlibrary.org/works/OL468485W |
 | Q249242 | 一生 | open-library | publisher-copyright | https://openlibrary.org/books/OL22895952M |
 | Q2494608 | 绝望 | open-library | publisher-copyright | https://openlibrary.org/works/OL627004W |
+| Q2502188 | 法集论 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL24574882W |
 | Q2518946 | 金阁寺 | open-library | publisher-copyright | https://openlibrary.org/books/OL12355552M |
 | Q2527101 | 特洛伊罗斯与克丽西达 | open-library | publisher-copyright | https://openlibrary.org/works/OL21312991W |
 | Q2531607 | 林伽往世书 | wikimedia-commons | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Linga_Purana,_Sanskrit,_Devanagari.jpg |
@@ -565,6 +573,7 @@ Each entry links to its source page, where the licence is stated.
 | Q41064 | 诗篇 | wikimedia-commons | CC0 | https://commons.wikimedia.org/wiki/File:Psalms_scroll.PNG |
 | Q4127192 | 固有瑕疵 | open-library | publisher-copyright | https://openlibrary.org/works/OL2636648W |
 | Q4132785 | 把银禧带来 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Bring_the_Jubilee_%28Farrar%2C_Straus_%26_Young%29_dust_jacket_%28cropped%29.png |
+| Q4147595 | 论儿童的教养 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL679929W |
 | Q41490 | 利未记 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Samaritan_Leviticus.jpg |
 | Q41542 | 德拉库拉 | open-library | publisher-copyright | https://openlibrary.org/works/OL85892W |
 | Q4154269 | 鲁滨逊·克鲁索的更远历险 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:FartherAdventuresCrusoe.png |
@@ -596,6 +605,7 @@ Each entry links to its source page, where the licence is stated.
 | Q466288 | 绿里奇迹 | open-library | publisher-copyright | https://openlibrary.org/works/OL81629W |
 | Q46751 | 哈利·波特与火焰杯 | open-library | publisher-copyright | https://openlibrary.org/works/OL82560W |
 | Q4683452 | 管理行为 | open-library | publisher-copyright | https://openlibrary.org/books/OL6220775M |
+| Q4692184 | 起世因本经 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL23793843W |
 | Q470098 | 第二性 | open-library | publisher-copyright | https://openlibrary.org/works/OL767941W |
 | Q470937 | 闪灵 | open-library | publisher-copyright | https://openlibrary.org/works/OL81633W |
 | Q471005 | 神秘岛 | open-library | publisher-copyright | https://openlibrary.org/works/OL1099915W |
@@ -656,6 +666,7 @@ Each entry links to its source page, where the licence is stated.
 | Q53592 | 从地球到月球 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:From_the_Earth_to_the_Moon_Jules_Verne.jpg |
 | Q5362662 | 毕业 雪月花杀人游戏 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:Wgraduation.jpg |
 | Q5366046 | 新参者 | open-library | publisher-copyright | https://openlibrary.org/works/OL24591181W |
+| Q5367772 | 大智度论 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E5%AE%89%E5%BC%98%E5%B5%A9%E9%9A%B6%E6%A5%B7%E4%B9%A6%E5%A4%A7%E6%99%BA%E5%BA%A6%E8%AE%BA%E7%BB%8F%E5%8D%B7.png |
 | Q5379616 | 被天堂遗忘的孩子 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Enriquesjourney.jpg |
 | Q5398909 | 风中玫瑰 | open-library | publisher-copyright | https://openlibrary.org/works/OL784051W |
 | Q54016147 | 亚历山大·汉密尔顿 | open-library | publisher-copyright | https://openlibrary.org/works/OL2665176W |
@@ -774,6 +785,7 @@ Each entry links to its source page, where the licence is stated.
 | Q7104497 | 正教研习本圣经 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:The_Orthodox_Study_Bible_%282008_edition_cover%29.jpg |
 | Q711166 | 流星之绊 | open-library | publisher-copyright | https://openlibrary.org/works/OL17745561W |
 | Q7133130 | 盗梦侦探 | open-library | publisher-copyright | https://openlibrary.org/books/OL12225796M |
+| Q7191563 | 太阳石 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL743248W |
 | Q7228769 | 贫穷经济学 | open-library | publisher-copyright | https://openlibrary.org/works/OL15743097W |
 | Q7244747 | 雅子妃：菊花王朝的囚徒 | open-library | publisher-copyright | https://openlibrary.org/works/OL2587195W |
 | Q726254 | 骑鹅历险记 | wikipedia-infobox | free | https://zh.wikipedia.org/wiki/File:The_The_Wonderful_Adventures_of_Nils_-_cover_by_Mary_Hamilton_Frye.jpg |
@@ -831,6 +843,7 @@ Each entry links to its source page, where the licence is stated.
 | Q7742044 | 无与伦比的吉福斯 | open-library | publisher-copyright | https://openlibrary.org/works/OL1337101W |
 | Q774233 | 茫茫黑夜漫游 | open-library | publisher-copyright | https://openlibrary.org/works/OL1287903W |
 | Q7742356 | 文化的阐释 | open-library | publisher-copyright | https://openlibrary.org/works/OL926829W |
+| Q7743953 | 甘榜小子 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL2327954W |
 | Q7744886 | 我的大英百科狂想曲 | open-library | publisher-copyright | https://openlibrary.org/works/OL2648310W |
 | Q7746980 | 历史的教训 | open-library | publisher-copyright | https://openlibrary.org/books/OL17168649M |
 | Q7747816 | 细胞生命的礼赞 | open-library | publisher-copyright | https://openlibrary.org/works/OL1753902W |
@@ -853,6 +866,7 @@ Each entry links to its source page, where the licence is stated.
 | Q7847758 | 交易的艺术 | open-library | publisher-copyright | https://openlibrary.org/works/OL18170627W |
 | Q7857661 | 被夺走的十二年 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Solomon_Northup_001.jpg |
 | Q786586 | 疯狂山脉 | open-library | publisher-copyright | https://openlibrary.org/works/OL15330907W |
+| Q794975 | 苍穹之昴 | open-library | Cover art © publisher/artist; used for bibliographic identification | https://openlibrary.org/works/OL28599789W |
 | Q7978020 | 财富、虚拟财富及负债 | open-library | publisher-copyright | https://openlibrary.org/books/OL36373107M |
 | Q7991586 | 什么是哲学？ | open-library | publisher-copyright | https://openlibrary.org/works/OL93918W |
 | Q7992441 | 当中国统治世界 | open-library | publisher-copyright | https://openlibrary.org/works/OL26303260W |
