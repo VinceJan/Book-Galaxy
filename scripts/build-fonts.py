@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""Build self-hosted, unicode-range sliced web fonts for the type system.
+
+Only characters that actually appear in the product (UI sources, curated
+copy, the runtime catalog) are kept.  Each family is cut into small woff2
+slices ordered by frequency, so a page loads only the slices its visible
+text needs (the cn-font-split technique, without a CDN).
+
+Source fonts (all SIL OFL 1.1) are not committed; fetch them into
+--source (default .cache/fonts):
+  LXGWWenKai-Regular.ttf   https://github.com/lxgw/LxgwWenKai/releases (v1.520)
+  NotoSerifSC-SemiBold.otf https://github.com/notofonts/noto-cjk (Serif/SubsetOTF/SC)
+  NotoSerifSC-Regular.otf  idem
+  CormorantGaramond-Italic[wght].ttf https://github.com/google/fonts/tree/main/ofl/cormorantgaramond
+Requires: pip install fonttools brotli
+"""
+import argparse, collections, json, pathlib, re
+from fontTools import subset
+from fontTools.ttLib import TTFont
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+HAN_OR_PUNCT = re.compile(r'[\u3000-\u303f\u3400-\u9fff\uff00-\uffef\u2018-\u201d\u2026\u00b7\u2014]')
+
+
+def chars_of(texts):
+    counter = collections.Counter()
+    for text in texts:
+        for ch in text:
+            if HAN_OR_PUNCT.match(ch):
+                counter[ch] += 1
+    return counter
+
+
+def source_texts(patterns):
+    for pattern in patterns:
+        for path in sorted(ROOT.glob(pattern)):
+            yield path.read_text(encoding='utf-8')
+
+
+KAI_GLYPHS = 2600
+
+
+def build_family(src, out_dir, family, weight, style, counter, slice_size, first_chars=None):
+    font = TTFont(src, lazy=True)
+    cmap = font.getBestCmap()
+    # Slice 00 is exactly the first screen's glyphs (data/fonts/first-screen.txt)
+    # so the landing view downloads one small file per family; the rest
+    # follows by frequency and loads only when that text appears.
+    first = [ch for ch in dict.fromkeys(first_chars or '') if ord(ch) in cmap and HAN_OR_PUNCT.match(ch)]
+    seen = set(first)
+    ordered = [ch for ch, _ in counter.most_common() if ord(ch) in cmap and ch not in seen]
+    slices = [first] if first else []
+    for start in range(0, len(ordered), slice_size):
+        slices.append(ordered[start:start + slice_size])
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for old in out_dir.glob('*.woff2'):
+        old.unlink()
+    faces, total = [], 0
+    for index, chars in enumerate(slices):
+        codepoints = sorted(ord(ch) for ch in chars)
+        # Latin basics ride in the first slice so mixed lines do not shift.
+        if index == 0:
+            codepoints = sorted(set(codepoints) | {cp for cp in range(0x20, 0x7f) if cp in cmap})
+        options = subset.Options()
+        options.flavor = 'woff2'
+        options.layout_features = ['kern', 'liga', 'vert', 'vrt2', 'palt']
+        options.name_IDs = [0, 1, 2, 3, 4, 5, 6]
+        options.hinting = False
+        options.desubroutinize = True
+        subsetter = subset.Subsetter(options)
+        target = TTFont(src)
+        subsetter.populate(unicodes=codepoints)
+        subsetter.subset(target)
+        name = f'{index:02d}.woff2'
+        target.flavor = 'woff2'
+        target.save(out_dir / name)
+        total += (out_dir / name).stat().st_size
+        ranges = ','.join(f'U+{cp:X}' for cp in codepoints)
+        faces.append(
+            f"@font-face{{font-family:'{family}';src:url('./{out_dir.name}/{name}') format('woff2');"
+            f"font-weight:{weight};font-style:{style};font-display:swap;unicode-range:{ranges}}}"
+        )
+    return faces, len(slices), total, len(ordered) + len(first)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', default=str(ROOT / '.cache/fonts'))
+    args = parser.parse_args()
+    source = pathlib.Path(args.source)
+    catalog = json.loads((ROOT / 'public/data/catalog.runtime.json').read_text(encoding='utf-8'))
+    ui = list(source_texts(['src/**/*.tsx', 'src/**/*.ts', 'index.html']))
+    titles = [b['title'] for b in catalog['books']] + [b.get('author', '') for b in catalog['books']]
+    regions = [f"{r['name']}{r.get('subtitle', '')}{r['question']}" for r in catalog.get('regions', [])]
+    hooks = [b.get('hook', '') for b in catalog['books']]
+    summaries = [b.get('summary', '') for b in catalog['books']]
+    sentences = [r.get('sentence', '') for r in catalog['relations']]
+
+    notes = [v for b in catalog['books'] for v in (b.get('notes') or {}).values()]
+    librarian_voice = ''.join(source_texts(['src/ai/offlineCurator.ts'])) + ''.join(regions)
+    kai_all = chars_of(notes + sentences + titles + [librarian_voice])
+    kai_counter = collections.Counter(dict(kai_all.most_common(KAI_GLYPHS)))
+
+    out = ROOT / 'public/fonts'
+    first_screen = (ROOT / 'data/fonts/first-screen.txt').read_text(encoding='utf-8')
+    first_screen += ''.join(f"{r['name']}{r.get('subtitle', '')}" for r in catalog.get('regions', []))
+    header = ['/* Generated by scripts/build-fonts.py. Fonts: SIL OFL 1.1 — see public/fonts/LICENSES.md */']
+    report, css, kai_css = {}, list(header), list(header)
+    jobs = [
+        ('BG Display', 'NotoSerifSC-SemiBold.otf', 'display', 600, chars_of(titles + regions + ui), 200, first_screen, css),
+        ('BG Serif', 'NotoSerifSC-Regular.otf', 'serif', 400, chars_of(summaries + hooks + titles + ui), 260, None, css),
+        # WenKai is the librarian's voice only; its stylesheet is injected
+        # when the librarian opens (src/lib/lazyFonts.ts).
+        # Subset to the librarian's own words: its templates first (slice 00), then the
+        # most frequent glyphs of the notes and relation lines it quotes. Rare glyphs
+        # fall back to BG Serif, which is already on the page.
+        ('BG Kai', 'LXGWWenKai-Regular.ttf', 'kai', 400, kai_counter, 900, librarian_voice, kai_css),
+    ]
+    for family, file, folder, weight, counter, size, first, sink in jobs:
+        faces, count, total, glyphs = build_family(source / file, out / folder, family, weight, 'normal', counter, size, first)
+        sink.extend(faces)
+        report[family] = {'chars': glyphs, 'slices': count, 'totalKB': round(total / 1024)}
+        if first:
+            report[family]['firstSliceKB'] = round((out / folder / '00.woff2').stat().st_size / 1024)
+    latin = collections.Counter({chr(cp): 1 for cp in range(0x20, 0x17f)})
+    latin_src = source / 'CormorantGaramond-Italic[wght].ttf'
+    faces, count, total, glyphs = build_family(latin_src, out / 'latin', 'BG Latin', '300 700', 'italic', latin, 400)
+    css.extend(faces)
+    report['BG Latin'] = {'chars': glyphs, 'slices': count, 'totalKB': round(total / 1024)}
+    (out / 'fonts.css').write_text('\n'.join(css) + '\n', encoding='utf-8')
+    (out / 'fonts-kai.css').write_text('\n'.join(kai_css) + '\n', encoding='utf-8')
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
+if __name__ == '__main__':
+    main()

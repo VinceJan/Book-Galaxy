@@ -36,7 +36,7 @@
 
 ## 字段级回链
 
-最终 `public/data/catalog.json` 的每本书都必须保留下列字段，归属侧车 `public/data/ATTRIBUTION.json` 会按书逐条复制它们：
+最终 `data/catalog.json` 的每本书都必须保留下列字段，归属侧车 `public/data/ATTRIBUTION.json` 会按书逐条复制它们：
 
 | 字段 | 含义 |
 | --- | --- |
@@ -54,8 +54,8 @@
 只有 v2 书目快照可以生成正式归属文件：
 
 ```powershell
-node scripts/build-attribution.mjs --catalog public/data/catalog.json --output public/data/ATTRIBUTION.json
-node scripts/build-attribution.mjs --check --catalog public/data/catalog.json --output public/data/ATTRIBUTION.json
+node scripts/build-attribution.mjs --catalog data/catalog.json --output public/data/ATTRIBUTION.json
+node scripts/build-attribution.mjs --check --catalog data/catalog.json --output public/data/ATTRIBUTION.json
 ```
 
 脚本会在写文件之前拒绝旧版或不完整 catalog，特别是旧的 Project Gutenberg v1 快照；因此在 v2 尚未落地时，不能用默认命令覆盖正式 `public/data/ATTRIBUTION.json`。可以安全运行内存 smoke：

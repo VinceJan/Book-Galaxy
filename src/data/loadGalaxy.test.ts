@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import catalogSnapshot from '../../public/data/catalog.json'
+import catalogSnapshot from '../../data/catalog.json'
+import runtimeSnapshot from '../../public/data/catalog.runtime.json'
 import type { Book } from '../types'
 import {
   buildCuratedRelations,
@@ -83,6 +84,25 @@ describe('catalog relation resolver', () => {
   })
 
   afterEach(() => vi.unstubAllGlobals())
+
+  it('loads the slim runtime snapshot the browser actually fetches', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(runtimeSnapshot), {
+      headers: { 'content-type': 'application/json' },
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const data = await loadGalaxyData()
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/data\/catalog\.runtime\.json$/)
+    expect(data.books).toHaveLength(1_000)
+    expect(data.catalogEdges).toHaveLength(5_385)
+    expect(data.curatedRelations).toHaveLength(3_002)
+    // Books whose lead is only publication or series detail carry no hook (留白), never a noisy one.
+    expect(data.books.filter((book) => book.hook).length).toBeGreaterThan(850)
+    expect(data.books[0].provenance?.wikipediaRevisionUrl).toContain('oldid=')
+    expect(data.regions).toHaveLength(12)
+    expect(new Set(data.regions?.flatMap((region) => region.bookIds)).size).toBe(1_000)
+    expect(data.regions?.every((region) => region.name && region.question)).toBe(true)
+  })
 
   it('loads the complete formal snapshot and retains audited provenance', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(catalogSnapshot), {

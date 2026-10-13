@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type FormEvent } from 'react'
-import type { Book, BookRelation } from '../types'
+import type { Book, BookRelation, MapRegion } from '../types'
 import { otherBookId } from '../lib/galaxyMath'
+import { generativeCover } from '../lib/generativeCover'
+import { ensureLibrarianFont } from '../lib/lazyFonts'
+import { regionSpeaksTo, offlineAnswer, offlineBookNote, offlineQuestions, offlineTransitionNote, type OfflineQuestion } from '../ai/offlineCurator'
 
 function Icon({ name }: { name: 'sound' | 'mute' | 'expand' | 'motion' | 'close' | 'arrow' | 'signal' }) {
   const paths: Record<typeof name, React.ReactNode> = {
@@ -23,6 +26,7 @@ interface IntroProps {
   curatedRelationCount: number
   loadingPhase?: string
   onStart: (book: Book) => void
+  onWake?: () => void
 }
 
 function normalizeSearch(value: string): string {
@@ -135,7 +139,7 @@ function featuredBooks(books: Book[], limit = 5): Book[] {
     .slice(0, limit)
 }
 
-export function IntroScreen({ books, ready, bookCount, relationCount, curatedRelationCount, loadingPhase, onStart }: IntroProps) {
+export function IntroScreen({ books, ready, bookCount, relationCount, curatedRelationCount, loadingPhase, onStart, onWake }: IntroProps) {
   const [query, setQuery] = useState('')
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
   const featured = useMemo(() => featuredBooks(books), [books])
@@ -243,6 +247,13 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
           </button>
         ))}
       </div>
+      {onWake && (
+        <button className="intro-wake" type="button" disabled={!ready} onClick={() => ready && onWake()}>
+          <span className="intro-wake-star" aria-hidden="true" />
+          <span>随机唤醒一颗沉睡之星</span>
+          <small>很少有人造访的书，在等第一位来客</small>
+        </button>
+      )}
       <div className="intro-proof" aria-label="数据规模">
         <span><strong>{ready ? bookCount.toLocaleString('zh-CN') : '—'}</strong> 本真实书籍</span>
         <span><strong>{ready ? relationCount.toLocaleString('zh-CN') : '—'}</strong> 条书海暗线</span>
@@ -356,6 +367,8 @@ type ExternalUrlKind = 'source' | 'wikipediaRevision' | 'wikidata' | 'cover' | '
 
 export function safeExternalUrl(value: string | null | undefined, kind: ExternalUrlKind = 'source'): string | undefined {
   if (!value) return undefined
+  // Self-hosted covers (scripts/build-covers.py) are plain relative paths.
+  if (kind === 'cover' && /^covers\/Q\d+\.webp$/u.test(value)) return `${import.meta.env.BASE_URL}${value}`
   try {
     const url = new URL(value)
     if (url.protocol !== 'https:' || url.username || url.password || url.port || url.hash) return undefined
@@ -372,6 +385,7 @@ export function safeExternalUrl(value: string | null | undefined, kind: External
         : undefined
     }
     if (kind === 'coverSource') {
+      if ((host === 'commons.wikimedia.org' || /^[a-z-]+\.wikipedia\.org$/u.test(host)) && /^\/wiki\/File:[^/]+$/u.test(path) && !url.search) return url.toString()
       return host === 'openlibrary.org'
         && !rawPath.includes('%')
         && /^\/(?:works\/OL\d+W|books\/OL\d+M)$/u.test(rawPath)
@@ -454,7 +468,7 @@ export function BookCover({ book }: { book: Book }) {
   }
   const hasCover = Boolean(coverUrl) && coverState.status === 'loaded'
   const imageLabel = book.imageKind === 'related-image' ? '相关图像' : '封面'
-  const plateTitle = book.title.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 3) || '书'
+  const plate = generativeCover(book)
   const plateYear = formatYear(book.year)
   const revealCover = async (image: HTMLImageElement, eventUrl: string) => {
     try {
@@ -469,10 +483,14 @@ export function BookCover({ book }: { book: Book }) {
   }
 
   return (
-    <div className={`book-cover bookplate${hasCover ? ' has-cover' : ''}`}>
+    <div className={`book-cover bookplate${hasCover ? ' has-cover' : ''}`} style={plate.style}>
+      <svg className="bookplate-sky" viewBox="0 0 100 150" aria-hidden="true" preserveAspectRatio="none">
+        <polyline points={plate.constellation.map(([x, y]) => `${x},${y}`).join(' ')} />
+        {plate.constellation.map(([x, y, r], index) => <circle key={index} cx={x} cy={y} r={r} />)}
+      </svg>
       <div className="bookplate-inner" role="img" aria-label={`《${book.title}》藏书票预览`} aria-hidden={hasCover}>
-        <span className="bookplate-overline">藏书票 · 书页</span>
-        <strong>{plateTitle}</strong>
+        <span className="bookplate-overline">藏书票 · {plate.region}</span>
+        <strong className={plate.vertical ? 'is-vertical' : undefined}>{plate.title}</strong>
         <span className="bookplate-rule" />
         <small>{book.author}</small>
         <em>{plateYear}</em>
@@ -533,10 +551,10 @@ export function whyHereCopy(
 ): string {
   if (!nearest) {
     if (locationLabel === densityWord) return `它位于${densityWord}。附近暂未显出可命名的相遇。`
-    return `它位于“${locationLabel}”的${densityWord}。附近暂未显出可命名的相遇。`
+    return `它位于「${locationLabel}」的${densityWord}。附近暂未显出可命名的相遇。`
   }
   if (locationLabel === densityWord) return `它位于${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
-  return `它位于“${locationLabel}”的${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
+  return `它位于「${locationLabel}」的${densityWord}。《${nearest.book.title}》是离这里最近的书星。`
 }
 
 interface BookPanelProps {
@@ -552,6 +570,7 @@ interface BookPanelProps {
   hasRelationship: boolean
   journeyLength?: number
   isAtOrigin?: boolean
+  hint?: React.ReactNode
   onClose: () => void
   onObserveNearby: (book: Book) => void
   onFollowCuratedThread: (relation: BookRelation) => void
@@ -612,6 +631,7 @@ export function BookObservatory({
   hasRelationship,
   journeyLength = 0,
   isAtOrigin = false,
+  hint,
   onClose,
   onObserveNearby,
   onFollowCuratedThread,
@@ -633,10 +653,10 @@ export function BookObservatory({
   const densityWord = density === undefined
     ? '书云交界处'
     : density >= 0.72
-      ? '书云深处'
+      ? '腹地'
       : density <= 0.3
-        ? '星群边缘'
-        : '书云过渡带'
+        ? '边缘'
+        : '过渡地带'
   const whyHere = whyHereCopy(locationLabel, densityWord, nearestSemantic)
 
   const imprintDisabled = !canImprint
@@ -675,6 +695,7 @@ export function BookObservatory({
         <span>观测对象 {String(index + 1).padStart(2, '0')} / {total.toLocaleString('zh-CN')}</span>
         <button type="button" onClick={onClose} aria-label="收起书籍信息"><Icon name="close" /></button>
       </div>
+      {hint}
       <div className="book-identity">
         <BookCover book={book} />
         <div className="book-title-stack">
@@ -694,7 +715,17 @@ export function BookObservatory({
       <div className="book-record book-record-primary">
          <span className="book-record-label book-record-label-primary">书页一瞥</span>
         {contentReady ? (
-          <p className="book-summary book-summary-primary">{summary}</p>
+          <>
+            {book.hook?.trim()
+              ? <p className="book-summary book-summary-primary book-hook">{book.hook.trim()}</p>
+              : <p className="book-summary book-hook-absent">馆藏导语多在记录出版与系列，这一瞥先留白——由你翻开它。</p>}
+            {book.hook?.trim() !== summary && (
+              <details className="book-fulltext">
+                <summary>展开馆藏导语全文</summary>
+                <p className="book-summary">{summary}</p>
+              </details>
+            )}
+          </>
         ) : (
           <div className="book-content-missing" role="status">
             <strong>内容尚未显影</strong>
@@ -740,7 +771,7 @@ export function BookObservatory({
         </div>
       )}
       <div className="book-record whyhere-record" aria-label="星域定位">
-         <span className="book-record-label">为什么在这里</span>
+         <span className="book-record-label">此地何处</span>
         <p className="book-summary whyhere-copy">{whyHere}</p>
       </div>
       <footer className="panel-footer">
@@ -804,7 +835,9 @@ function maskedTitle(title: string): string {
   const cleaned = title.replace(/[（(][^）)]*[）)]/gu, '').trim() || title
   const characters = [...cleaned]
   if (characters.length <= 5) return cleaned
-  return `${characters.slice(0, 2).join('')}···${characters.slice(-2).join('')}`
+  // Reveal only the opening characters: a mid-string ellipsis
+  // (《中国…术史》) reads as a rendering bug in Chinese.
+  return `${characters.slice(0, 3).join('')}……`
 }
 
 const relationTechnicalTerms = /多维|语义|书目|模型|摘要|字段|相似度|邻接|可解释|证明|元数据/iu
@@ -862,10 +895,12 @@ export function directionCopy(
   target?: Book,
   index = 0,
   total = 3,
-): { band: string; title: string; description: string } {
-  const targetHint = target ? `《${maskedTitle(target.title)}》` : '一颗待显影书星'
+): { band: string; title: string; description: string; reveal?: string } {
   const relativeBand = total >= 3 ? index : total === 2 ? index * 2 : 1
   const band = relativeBand === 0 ? '近' : relativeBand === 1 ? '桥' : '远'
+  // The far option keeps its destination secret on purpose, and says so.
+  const hidden = band === '远' && relation.provenance !== 'reading-hypothesis'
+  const targetHint = target ? (hidden ? '一颗未名远星' : `《${target.title}》`) : '一颗待显影书星'
   const routeCopy = {
     近: '留在相近的书云，看熟悉的方向如何变化。',
     桥: '越过一层书云，让另一种目光接住这段航行。',
@@ -874,6 +909,8 @@ export function directionCopy(
   return {
     band,
     title: target ? `向 ${targetHint} 偏航` : '向远方偏航',
+    // The far star stays unnamed: the clue is only where it comes from, never part of its title.
+    reveal: hidden && target ? `抵达后揭晓书名${target.country && !/^(?:未注明|未知|不详)$/u.test(target.country) ? ` · 一颗来自${target.country}的星` : ''}` : undefined,
     description: relation.provenance === 'reading-hypothesis'
       ? relationReading(relation, undefined, target) || '一条尚未命名的阅读假说。'
       : routeCopy,
@@ -1014,6 +1051,7 @@ export function DetourCompass({
               <button key={`${relation.source}:${relation.target}`} type="button" onClick={() => onChoose(relation)}>
                 <small>0{index + 1} / {copy.band}{relation.provenance === 'reading-hypothesis' ? ` · ${relation.kind}` : ''}</small>
                 <strong>{copy.title}</strong>
+                {copy.reveal && <em className="direction-reveal">{copy.reveal}</em>}
                 <span>{copy.description}</span>
                 <Icon name="arrow" />
               </button>
@@ -1064,15 +1102,27 @@ export function VoyageNarration({ relation, from, to }: { relation: BookRelation
   )
 }
 
-export function JourneyRail({ books, onSelect }: { books: Book[]; onSelect?: (book: Book) => void }) {
+export function JourneyRail({ books, onSelect, myGalaxy }: {
+  books: Book[]
+  onSelect?: (book: Book) => void
+  myGalaxy?: { trails: number; stars: number; visible: boolean; onToggle: () => void }
+}) {
+  const railRef = useRef<HTMLOListElement>(null)
+  // On phones the rail scrolls sideways; keep the newest stop in view.
+  useEffect(() => {
+    const rail = railRef.current
+    if (rail && rail.scrollWidth > rail.clientWidth) rail.scrollTo({ left: rail.scrollWidth, behavior: 'smooth' })
+  }, [books.length])
   if (books.length === 0) return null
   const visibleBooks = books.slice(-6)
   const omitted = books.length - visibleBooks.length
   const progress = books.length >= 3 ? '可留星图' : `再走 ${3 - books.length} 本可留星图`
+  // Past three stops the rail counts stops instead of showing "4/3".
+  const count = books.length >= 3 ? `${books.length} 站` : `${books.length}/3`
   return (
     <aside className="journey-rail" aria-label="本次航迹">
-      <small>本次航迹 · {books.length}/3 · {progress}</small>
-      <ol>
+      <small>本次航迹 · {count} · {progress}</small>
+      <ol ref={railRef}>
         {omitted > 0 && <li className="omitted"><span>此前 {omitted} 站 ···</span></li>}
         {visibleBooks.map((book, index) => {
           const isCurrent = index === visibleBooks.length - 1
@@ -1089,6 +1139,13 @@ export function JourneyRail({ books, onSelect }: { books: Book[]; onSelect?: (bo
           )
         })}
       </ol>
+      {myGalaxy && (
+        <button className="my-galaxy-toggle" type="button" aria-pressed={myGalaxy.visible} onClick={myGalaxy.onToggle}>
+          <i aria-hidden="true" />
+          我的星系 · {myGalaxy.trails} 段航迹 · {myGalaxy.stars} 颗星
+          <small>{myGalaxy.visible ? '隐去旧航迹' : '显影旧航迹'}</small>
+        </button>
+      )}
     </aside>
   )
 }
@@ -1100,10 +1157,16 @@ export function LibrarianBand({
   onClose,
   onlineAvailable = false,
   onAskOnline,
+  nearest,
+  sleeping = false,
+  region,
 }: {
   relation?: BookRelation
   from?: Book
   to: Book
+  nearest?: Book
+  sleeping?: boolean
+  region?: MapRegion
   onClose: () => void
   onlineAvailable?: boolean
   onAskOnline?: (question: string) => Promise<string | undefined>
@@ -1112,8 +1175,10 @@ export function LibrarianBand({
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<string>()
   const [loading, setLoading] = useState(false)
+  const [asked, setAsked] = useState<OfflineQuestion>()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const { dialogRef, handleKeyDown } = useModalFocusTrap(headingRef, onClose, '[data-overlay-trigger="librarian"]')
+  useEffect(() => ensureLibrarianFont(), [])
 
   const provenance = relation?.provenance === 'catalog'
     ? '书云相逢'
@@ -1123,17 +1188,44 @@ export function LibrarianBand({
         ? '阅读联想'
         : '单书观测'
   const basis = relation ? readableRelationBasis(relation, to) : []
+  const note = relation
+    ? { ...offlineTransitionNote(relation, from, to), lead: relationReading(relation, from, to) }
+    : offlineBookNote(to, { sleeping, nearest })
   return (
     <section ref={dialogRef} className="librarian-band" role="dialog" aria-modal="true" aria-labelledby="librarian-title" onKeyDown={handleKeyDown}>
       <div className="signal-rule"><span /><i /><span /></div>
-      <div className="signal-meta"><Icon name="signal" /> 馆员来信</div>
+      <div className="signal-meta"><Icon name="signal" /> 馆员来信{region ? ` · 来自${region.name}` : ''}</div>
       <button className="signal-close" type="button" onClick={onClose} aria-label="关闭馆员来信"><Icon name="close" /></button>
       <h2 id="librarian-title" ref={headingRef} tabIndex={-1}>{relation ? '为什么是这一本？' : '这颗书星正在说什么？'}</h2>
       {answer ? <p>{answer}</p> : mode === 'basis' && relation ? null : (
         <>
-          <p>{relation ? relationReading(relation, from, to) : `你正在单独观测《${to.title}》。它还没有前一跳，先让它独自发光。`}</p>
+          <p>{note.lead}</p>
+          {note.lines.length > 0 && (
+            <ul className="signal-notes">
+              {note.lines.map((line) => <li key={line}>{line}</li>)}
+            </ul>
+          )}
+          {region && regionSpeaksTo(to, region) && <p className="signal-question-line"><span>{region.name}在问</span>{region.question}</p>}
           {!relation && <p className="signal-next">再偏航一次，馆员便能说说两本书为何相遇。</p>}
         </>
+      )}
+      {!onlineAvailable && (
+        <div className="signal-presets" role="group" aria-label="向馆员提问">
+          {offlineQuestions.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={asked === item.id}
+              onClick={() => {
+                setMode('reading')
+                setAsked(item.id)
+                setAnswer(offlineAnswer(item.id, { relation, from, to, nearest, sleeping }))
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       )}
       {mode === 'basis' && relation && (
         <div className="signal-evidence">
@@ -1201,7 +1293,7 @@ export function StarChartReveal({
       <div className="exposure-curtain" />
       <div className="chart-copy">
         <small>书架星系 · 私人星图</small>
-        <h2 id="chart-title" ref={headingRef} tabIndex={-1}>你的迷路，已经显影。</h2>
+        <h2 id="chart-title" ref={headingRef} tabIndex={-1}><span className="nobreak">你的迷路，</span><span className="nobreak">已经显影。</span></h2>
         <p>空间被压成纸面，经过的书成为一幅只属于本次航行的未刊星图。</p>
         <div>
           <button className="ink-action" type="button" onClick={onDownload}>保存高清星图</button>
@@ -1209,7 +1301,6 @@ export function StarChartReveal({
         </div>
       </div>
       <figure className="chart-plate"><img src={dataUrl} alt="本次阅读旅程生成的未刊星图" /></figure>
-      <div className="vermilion-seal" aria-hidden="true">迷<br />路</div>
     </section>
   )
 }
@@ -1222,5 +1313,49 @@ export function ErrorFallback({ message, onReset }: { message: string; onReset: 
       <p>{message}</p>
       <button type="button" onClick={onReset}>重新观测</button>
     </section>
+  )
+}
+
+const ONBOARDING_KEY = 'book-galaxy:onboarding-v1'
+const onboardingSteps = [
+  { title: '观测', copy: '点开一颗书星，先读它的一句导语。' },
+  { title: '偏航', copy: '选「近 / 桥 / 远」，让距离替你挑下一本。' },
+  { title: '显影', copy: '走满三本，这次迷路会显影成一张星图。' },
+]
+
+function readOnboardingDismissed(): boolean {
+  try {
+    return window.localStorage.getItem(ONBOARDING_KEY) === 'dismissed'
+  } catch {
+    return false
+  }
+}
+
+/** A three-step hint shown once; dismissal is remembered on this device. */
+export function OnboardingHint({ step }: { step: number }) {
+  const [dismissed, setDismissed] = useState(readOnboardingDismissed)
+  if (dismissed) return null
+  const dismiss = () => {
+    setDismissed(true)
+    try {
+      window.localStorage.setItem(ONBOARDING_KEY, 'dismissed')
+    } catch {
+      // Private mode: the hint simply returns next visit.
+    }
+  }
+  const active = Math.min(onboardingSteps.length - 1, Math.max(0, step - 1))
+  return (
+    <aside className="onboarding-hint" aria-label="三步漫游提示">
+      <ol>
+        {onboardingSteps.map((item, index) => (
+          <li key={item.title} className={index === active ? 'is-active' : index < active ? 'is-done' : undefined} aria-current={index === active ? 'step' : undefined}>
+            <small>0{index + 1}</small>
+            <strong>{item.title}</strong>
+            <span>{item.copy}</span>
+          </li>
+        ))}
+      </ol>
+      <button type="button" onClick={dismiss} aria-label="不再显示漫游提示">知道了</button>
+    </aside>
   )
 }

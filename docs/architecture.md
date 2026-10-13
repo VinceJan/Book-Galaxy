@@ -75,7 +75,7 @@ npm run build:data:assemble
 合并阶段再次读取并校验本地批准侧车、重新覆盖富书目，再校验布局并写入：
 
 ```text
-public/data/catalog.json
+data/catalog.json
 public/data/manifest.json
 public/data/ATTRIBUTION.json
 ```

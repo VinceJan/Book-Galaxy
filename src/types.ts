@@ -120,6 +120,20 @@ export interface BookNeighbor {
   basis?: string[]
 }
 
+/** A named region of the star sea (scripts/lib/regions.mjs + data/regions/names.json). */
+export interface MapRegion {
+  id: string
+  /** Map-style place name shown on the star map, e.g. 古经高原. */
+  name: string
+  /** Short line shown at mid zoom. */
+  subtitle?: string
+  /** The question this region asks; shown only when the region is opened or by the librarian. */
+  question: string
+  size: number
+  density?: number
+  bookIds: string[]
+}
+
 export interface Book {
   id: string
   title: string
@@ -133,6 +147,10 @@ export interface Book {
   language?: string
   country?: string
   summary?: string
+  /** Verbatim 1–2 sentence span of the lead, chosen offline (scripts/lib/book-hook.mjs). */
+  hook?: string
+  /** More verbatim lead sentences, tagged by what they tell (scripts/lib/book-hook.mjs). */
+  notes?: { story?: string; setting?: string; idea?: string }
   themes: string[]
   /** Auditable origin for every user-visible theme label. */
   themeProvenance?: Record<string, ThemeProvenance>

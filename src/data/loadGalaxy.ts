@@ -1,6 +1,6 @@
-import type { Book, BookRelation, BookPosition, BookShape, RelationKind, BookEligibility, BookInstanceType } from '../types'
+import type { MapRegion, Book, BookRelation, BookPosition, BookShape, RelationKind, BookEligibility, BookInstanceType } from '../types'
 import { chooseRelations, otherBookId } from '../lib/galaxyMath'
-import { buildCuratedRelationsWithStats, type CuratedRelationBuildStats } from './curatedThreads'
+import type { CuratedRelationBuildStats } from './curatedThreads'
 
 export interface CatalogNeighbour {
   id: string
@@ -26,6 +26,8 @@ interface CatalogBook {
   language?: string
   country?: string
   summary?: string
+  hook?: string
+  notes?: Book['notes']
   subjects?: string[]
   themes?: string[]
   themeProvenance?: Book['themeProvenance']
@@ -83,6 +85,7 @@ interface CatalogPayload {
   layoutModel?: string | null
   books?: CatalogBook[]
   relations?: CatalogEdge[]
+  regions?: MapRegion[]
 }
 
 const FORMAL_BOOK_COUNT = 1_000
@@ -137,6 +140,8 @@ export interface GalaxyData {
   /** Counts from the editorial adapter; absent only for pre-v2 fixtures. */
   curatedRelationStats?: CuratedRelationBuildStats
   catalogEdges: CatalogEdge[]
+  /** Named map regions; empty for snapshots built before regions existed. */
+  regions?: MapRegion[]
   relationCount: number
   source: string
   generatedAt?: string
@@ -155,6 +160,8 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
     originalTitle: book.originalTitle ?? book.foreignTitle,
     aliases: book.aliases,
     summary: book.summary?.trim(),
+    hook: book.hook?.trim() || undefined,
+    notes: book.notes,
     instanceOf: book.instanceOf,
     eligibility: book.eligibility,
     wikipediaTitle: book.wikipediaTitle,
@@ -189,7 +196,7 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
 }
 
 export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.json`, { signal })
+  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.runtime.json`, { signal })
   if (!response.ok) throw new Error(`真实书目载入失败（${response.status}）`)
   const payload = await response.json() as CatalogPayload
   if (payload.schemaVersion !== 'bookshelf-galaxy/catalog-v2') {
@@ -201,6 +208,8 @@ export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> 
     throw new Error('真实书目快照不完整')
   }
   const catalogBooks = catalogSourceBooks.map(normalizeCatalogBook)
+  // Hand-written threads are ~0.9 MB of source; load them as their own chunk.
+  const { buildCuratedRelationsWithStats } = await import('./curatedThreads')
   const curatedBuild = buildCuratedRelationsWithStats(catalogBooks)
   return {
     books: catalogBooks,
@@ -210,6 +219,7 @@ export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> 
     curatedRelations: curatedBuild.relations,
     curatedRelationStats: curatedBuild.stats,
     catalogEdges,
+    regions: (payload.regions ?? []).filter((region) => region.id && region.name && Array.isArray(region.bookIds)),
     relationCount: catalogEdges.length,
     source: payload.source ?? '中文富书目快照',
     generatedAt: payload.generatedAt,

@@ -1,0 +1,18 @@
+{
+  "$comment": "Map-style (C) region names with question lines (B). Keyed by the medoid book id of each k-means region (scripts/lib/regions.mjs). Every name was chosen from the region's real themes and representative books listed in docs/region-naming.md.",
+  "version": 1,
+  "regions": {
+    "Q2176806": { "name": "古经高原", "subtitle": "经藏、往世书与最古老的光", "question": "人为什么要信？" },
+    "Q161953": { "name": "律法台地", "subtitle": "诫命、法度与王者之术", "question": "规矩从哪里来？" },
+    "Q833106": { "name": "忏悔谷", "subtitle": "病房、囚室与欲望的代价", "question": "人能被救赎吗？" },
+    "Q5398909": { "name": "欲望海峡", "subtitle": "沙龙、婚约与心的交易", "question": "爱是一种契约吗？" },
+    "Q16050727": { "name": "夜城海岸", "subtitle": "赌场、小城与冷血的案卷", "question": "一座城会怎样塑造一个人？" },
+    "Q165068": { "name": "少年河湾", "subtitle": "学徒、离家与长大", "question": "人是怎样长大的？" },
+    "Q1401130": { "name": "江湖渡口", "subtitle": "侠客、猎人与远行者", "question": "人为什么总想去远方？" },
+    "Q464220": { "name": "机械群岛", "subtitle": "机器、星际与新的太阳", "question": "机器会做梦吗？" },
+    "Q2354342": { "name": "镜城列岛", "subtitle": "推理、谜题与另一个日本", "question": "真相藏在第几层？" },
+    "Q230302": { "name": "契约平原", "subtitle": "自由、市场与国家的起源", "question": "社会靠什么维系？" },
+    "Q120288": { "name": "时间沙洲", "subtitle": "战争、芯片与昨日的世界", "question": "时代会怎样改写一个人？" },
+    "Q2031199": { "name": "蓝图孤岛", "subtitle": "乌托邦、系统与未来的草图", "question": "更好的世界能被设计出来吗？" }
+  }
+}

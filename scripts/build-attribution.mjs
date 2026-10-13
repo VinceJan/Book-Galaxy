@@ -7,7 +7,7 @@
  * catalog (for example the old Project Gutenberg snapshot), and it validates
  * every source link before touching the output file.  `--smoke` exercises the
  * same deterministic builder with an in-memory fixture, so it is safe to run
- * while public/data/catalog.json is still a v1 payload.
+ * while data/catalog.json is still a v1 payload.
  */
 
 import { createHash } from 'node:crypto'
@@ -28,7 +28,7 @@ import {
 import { COVER_REMOVAL_CONTACT_URL, LIFECYCLE_STATUSES } from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
+const DEFAULT_CATALOG = resolve(ROOT, 'data/catalog.json')
 const DEFAULT_OUTPUT = resolve(ROOT, 'public/data/ATTRIBUTION.json')
 const CATALOG_SCHEMA = 'bookshelf-galaxy/catalog-v2'
 const ATTRIBUTION_SCHEMA = 'bookshelf-galaxy/attribution-v2'

@@ -277,8 +277,8 @@ describe('product depth - contract', () => {
     expect(panel.indexOf('书页一瞥')).toBeGreaterThan(-1)
     expect(panel.indexOf('引力书线')).toBeGreaterThan(panel.indexOf('书页一瞥'))
     expect(panel.indexOf('附近书星')).toBeGreaterThan(panel.indexOf('引力书线'))
-    expect(panel.indexOf('为什么在这里')).toBeGreaterThan(panel.indexOf('附近书星'))
-    expect(panel.indexOf('panel-footer')).toBeGreaterThan(panel.indexOf('为什么在这里'))
+    expect(panel.indexOf('此地何处')).toBeGreaterThan(panel.indexOf('附近书星'))
+    expect(panel.indexOf('panel-footer')).toBeGreaterThan(panel.indexOf('此地何处'))
 
     // humility: visible meta keeps hypothesis, redundant inline details removed
     expect(ui).toContain('逐书策展 · 阅读假说')
@@ -303,5 +303,13 @@ describe('product depth - contract', () => {
     expect(css).toContain('min(520px, 52vw)')
     expect(css).toContain('gravity-thread-record')
     expect(app).toContain('journey.steps.length === journeyBooks.length')
+  })
+})
+
+describe('self-hosted covers', () => {
+  it('accepts only generated cover paths and wiki file pages as credits', () => {
+    expect(safeExternalUrl('covers/Q607112.webp', 'cover')).toMatch(/covers\/Q607112\.webp$/)
+    expect(safeExternalUrl('covers/../x.webp', 'cover')).toBeUndefined()
+    expect(safeExternalUrl('https://commons.wikimedia.org/wiki/File:A.jpg', 'coverSource')).toBeDefined()
   })
 })

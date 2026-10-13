@@ -21,7 +21,7 @@ import {
 } from './lib/cover-policy.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const DEFAULT_CATALOG = resolve(ROOT, 'public/data/catalog.json')
+const DEFAULT_CATALOG = resolve(ROOT, 'data/catalog.json')
 const DEFAULT_MANIFEST = resolve(ROOT, 'public/data/manifest.json')
 const DEFAULT_APPROVED_COVERS = resolve(ROOT, 'data/covers/approved-v1.json')
 const CATALOG_SCHEMA = 'bookshelf-galaxy/catalog-v2'
