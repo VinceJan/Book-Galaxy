@@ -109,7 +109,119 @@ export function sharedThemes(relation: BookRelation | undefined, from?: Book, to
   return [...new Set([...fromEvidence, ...derived])].filter((theme) => theme.trim())
 }
 
-export function offlineTransitionNote(relation: BookRelation, from?: Book, to?: Book): OfflineNote {
+type RegionLike = { name: string; subtitle?: string; question: string; bookIds: string[] }
+
+export interface TransitionContext {
+  fromRegion?: RegionLike
+  toRegion?: RegionLike
+}
+
+const short = (text: string | undefined, max = 64) => (text && [...text].length <= max ? text.replace(/。$/u, '') : undefined)
+
+/** Chinese genre label from Wikidata instance-of, or undefined for English-only labels. */
+function genre(book: Book): string | undefined {
+  // Only labels that name a kind of book (佛经, 漫画小说, 词典…); bibliographic ones
+  // (书面作品, 多卷作品, 四六版…) say nothing. 文学作品 is the plain counterpart.
+  const labels = (book.instanceOf ?? []).map((item) => item.label).filter((label) => /[\u3400-\u9fff]/u.test(label))
+  const specific = labels.find((label) => /经|漫画|专著|非小说|往世书|史[诗詩]|词典|辞典|哲学|历史书|工具书|诗|剧|小说|散文|随笔|传记|回忆录|论文|教科书|百科/u.test(label))
+  return specific ?? (labels.includes('文学作品') ? '文学作品' : undefined)
+}
+
+function gapPhrase(gap: number): string {
+  if (gap < 8) return '它们几乎写于同一时期'
+  if (gap < 100) return `两本书相隔约 ${gap} 年`
+  const centuries = Math.round(gap / 100)
+  const words = ['', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十']
+  return centuries <= 10 ? `两本书隔着约${words[centuries]}个世纪` : `两本书相隔约 ${gap} 年`
+}
+
+/**
+ * A far jump, in the librarian's voice. Every clause still comes from data:
+ * region names and questions, catalog themes, years, places, languages,
+ * Wikidata genre, verbatim lead sentences and the star's density on the map.
+ * What varies is which of these this particular pair actually has.
+ */
+function farNote(relation: BookRelation, from: Book | undefined, to: Book | undefined, context: TransitionContext): OfflineNote {
+  const seed = `${from?.id ?? ''}>${to?.id ?? ''}`
+  const lines: string[] = []
+  const fromRegion = context.fromRegion
+  const toRegion = context.toRegion
+  const crossed = fromRegion && toRegion && fromRegion.name !== toRegion.name
+
+  let lead: string
+  if (crossed) {
+    lead = pick([
+      `这一跳越过了半片星海：从「${fromRegion.name}」到「${toRegion.name}」。`,
+      `你离开「${fromRegion.name}」，落在「${toRegion.name}」。`,
+      `「${fromRegion.name}」已经在身后，这里是「${toRegion.name}」。`,
+    ], seed)
+  } else if (toRegion && fromRegion) {
+    // Same region on the map, far apart in content: say exactly that.
+    lead = `同在「${toRegion.name}」，内容上却离得很远。`
+  } else {
+    lead = pick([
+      `从《${from?.title ?? '出发星'}》到《${to?.title ?? '远方书星'}》，中间几乎没有路标。`,
+      `《${to?.title ?? '远方书星'}》离《${from?.title ?? '出发星'}》很远，远到书线只剩一根。`,
+    ], seed)
+  }
+
+  if (from && to) {
+    // Why it is far: each side's own concern, then whatever thin thread remains.
+    const shared = new Set(sharedThemes(relation, from, to))
+    const own = (book: Book) => meaningfulThemes(book).find((theme) => !shared.has(theme) && !BROAD_THEME.test(theme))
+    const mine = own(from)
+    const theirs = own(to)
+    if (mine && theirs && mine !== theirs) {
+      lines.push(pick([
+        `一边是「${mine}」，一边是「${theirs}」，几乎没有重叠。`,
+        `《${from.title}》落在「${mine}」，《${to.title}》落在「${theirs}」。`,
+      ], `${seed}:themes`))
+    }
+    const thread = [...shared].filter((theme) => !GENERIC_THEME.test(theme))
+    const specific = thread.find((theme) => !BROAD_THEME.test(theme))
+    if (specific) lines.push(`它们之间只剩一根细线：「${specific}」。`)
+    else if (thread[0]) lines.push(`唯一的交集是一个很宽的词：「${thread[0]}」，宽到不足以解释这一跳。`)
+
+    const facts: string[] = []
+    if (Number.isInteger(from.year) && Number.isInteger(to.year) && from.year && to.year) {
+      facts.push(gapPhrase(Math.abs((to.year as number) - (from.year as number))))
+    }
+    // A change of kind (佛经 → 小说) says more than a change of country, so it ranks first.
+    const kindA = genre(from)
+    const kindB = genre(to)
+    if (kindA && kindB && kindA !== kindB && (kindA !== '文学作品' || kindB !== '文学作品')) facts.push(`一部是${kindA}，一部是${kindB}`)
+    const place = placePhrase(from, to)
+    if (place && !place.startsWith('同样')) facts.push(place)
+    else {
+      const a = known(from.language)
+      const b = known(to.language)
+      if (a && b && a !== b) facts.push(`一本以${a}写成，一本以${b}写成`)
+    }
+    if (facts.length > 0) lines.push(`${facts.slice(0, 2).join('，')}。`)
+
+    const fromQuote = short(quotableNote(from, ['idea', 'story', 'setting']))
+    const toQuote = short(quotableNote(to, ['idea', 'story', 'setting']))
+    if (fromQuote && toQuote) lines.push(`对读：「${fromQuote}」——「${toQuote}」`)
+    else if (toQuote) lines.push(`到了这里，导语写着：「${toQuote}」`)
+  }
+
+  // The region's own question is already shown under the band; not repeated here.
+  if (to && ((to.outlierScore ?? 0) >= 0.7 || (to.localDensity ?? 1) <= 0.2)) {
+    lines.push(pick(['它在星域的边缘，四周很少有书。', '它身边很空，很少有书线经过。'], `${seed}:edge`))
+  }
+  const signOff = pick([
+    '说实话，这一跳连我也没料到，这正是我喜欢的部分。',
+    '离家很远了。别急着找路标，先读第一页。',
+    '我不保证你会喜欢它，只保证你本来不会遇见它。',
+    '远行的理由很少，所以每一条都值得细读。',
+    '书线到这里很细了，剩下的要靠你读出来。',
+    '若读不下去，回出发星只要一下；若读下去了，这就是你的发现。',
+  ], `${seed}:sign`)
+  return { lead, lines: [...lines.slice(0, 4), signOff] }
+}
+
+export function offlineTransitionNote(relation: BookRelation, from?: Book, to?: Book, context: TransitionContext = {}): OfflineNote {
+  if (relation.distanceBand === 'far' && relation.provenance !== 'reading-hypothesis') return farNote(relation, from, to, context)
   const lines: string[] = []
   const themes = sharedThemes(relation, from, to)
   const meaningful = themes.filter((theme) => !GENERIC_THEME.test(theme))
@@ -158,7 +270,7 @@ export const offlineQuestions: Array<{ id: OfflineQuestion; label: string }> = [
 
 export function offlineAnswer(
   question: OfflineQuestion,
-  context: { relation?: BookRelation; from?: Book; to: Book; nearest?: Book; sleeping?: boolean },
+  context: { relation?: BookRelation; from?: Book; to: Book; nearest?: Book; sleeping?: boolean } & TransitionContext,
 ): string {
   const { relation, from, to, nearest } = context
   if (question === 'about') {
@@ -168,7 +280,7 @@ export function offlineAnswer(
   }
   if (question === 'why') {
     if (!relation) return `《${to.title}》还没有前一站。偏航一次，馆员就能说说两本书为何相遇。`
-    const note = offlineTransitionNote(relation, from, to)
+    const note = offlineTransitionNote(relation, from, to, context)
     return [note.lead, ...note.lines.slice(0, 2)].join('')
   }
   const themes = meaningfulThemes(to)
