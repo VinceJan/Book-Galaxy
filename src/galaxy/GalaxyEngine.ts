@@ -53,6 +53,7 @@ import {
 export interface GalaxyEngineCallbacks {
   onHover: (book: Book | null, position?: { x: number; y: number }) => void
   onSelect: (book: Book, source?: 'pointer' | 'keyboard') => void
+  onRelationClick?: (sourceId: string, targetId: string) => void
   onReady: () => void
   onError: (message: string) => void
 }
@@ -869,6 +870,11 @@ export class GalaxyEngine {
     }
     if (this.flight) return
     this.updatePointer(event.clientX, event.clientY)
+    if (this.isRelationPicked() && this.relationLine) {
+      const { sourceId, targetId } = this.relationLine.userData
+      this.callbacks.onRelationClick?.(sourceId, targetId)
+      return
+    }
     const index = this.findPickedIndex(this.pointerType === 'touch' ? 34 : 20)
     if (index < 0) return
     this.hoveredIndex = index
@@ -915,12 +921,27 @@ export class GalaxyEngine {
     return pickedIndex
   }
 
+  private isRelationPicked(): boolean {
+    if (!this.relationLine) return false
+    this.raycaster.setFromCamera(this.pointer, this.camera)
+    // A roughly 10px hit corridor, with a larger tap target on touch devices.
+    this.raycaster.params.Line = { threshold: Math.max(0.5, this.camera.position.distanceTo(this.controls.target) * (this.pointerType === 'touch' ? 0.025 : 0.014)) }
+    return this.raycaster.intersectObject(this.relationLine, false).length > 0
+  }
+
   private pick(): void {
     this.needsPick = false
+    const relationPicked = !this.flight && this.isRelationPicked()
+    this.renderer.domElement.style.cursor = relationPicked ? 'pointer' : ''
+    if (relationPicked) {
+      this.hoveredIndex = -1
+      this.callbacks.onHover(null)
+      return
+    }
     const nextIndex = this.findPickedIndex(this.pointerType === 'touch' ? 34 : 20)
+    this.renderer.domElement.style.cursor = nextIndex >= 0 ? 'pointer' : ''
     if (nextIndex === this.hoveredIndex) return
     this.hoveredIndex = nextIndex
-    this.renderer.domElement.style.cursor = nextIndex >= 0 ? 'pointer' : ''
     if (nextIndex < 0) {
       this.callbacks.onHover(null)
       return
@@ -1195,6 +1216,7 @@ export class GalaxyEngine {
       depthWrite: false,
     })
     this.relationLine = new Line(geometry, material)
+    this.relationLine.userData = { sourceId, targetId }
     this.scene.add(this.relationLine)
 
     this.relationBeacon = new Mesh(

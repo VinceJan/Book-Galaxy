@@ -26,19 +26,20 @@ interface GalaxyCanvasProps {
   reducedMotion: boolean
   onHover: (book: Book | null, position?: { x: number; y: number }) => void
   onSelect: (book: Book, source?: 'pointer' | 'keyboard') => void
+  onRelationClick?: (sourceId: string, targetId: string) => void
   onReady: () => void
   onError: (message: string) => void
 }
 
 export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(function GalaxyCanvas(
-  { books, regions, trails, focusRegionId, bookOpen = false, introOpen = false, emphasisIds, keyboardEnabled, reducedMotion, onHover, onSelect, onReady, onError },
+  { books, regions, trails, focusRegionId, bookOpen = false, introOpen = false, emphasisIds, keyboardEnabled, reducedMotion, onHover, onSelect, onRelationClick, onReady, onError },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
   const keyboardStatusRef = useRef<HTMLSpanElement>(null)
   const engineRef = useRef<GalaxyEngine | null>(null)
-  const callbacksRef = useRef({ onHover, onSelect, onReady, onError })
-  callbacksRef.current = { onHover, onSelect, onReady, onError }
+  const callbacksRef = useRef({ onHover, onSelect, onRelationClick, onReady, onError })
+  callbacksRef.current = { onHover, onSelect, onRelationClick, onReady, onError }
   // Latest props for an engine that finishes loading after they changed.
   const reducedMotionRef = useRef(reducedMotion)
   reducedMotionRef.current = reducedMotion
@@ -63,6 +64,7 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
           {
             onHover: (...args) => callbacksRef.current.onHover(...args),
             onSelect: (...args) => callbacksRef.current.onSelect(...args),
+            onRelationClick: (...args) => callbacksRef.current.onRelationClick?.(...args),
             onReady: () => callbacksRef.current.onReady(),
             onError: (...args) => callbacksRef.current.onError(...args),
           },

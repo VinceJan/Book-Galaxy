@@ -69,6 +69,9 @@ export interface CatalogEdge {
   weight?: number
   basis?: string[]
   sentence?: string
+  relationType?: string
+  strength?: number
+  wd?: string
   surprise?: number
   surpriseByBook?: Record<string, number>
   bandByBook?: Record<string, 'low' | 'middle' | 'high'>
@@ -145,6 +148,26 @@ export interface GalaxyData {
   relationCount: number
   source: string
   generatedAt?: string
+}
+
+/** Validate the entire library before replacing the legacy fallback. */
+export function mapRelationsV2(payload: unknown, bookIds: ReadonlySet<string>): CatalogEdge[] {
+  const data = payload as { schemaVersion?: string; count?: number; relations?: Array<{ s: string; t: string; text: string; strength: number; type: string; wd?: string }> } | null
+  if (data?.schemaVersion !== 'relations-v2-app/1' || !Array.isArray(data.relations)
+    || !data.relations.length || data.count !== data.relations.length) throw new Error('关系库格式不符')
+  return data.relations.map((record) => {
+    if (!record || !bookIds.has(record.s) || !bookIds.has(record.t) || record.s === record.t
+      || typeof record.text !== 'string' || !record.text.trim()
+      || typeof record.type !== 'string' || !record.type.trim()
+      || !Number.isInteger(record.strength) || record.strength < 3 || record.strength > 5
+      || (record.wd !== undefined && typeof record.wd !== 'string')) throw new Error('关系记录格式不符')
+    return {
+      source: record.s, target: record.t, sentence: record.text,
+      relationType: record.type, strength: record.strength, wd: record.wd,
+      basis: record.wd ? [record.wd] : [], weight: record.strength / 5,
+      confidence: record.strength / 5, surprise: 0.6, provenance: 'relations-v2',
+    }
+  })
 }
 
 function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
@@ -229,10 +252,6 @@ function emptyGalaxyData(): GalaxyData {
 }
 
 export async function loadGalaxyData(signal?: AbortSignal, core?: GalaxyData): Promise<GalaxyData> {
-  // Hand-written threads are ~0.9 MB of source in their own chunk; fetch it in
-  // parallel with the catalog rather than after it.
-  const curatedModule = import('./curatedThreads')
-  curatedModule.catch(() => undefined)
   const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.runtime.json`, { signal })
   if (!response.ok) throw new Error(`真实书目载入失败（${response.status}）`)
   const payload = await response.json() as CatalogPayload
@@ -240,7 +259,7 @@ export async function loadGalaxyData(signal?: AbortSignal, core?: GalaxyData): P
     throw new Error('真实书目不是中文富内容 v2 快照')
   }
   const catalogSourceBooks = payload.books ?? []
-  const catalogEdges = payload.relations ?? []
+  let catalogEdges = payload.relations ?? []
   if (!isCompleteFormalCatalog(catalogSourceBooks, catalogEdges)) {
     throw new Error('真实书目快照不完整')
   }
@@ -254,15 +273,26 @@ export async function loadGalaxyData(signal?: AbortSignal, core?: GalaxyData): P
     core.books.forEach((book) => Object.assign(book, full.get(book.id)))
     catalogBooks = core.books
   }
-  const { buildCuratedRelationsWithStats } = await curatedModule
-  const curatedBuild = buildCuratedRelationsWithStats(catalogBooks)
+  let v2 = false
+  try {
+    const relationResponse = await fetch(`${import.meta.env.BASE_URL}data/relations.v2.json`, { signal })
+    if (!relationResponse.ok) throw new Error('关系库载入失败')
+    catalogEdges = mapRelationsV2(await relationResponse.json(), new Set(catalogBooks.map((book) => book.id)))
+    v2 = true
+  } catch (error) {
+    if (signal?.aborted) throw error
+    // Offline, missing or malformed v2: retain the audited semantic snapshot.
+  }
+  // The large editorial chunks are needed only when v2 cannot be loaded.
+  const curatedBuild = v2 ? undefined : (await import('./curatedThreads')).buildCuratedRelationsWithStats(catalogBooks)
+  const relationData: GalaxyData = { books: catalogBooks, curated: [], curatedRelations: [], catalogEdges, relationCount: catalogEdges.length, source: '' }
+  const v2Resolver = makeRelationResolver(relationData)
   return {
     books: catalogBooks,
     curated: [],
-    // Hand-authored routes are mapped to the real catalog Q-ids at load time.
-    // They stay separate from the three algorithmic detour options below.
-    curatedRelations: curatedBuild.relations,
-    curatedRelationStats: curatedBuild.stats,
+    // Reuse the existing side-list contract for v2; retain curated fallback.
+    curatedRelations: v2 ? catalogEdges.map((edge) => v2Resolver.relationFor(edge.source, edge.target)!) : curatedBuild!.relations,
+    curatedRelationStats: curatedBuild?.stats,
     catalogEdges,
     regions: core?.regions ?? (payload.regions ?? []).filter((region) => region.id && region.name && Array.isArray(region.bookIds)),
     relationCount: catalogEdges.length,
@@ -273,11 +303,12 @@ export async function loadGalaxyData(signal?: AbortSignal, core?: GalaxyData): P
 
 export function makeRelationResolver(data: GalaxyData): {
   optionsFor: (bookId: string, visited: ReadonlySet<string>) => BookRelation[]
+  relationFor: (source: string, target: string) => BookRelation | undefined
 } {
   const booksById = new Map(data.books.map((book) => [book.id, book]))
   const adjacency = new Map<string, CatalogEdge[]>()
   data.catalogEdges.forEach((edge) => {
-    if (!hasHonestBasis(edge)) return
+    if (edge.provenance !== 'relations-v2' && !hasHonestBasis(edge)) return
     const sourceEdges = adjacency.get(edge.source)
     if (sourceEdges) sourceEdges.push(edge)
     else adjacency.set(edge.source, [edge])
@@ -325,6 +356,9 @@ export function makeRelationResolver(data: GalaxyData): {
       // editorial prose in the observatory.
       sentence: edge.sentence?.trim()
         || `《${sourceBook?.title ?? '这本书'}》与《${targetBook?.title ?? '远方作品'}》在“${shared}”处相遇。`,
+      relationType: edge.relationType,
+      strength: edge.strength,
+      wd: edge.wd,
       basis,
       similarity: edge.similarity,
       weight: edge.weight,
@@ -346,6 +380,10 @@ export function makeRelationResolver(data: GalaxyData): {
   }
 
   return {
+    relationFor(source, target) {
+      const edge = adjacency.get(source)?.find((edge) => otherBookId(edge, source) === target)
+      return edge ? enrich(edge, source) : undefined
+    },
     optionsFor(bookId, visited) {
       const catalog = (adjacency.get(bookId) ?? [])
         .filter((edge) => booksById.has(otherBookId(edge, bookId)) && !visited.has(otherBookId(edge, bookId)))

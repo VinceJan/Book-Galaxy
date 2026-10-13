@@ -197,6 +197,9 @@ export interface BookRelation {
   target: string
   kind: RelationKind
   sentence: string
+  relationType?: string
+  strength?: number
+  wd?: string
   basis: string[]
   surprise: number
   confidence: number

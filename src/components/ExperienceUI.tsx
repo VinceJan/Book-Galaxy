@@ -604,7 +604,7 @@ export function curatedThreadsFor(
 ): CuratedThreadView[] {
   if (!bookId || limit <= 0) return []
   const candidates = relations
-    .filter((relation) => relation.provenance === 'reading-hypothesis'
+    .filter((relation) => (relation.relationType || relation.provenance === 'reading-hypothesis')
       && (relation.source === bookId || relation.target === bookId))
     .map((relation) => ({ relation, target: booksById.get(otherBookId(relation, bookId)) }))
     .filter((item): item is CuratedThreadView => {
@@ -744,13 +744,13 @@ export function BookObservatory({
         <div className="book-record gravity-thread-record hidden-thread-record" aria-labelledby="gravity-thread-title">
           <div className="gravity-thread-header">
             <h3 id="gravity-thread-title" className="gravity-thread-title">引力书线</h3>
-            <small className="gravity-thread-meta">逐书策展 · 阅读假说 · {curatedThreads.length}条</small>
+            <small className="gravity-thread-meta">{curatedThreads[0]?.relation.relationType ? '作品关系' : '逐书策展 · 阅读假说'} · {curatedThreads.length}条</small>
           </div>
           <ul className="hidden-thread-list gravity-thread-list">
             {curatedThreads.map(({ relation, target }) => (
               <li key={`${relation.source}:${relation.target}`}>
-                <button className="hidden-thread-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
-                  <small>{relation.kind}</small>
+                <button className="hidden-thread-item" data-testid="relation-item" type="button" onClick={() => onFollowCuratedThread(relation)}>
+                  <small>{relation.relationType ?? relation.kind}</small>
                   <strong>《{target.title}》</strong>
                   <span>{relation.sentence}</span>
                   <Icon name="arrow" />
@@ -880,7 +880,7 @@ function readableRelationBasis(relation: BookRelation, target?: Book): string[] 
 /** Only a reading hypothesis owns authored interpretation; other edges record travel facts. */
 export function relationReading(relation: BookRelation, departure?: Book, arrival?: Book): string {
   const sentence = relation.sentence?.trim()
-  if (relation.provenance === 'reading-hypothesis' && sentence) return sentence
+  if ((relation.relationType || relation.provenance === 'reading-hypothesis') && sentence) return sentence
   const from = departure ? `《${departure.title}》` : '出发星'
   const to = arrival ? `《${arrival.title}》` : '远方书星'
   return `这次航行从${from}抵达${to}。`
@@ -949,7 +949,7 @@ function getModalFocusableElements(dialog: HTMLElement): HTMLElement[] {
     })
 }
 
-function useModalFocusTrap<T extends HTMLElement>(
+export function useModalFocusTrap<T extends HTMLElement>(
   headingRef: React.RefObject<T | null>,
   onClose: () => void,
   returnFocusSelector: string,

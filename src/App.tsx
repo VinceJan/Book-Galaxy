@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { RelationPanel } from './components/RelationPanel'
 import { GalaxyCanvas, type GalaxyCanvasHandle } from './galaxy/GalaxyCanvas'
 import {
   BookObservatory,
@@ -144,6 +145,7 @@ export default function App() {
   const [catalogState, setCatalogState] = useState<'loading' | 'core' | 'ready'>('loading')
   // A departure asked for before the full catalog landed; honoured once it does.
   const [pendingStart, setPendingStart] = useState<Book | 'wake'>()
+  const [relationDetail, setRelationDetail] = useState<BookRelation>()
   const [engineReady, setEngineReady] = useState(false)
   const [hovered, setHovered] = useState<{ book: Book; position: { x: number; y: number } }>()
   const [soundEnabled, setSoundEnabled] = useState(false)
@@ -247,6 +249,20 @@ export default function App() {
     () => selected ? curatedThreadsFor(selected.id, data.curatedRelations, booksById) : [],
     [booksById, data.curatedRelations, selected],
   )
+  const openRelation = useCallback((relation: BookRelation) => {
+    setRelationDetail(relation)
+    galaxyRef.current?.revealRelation(relation.source, relation.target)
+  }, [])
+  useEffect(() => {
+    setRelationDetail(undefined)
+    if (state.status !== 'exploring' || !selected) {
+      if (state.status !== 'travelling') galaxyRef.current?.clearRelation()
+      return
+    }
+    const first = curatedThreads[0]?.relation
+    if (first) galaxyRef.current?.revealRelation(first.source, first.target)
+    else galaxyRef.current?.clearRelation()
+  }, [selected?.id, curatedThreads, engineReady, state.status])
   const curatedRelationCount = data.curatedRelationStats?.relationCount ?? 0
   const nearbyBooks = useMemo(() => {
     if (!selected) return []
@@ -502,6 +518,10 @@ export default function App() {
         reducedMotion={reducedMotion}
         onHover={handleHover}
         onSelect={selectBook}
+        onRelationClick={(source, target) => {
+          const relation = resolver.relationFor(source, target)
+          if (relation && state.status === 'exploring') openRelation(relation)
+        }}
         onReady={() => setEngineReady(true)}
         onError={(message) => reportFailure('renderer', message)}
       />
@@ -554,7 +574,7 @@ export default function App() {
                 window.requestAnimationFrame(() => galaxyRef.current?.focusStage())
               }}
               onObserveNearby={selectBook}
-              onFollowCuratedThread={followCuratedThread}
+              onFollowCuratedThread={(relation) => relation.relationType ? openRelation(relation) : followCuratedThread(relation)}
               onDetour={() => dispatch({ type: 'OPEN_DIRECTIONS' })}
               onRestart={() => startFrom(selected)}
               onAsk={() => dispatch({ type: 'TOGGLE_LIBRARIAN', open: true })}
@@ -587,6 +607,10 @@ export default function App() {
               onAskOnline={askOnline}
               onClose={() => dispatch({ type: 'TOGGLE_LIBRARIAN', open: false })}
             />
+          )}
+          {relationDetail && (
+            <RelationPanel relation={relationDetail} from={booksById.get(relationDetail.source)}
+              to={booksById.get(relationDetail.target)} onClose={() => setRelationDetail(undefined)} />
           )}
           {state.status === 'chart' && state.chartDataUrl && (
             <StarChartReveal
