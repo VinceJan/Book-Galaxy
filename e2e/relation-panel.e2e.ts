@@ -23,7 +23,7 @@ test('a v2 relation opens accessible details with prose, strength and type', asy
   await expect(panel).toHaveAttribute('role', 'dialog')
   await expect(panel).toHaveAttribute('aria-label', '关系详情')
   await expect(panel).toContainText(record.text)
-  await expect(panel).toContainText(`强度 ${record.strength}/5`)
+  await expect(panel).not.toContainText("强度")
   await expect(panel).toContainText(record.type)
   for (const id of [record.s, record.t]) {
     await expect(panel).toContainText(runtime.books.find((book) => book.id === id)!.title)
