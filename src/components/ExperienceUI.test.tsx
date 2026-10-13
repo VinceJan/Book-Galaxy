@@ -294,7 +294,6 @@ describe('product depth - contract', () => {
     expect(ui).toContain('curatedRelationCount')
     expect(app).toContain("state.status === 'exploring' ? selectBook : undefined")
     expect(ui).toContain("aria-current={isCurrent ? 'step' : undefined}")
-    expect(ui).toContain('ready && curatedRelationCount > 0 ? curatedRelationCount')
     expect(ui).toContain('aria-busy={!ready}')
     expect(ui).toContain('另起一段航迹')
     expect(ui).toContain('将清空当前航迹，从此书重开')

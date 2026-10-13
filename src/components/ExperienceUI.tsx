@@ -259,15 +259,9 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
           <small>很少有人造访的书，在等第一位来客</small>
         </button>
       )}
-      <div className="intro-proof" aria-label="数据规模">
-        <span><strong>{ready ? bookCount.toLocaleString('zh-CN') : '—'}</strong> 本真实书籍</span>
-        <span><strong>{ready && relationCount > 0 ? relationCount.toLocaleString('zh-CN') : '—'}</strong> 条书海暗线</span>
-        <span><strong>{ready && curatedRelationCount > 0 ? curatedRelationCount.toLocaleString('zh-CN') : '—'}</strong> 条引力书线</span>
-      </div>
       {loadingPhase && (
         <p className="intro-loading-phase" role="status">{loadingPhase}</p>
       )}
-      <div className="intro-challenges">双题合流 · 02 × 03</div>
     </section>
   )
 }
@@ -699,16 +693,15 @@ export function BookObservatory({
   return (
     <aside className="book-observatory" aria-labelledby="observed-book-title" onKeyDown={handlePanelKeyDown}>
       <div className="panel-heading">
-        <span>观测对象 {String(index + 1).padStart(2, '0')} / {total.toLocaleString('zh-CN')}</span>
+        <span aria-hidden="true" />
         <button type="button" onClick={onClose} aria-label="收起书籍信息"><Icon name="close" /></button>
       </div>
       {hint}
       <div className="book-identity">
         <BookCover book={book} />
         <div className="book-title-stack">
-          <span className="book-title-label">{hasSecondaryTitle ? '中文题名' : '馆藏题名'}</span>
           <h2 id="observed-book-title" data-book-observatory-title tabIndex={-1}>{book.title}</h2>
-          {hasSecondaryTitle && <p className="original-title"><span>外文题名</span>{book.originalTitle}</p>}
+          {hasSecondaryTitle && <p className="original-title">{book.originalTitle}</p>}
           <p className="book-byline">{book.author}</p>
           {metaChips.length > 0 && (
             <div className="book-meta-chips" aria-label="题名信息">
