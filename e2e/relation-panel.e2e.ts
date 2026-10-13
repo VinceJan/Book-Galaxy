@@ -9,7 +9,7 @@ const runtime = JSON.parse(readFileSync('public/data/catalog.runtime.json', 'utf
 }
 import { collectErrors, departFrom } from './helpers'
 
-test('a v2 relation opens accessible details with prose only', async ({ page }, testInfo) => {
+test('a v2 relation opens accessible details with prose only', async ({ page }) => {
   const errors = collectErrors(page)
   const title = runtime.books.find((book) => book.id === library.relations[0].s)!.title
   await departFrom(page, title)
@@ -29,7 +29,6 @@ test('a v2 relation opens accessible details with prose only', async ({ page }, 
     await expect(panel).toContainText(runtime.books.find((book) => book.id === id)!.title)
   }
   await page.waitForTimeout(700)
-  await page.screenshot({ scale: 'css', path: `/workspace/relation-panel-${testInfo.project.name === 'phone' ? 'mobile' : 'desktop'}.png` })
   await panel.getByRole('button', { name: '关闭关系详情' }).click()
   await expect(panel).not.toBeVisible()
   await item.click()
