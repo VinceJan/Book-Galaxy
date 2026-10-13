@@ -281,7 +281,7 @@ describe('product depth - contract', () => {
     expect(panel.indexOf('panel-footer')).toBeGreaterThan(panel.indexOf('此地何处'))
 
     // humility: visible meta keeps hypothesis, redundant inline details removed
-    expect(ui).toContain('逐书策展 · 阅读假说')
+    expect(ui).not.toContain('逐书策展 · 阅读假说')
     expect(ui).not.toContain('一种读法，并非定论')
     expect(ui).not.toContain('关于这段相遇')
     expect(ui).not.toContain('hidden-thread-note')

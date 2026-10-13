@@ -9,7 +9,7 @@ const runtime = JSON.parse(readFileSync('public/data/catalog.runtime.json', 'utf
 }
 import { collectErrors, departFrom } from './helpers'
 
-test('a v2 relation opens accessible details with prose, strength and type', async ({ page }, testInfo) => {
+test('a v2 relation opens accessible details with prose only', async ({ page }, testInfo) => {
   const errors = collectErrors(page)
   const title = runtime.books.find((book) => book.id === library.relations[0].s)!.title
   await departFrom(page, title)
@@ -24,11 +24,10 @@ test('a v2 relation opens accessible details with prose, strength and type', asy
   await expect(panel).toHaveAttribute('aria-label', '关系详情')
   await expect(panel).toContainText(record.text)
   await expect(panel).not.toContainText("强度")
-  await expect(panel).toContainText(record.type)
+  await expect(panel).not.toContainText(record.type)
   for (const id of [record.s, record.t]) {
     await expect(panel).toContainText(runtime.books.find((book) => book.id === id)!.title)
   }
-  if ('wd' in record) await expect(panel).toContainText(record.wd!)
   await page.waitForTimeout(700)
   await page.screenshot({ scale: 'css', path: `/workspace/relation-panel-${testInfo.project.name === 'phone' ? 'mobile' : 'desktop'}.png` })
   await panel.getByRole('button', { name: '关闭关系详情' }).click()
