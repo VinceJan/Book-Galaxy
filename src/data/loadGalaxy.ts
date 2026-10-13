@@ -195,7 +195,44 @@ function normalizeCatalogBook(book: CatalogBook): RuntimeBook {
   }
 }
 
-export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> {
+interface CorePayload {
+  schemaVersion?: string
+  source?: string
+  regions?: MapRegion[]
+  books?: Array<CatalogBook & { summaryChars?: number }>
+}
+
+/**
+ * First paint: a ~190 KB slice (positions, titles, search fields) so the star
+ * field and the intro search come alive long before the full catalog lands.
+ * Books are partial until {@link loadGalaxyData} is given this result and
+ * fills the same objects in place (the renderer never rebuilds).
+ */
+export async function loadGalaxyCore(signal?: AbortSignal): Promise<GalaxyData> {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.core.json`, { signal })
+  if (!response.ok) throw new Error(`书目索引载入失败（${response.status}）`)
+  const payload = await response.json() as CorePayload
+  if (payload.schemaVersion !== 'bookshelf-galaxy/catalog-core-v1' || !payload.books?.length) {
+    throw new Error('书目索引格式不符')
+  }
+  const books = payload.books.map((book) => ({ ...normalizeCatalogBook(book), summaryChars: book.summaryChars }))
+  return {
+    ...emptyGalaxyData(),
+    books,
+    regions: (payload.regions ?? []).filter((region) => region.id && region.name && Array.isArray(region.bookIds)),
+    source: payload.source ?? '中文富书目快照',
+  }
+}
+
+function emptyGalaxyData(): GalaxyData {
+  return { books: [], curated: [], curatedRelations: [], catalogEdges: [], regions: [], relationCount: 0, source: '' }
+}
+
+export async function loadGalaxyData(signal?: AbortSignal, core?: GalaxyData): Promise<GalaxyData> {
+  // Hand-written threads are ~0.9 MB of source in their own chunk; fetch it in
+  // parallel with the catalog rather than after it.
+  const curatedModule = import('./curatedThreads')
+  curatedModule.catch(() => undefined)
   const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.runtime.json`, { signal })
   if (!response.ok) throw new Error(`真实书目载入失败（${response.status}）`)
   const payload = await response.json() as CatalogPayload
@@ -207,9 +244,17 @@ export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> 
   if (!isCompleteFormalCatalog(catalogSourceBooks, catalogEdges)) {
     throw new Error('真实书目快照不完整')
   }
-  const catalogBooks = catalogSourceBooks.map(normalizeCatalogBook)
-  // Hand-written threads are ~0.9 MB of source; load them as their own chunk.
-  const { buildCuratedRelationsWithStats } = await import('./curatedThreads')
+  let catalogBooks = catalogSourceBooks.map(normalizeCatalogBook)
+  if (core) {
+    // Fill the partial core books in place so array and object identity hold.
+    const full = new Map(catalogBooks.map((book) => [book.id, book]))
+    if (core.books.length !== catalogBooks.length || core.books.some((book) => !full.has(book.id))) {
+      throw new Error('书目索引与完整书目不一致')
+    }
+    core.books.forEach((book) => Object.assign(book, full.get(book.id)))
+    catalogBooks = core.books
+  }
+  const { buildCuratedRelationsWithStats } = await curatedModule
   const curatedBuild = buildCuratedRelationsWithStats(catalogBooks)
   return {
     books: catalogBooks,
@@ -219,7 +264,7 @@ export async function loadGalaxyData(signal?: AbortSignal): Promise<GalaxyData> 
     curatedRelations: curatedBuild.relations,
     curatedRelationStats: curatedBuild.stats,
     catalogEdges,
-    regions: (payload.regions ?? []).filter((region) => region.id && region.name && Array.isArray(region.bookIds)),
+    regions: core?.regions ?? (payload.regions ?? []).filter((region) => region.id && region.name && Array.isArray(region.bookIds)),
     relationCount: catalogEdges.length,
     source: payload.source ?? '中文富书目快照',
     generatedAt: payload.generatedAt,

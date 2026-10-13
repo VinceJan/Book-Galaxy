@@ -101,7 +101,7 @@ export function syncSoundscapeVisibility(
 }
 
 export function getIntroLoadingPhase(
-  catalogState: 'loading' | 'ready',
+  catalogState: 'loading' | 'core' | 'ready',
   engineReady: boolean,
 ): string | undefined {
   if (catalogState === 'loading') return '正在载入书目……'

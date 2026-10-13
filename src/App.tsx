@@ -17,6 +17,7 @@ import {
 } from './components/ExperienceUI'
 import { initialExperienceState, experienceReducer } from './app/experienceReducer'
 import {
+  loadGalaxyCore,
   loadGalaxyData,
   makeRelationResolver,
   type CatalogNeighbour,
@@ -140,7 +141,9 @@ const emptyData: GalaxyData = {
 export default function App() {
   const [state, dispatch] = useReducer(experienceReducer, initialExperienceState)
   const [data, setData] = useState<GalaxyData>(emptyData)
-  const [catalogState, setCatalogState] = useState<'loading' | 'ready'>('loading')
+  const [catalogState, setCatalogState] = useState<'loading' | 'core' | 'ready'>('loading')
+  // A departure asked for before the full catalog landed; honoured once it does.
+  const [pendingStart, setPendingStart] = useState<Book | 'wake'>()
   const [engineReady, setEngineReady] = useState(false)
   const [hovered, setHovered] = useState<{ book: Book; position: { x: number; y: number } }>()
   const [soundEnabled, setSoundEnabled] = useState(false)
@@ -179,12 +182,20 @@ export default function App() {
     const timeoutId = window.setTimeout(() => {
       timedOut = true
       controller.abort()
-    }, 28_000)
-    void loadGalaxyData(controller.signal)
-      .then((loaded) => {
-        window.clearTimeout(timeoutId)
+    }, 60_000)
+    // Two steps: a small index paints the stars and wakes the search, then the
+    // full catalog fills the same book objects (the renderer is not rebuilt).
+    void loadGalaxyCore(controller.signal)
+      .then((core) => {
         if (controller.signal.aborted) return
         setEngineReady(false)
+        setData(core)
+        setCatalogState('core')
+        return loadGalaxyData(controller.signal, core)
+      })
+      .then((loaded) => {
+        window.clearTimeout(timeoutId)
+        if (!loaded || controller.signal.aborted) return
         setData(loaded)
         setCatalogState('ready')
       })
@@ -304,7 +315,8 @@ export default function App() {
 
   const selectBook = useCallback(async (book: Book, source: SelectionSource = 'pointer') => {
     if (state.status === 'intro') {
-      if (catalogState !== 'loading') await startFrom(book)
+      if (catalogState === 'ready' && engineReady) await startFrom(book)
+      else if (catalogState !== 'loading') setPendingStart(book)
       return
     }
     if (state.status !== 'exploring') return
@@ -316,7 +328,7 @@ export default function App() {
     setHovered(undefined)
     await galaxyRef.current?.focusBook(book.id, 900)
     soundRef.current?.focus(book.id.length)
-  }, [catalogState, startFrom, state.status])
+  }, [catalogState, engineReady, startFrom, state.status])
 
   const travel = useCallback(async (relation: BookRelation) => {
     if (!selected || state.status !== 'exploring') return
@@ -446,6 +458,20 @@ export default function App() {
     const book = pickSleepingStar(data.books, data.curatedRelations)
     if (book) startFrom(book)
   }, [data.books, data.curatedRelations, startFrom])
+  const requestStart = useCallback((book: Book) => {
+    if (catalogState === 'ready' && engineReady) void startFrom(book)
+    else setPendingStart(book)
+  }, [catalogState, engineReady, startFrom])
+  const requestWake = useCallback(() => {
+    if (catalogState === 'ready' && engineReady) wakeSleepingStar()
+    else setPendingStart('wake')
+  }, [catalogState, engineReady, wakeSleepingStar])
+  useEffect(() => {
+    if (catalogState !== 'ready' || !engineReady || !pendingStart) return
+    setPendingStart(undefined)
+    if (pendingStart === 'wake') wakeSleepingStar()
+    else void startFrom(pendingStart)
+  }, [catalogState, engineReady, pendingStart, startFrom, wakeSleepingStar])
   const selectedIsSleeping = useMemo(
     () => Boolean(selected && isSleepingStar(selected, sleepingRanking)),
     [selected, sleepingRanking],
@@ -457,10 +483,12 @@ export default function App() {
 
   if (state.error) return <ErrorFallback message={state.error} onReset={() => window.location.reload()} />
 
-  const ready = engineReady && catalogState === 'ready'
-  const loadingPhase = getIntroLoadingPhase(catalogState, engineReady)
+  // The intro is operable as soon as the index is in; a departure chosen before
+  // the stars or the full catalog are up is queued (pendingStart) and honoured.
+  const ready = catalogState !== 'loading'
+  const loadingPhase = pendingStart ? '正在展开书页……' : getIntroLoadingPhase(catalogState, engineReady)
   return (
-    <main className={`app-shell status-${state.status}${reducedMotion ? ' reduced-motion' : ''}`} aria-label="书架星系 · 暗物质图书馆">
+    <main data-stage={engineReady ? 'ready' : 'loading'} data-catalog={catalogState} className={`app-shell status-${state.status}${reducedMotion ? ' reduced-motion' : ''}`} aria-label="书架星系 · 暗物质图书馆">
       <GalaxyCanvas
         ref={galaxyRef}
         books={data.books}
@@ -486,8 +514,8 @@ export default function App() {
           relationCount={data.relationCount}
           curatedRelationCount={curatedRelationCount}
           loadingPhase={loadingPhase}
-          onStart={startFrom}
-          onWake={wakeSleepingStar}
+          onStart={requestStart}
+          onWake={requestWake}
         />
       ) : (
         <>
@@ -554,6 +582,7 @@ export default function App() {
               nearest={nearbyBooks[0]}
               sleeping={selectedIsSleeping}
               region={selectedRegion}
+              fromRegion={observedFrom ? regionByBook.get(observedFrom.id) : undefined}
               onlineAvailable={hasOnlineCurator()}
               onAskOnline={askOnline}
               onClose={() => dispatch({ type: 'TOGGLE_LIBRARIAN', open: false })}

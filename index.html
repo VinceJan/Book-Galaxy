@@ -6,9 +6,28 @@
     <meta name="theme-color" content="#050708" />
     <meta name="color-scheme" content="dark" />
     <link rel="preconnect" href="https://covers.openlibrary.org" />
-    <link rel="stylesheet" href="./fonts/fonts.css" />
-    <link rel="stylesheet" href="./fonts/mono.css" />
-    <link rel="preload" href="./fonts/display/00.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./fonts/fonts.css" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="./fonts/fonts.css" /></noscript>
+    <link rel="stylesheet" href="./fonts/mono.css" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="./fonts/mono.css" /></noscript>
+    <link rel="preload" href="./data/catalog.core.json" as="fetch" crossorigin="anonymous" />
+    <style>
+      /* Static first frame: paints with the HTML alone, before any script. */
+      html, body { margin: 0; background: #050708; }
+      /* The static frame already played the arrival; the live intro takes over in place. */
+      .app-shell .intro { animation: none; }
+      .boot-shell { position: fixed; inset: 0; overflow: hidden; background:
+        radial-gradient(1px 1px at 12% 22%, rgba(236,228,210,.75), transparent 60%),
+        radial-gradient(1px 1px at 68% 14%, rgba(236,228,210,.6), transparent 60%),
+        radial-gradient(1.5px 1.5px at 82% 58%, rgba(236,228,210,.7), transparent 60%),
+        radial-gradient(1px 1px at 36% 74%, rgba(236,228,210,.5), transparent 60%),
+        radial-gradient(1px 1px at 54% 40%, rgba(214,190,140,.55), transparent 60%),
+        radial-gradient(1px 1px at 91% 86%, rgba(236,228,210,.45), transparent 60%),
+        radial-gradient(60% 50% at 70% 40%, rgba(40,52,58,.35), transparent 70%), #050708; }
+      .boot-shell::after { content: ""; position: absolute; inset: 0; opacity: .5; background:
+        radial-gradient(1px 1px, rgba(236,228,210,.35), transparent 60%) 0 0 / 97px 89px,
+        radial-gradient(1px 1px, rgba(236,228,210,.25), transparent 60%) 31px 47px / 151px 137px; }
+    </style>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <meta
       name="description"
@@ -20,7 +39,7 @@
     <title>书架星系 · 暗物质图书馆</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot-shell" aria-hidden="true"><section class="intro boot-intro"><div class="intro-kicker">图书馆 · 搜索之后</div><h1>下一代图书馆，<br><span>不只帮你找到书。</span></h1><p class="intro-thesis">它让你有意义地迷路。</p><form class="departure-search"><label>从一本熟悉的书出发</label><div class="search-line"><span>《</span><input placeholder="输入书名或作者" disabled tabindex="-1"><span>》</span><button type="button" disabled tabindex="-1">星海显影中<svg viewBox="0 0 24 24"><path d="M4 12h15M14 6l6 6-6 6"></path></svg></button></div></form><div class="intro-presets"></div><button class="intro-wake" type="button" disabled tabindex="-1"><span class="intro-wake-star"></span><span>随机唤醒一颗沉睡之星</span><small>很少有人造访的书，在等第一位来客</small></button><div class="intro-proof"><span><strong>—</strong> 本真实书籍</span><span><strong>—</strong> 条书海暗线</span><span><strong>—</strong> 条引力书线</span></div><p class="intro-loading-phase">正在载入书目……</p><div class="intro-challenges">双题合流 · 02 × 03</div></section></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -233,7 +233,6 @@ export class GalaxyEngine {
   private reducedMotion = false
   private disposed = false
   private elapsed = 0
-  private readyTimer?: number
   private readonly regions: MapRegion[]
   private labelLevel?: LabelLevel
   private focusRegionId?: string
@@ -315,9 +314,10 @@ export class GalaxyEngine {
     this.bindEvents()
     this.resize()
     this.animate()
-    this.readyTimer = window.setTimeout(() => {
+    // Ready once two frames have actually been drawn (no fixed delay).
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
       if (!this.disposed) callbacks.onReady()
-    }, 240)
+    }))
   }
 
   private createBookStars(): { geometry: BufferGeometry; material: ShaderMaterial; points: Points } {
@@ -1315,7 +1315,6 @@ export class GalaxyEngine {
 
   dispose(): void {
     this.disposed = true
-    if (this.readyTimer) window.clearTimeout(this.readyTimer)
     if (this.frame) cancelAnimationFrame(this.frame)
     this.frame = undefined
     this.timer.dispose()
