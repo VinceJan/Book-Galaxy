@@ -1,7 +1,8 @@
 # Cover credits
 
 Covers are self-hosted copies (resized to 400px WebP) of images from the sources below.
-Each entry links to its source page, where the licence is stated. 
+Each entry links to its source page, where the licence is stated.
+
 **Use and takedown.** Cover art remains © its publisher, artist or uploader. These copies are used only for non-commercial showcase and bibliographic identification of the books in this project; they are not covered by the repository's MIT licence. Rights holders who want an image removed can open an issue at https://github.com/VinceJan/Book-Galaxy/issues and it will be taken down promptly.
 
 - **open-library**: Open Library Covers API (https://openlibrary.org/dev/docs/api/covers). Cover art © its publisher/artist; shown for bibliographic identification.
@@ -22,6 +23,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1050479 | 波斯人信札 | open-library | publisher-copyright | https://openlibrary.org/works/OL453553W |
 | Q1054767 | 秘密 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Naoko_%28novel%29.jpg |
 | Q105704813 | 克拉拉与太阳 | open-library | publisher-copyright | https://openlibrary.org/works/OL20883297W |
+| Q10576648 | 高王观世音经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Tangut_High_King_Avalokitesvara_Sutra_illustration.jpg |
 | Q106103769 | 镜之孤城 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Lonely_Castle_in_the_Mirror_novel_cover.jpg |
 | Q1062365 | 饥饿 | open-library | publisher-copyright | https://openlibrary.org/works/OL573193W |
 | Q1063693 | 福楼拜的鹦鹉 | open-library | publisher-copyright | https://openlibrary.org/works/OL31595819W |
@@ -30,6 +32,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1068344 | 全息玫瑰碎片 | open-library | publisher-copyright | https://openlibrary.org/books/OL7259173M |
 | Q106852836 | 极限返航 | open-library | publisher-copyright | https://openlibrary.org/works/OL21745884W |
 | Q1072975 | 博士热爱的算式 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Housekeeper_and_the_Professor_%28Paperback%29.jpg |
+| Q1075382 | 韩非子 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Hanfeizi_or_Han_Feizi,_Qing_dynasty,_Hunan_Museum.jpg |
 | Q1076715 | 大乘起信论 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:CADAL07005552_%E5%A4%A7%E4%B9%98%E8%B5%B7%E4%BF%A1%E8%AB%96.djvu |
 | Q107790 | 绿皮书 | open-library | publisher-copyright | https://openlibrary.org/works/OL20863614W |
 | Q1079681 | 猎鲨记 | open-library | publisher-copyright | https://openlibrary.org/works/OL151447W |
@@ -62,6 +65,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1132673 | 天堂与地狱的婚姻 | open-library | publisher-copyright | https://openlibrary.org/works/OL575441W |
 | Q11340979 | 瓢虫 | open-library | publisher-copyright | https://openlibrary.org/works/OL24375262W |
 | Q11369879 | 少女的港湾 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Otome_no_Minato.jpg |
+| Q11377587 | 父母恩重难报经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E4%BD%9B%E8%AA%AA%E5%A4%A7%E5%A0%B1%E7%88%B6%E6%AF%8D%E6%81%A9%E9%87%8D%E7%B6%93_Sinosphere.png |
 | Q1137974 | C程序设计语言 | open-library | publisher-copyright | https://openlibrary.org/works/OL4617640W |
 | Q1138346 | 娜娜 | open-library | publisher-copyright | https://openlibrary.org/works/OL118984W |
 | Q1141732 | 带有七个尖角阁的房子 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:The_House_of_the_Seven_Gables.jpg |
@@ -73,7 +77,9 @@ Each entry links to its source page, where the licence is stated.
 | Q114892138 | 备胎 | open-library | publisher-copyright | https://openlibrary.org/works/OL29240850W |
 | Q1156065 | 玩笑 | open-library | publisher-copyright | https://openlibrary.org/works/OL10402333W |
 | Q1157010 | 克莱芙王妃 | open-library | publisher-copyright | https://openlibrary.org/works/OL1244914W |
+| Q11573685 | 琉球神道记 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Ryukyu_Shintoki_by_Taichu_(Taichu-an_Kyoto).jpg |
 | Q115782595 | 逆向诱拐 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:Nappingkidbookcover.webp |
+| Q11598026 | 立正安国论 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Risshou_Ankokuron.jpg |
 | Q1161171 | 死屋手记 | open-library | publisher-copyright | https://openlibrary.org/works/OL166970W |
 | Q1164094 | 罗梭的万能工人 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Rosumovi_Univerz%C3%A1ln%C3%AD_Roboti_1920.jpg |
 | Q1164998 | 在我们的时代里 | open-library | publisher-copyright | https://openlibrary.org/works/OL63068W |
@@ -93,6 +99,7 @@ Each entry links to its source page, where the licence is stated.
 | Q117293 | 穷人 | open-library | publisher-copyright | https://openlibrary.org/works/OL16444720W |
 | Q117431 | 爱达或爱欲：一部家族纪事 | open-library | publisher-copyright | https://openlibrary.org/works/OL4413233W |
 | Q1180614 | 有知识的无知 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Nicholas_of_Cusa%2C_De_docta_ignorantia%2C_Ms._218.jpg |
+| Q1185340 | 列女传 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:LieNuZhuan.jpg |
 | Q1187628 | 神雕侠侣 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:%E7%A5%9E%E9%9B%95%E4%BF%A0%E4%BE%B6.jpg |
 | Q1189602 | 日落之后 | open-library | publisher-copyright | https://openlibrary.org/works/OL81588W |
 | Q119039649 | 芯片战争 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:9781398504103_front-3875095242.jpg |
@@ -121,6 +128,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1202156 | 日本沉没 | open-library | publisher-copyright | https://openlibrary.org/works/OL5647195W |
 | Q120288 | 看得见风景的房间 | open-library | publisher-copyright | https://openlibrary.org/books/OL37044791M |
 | Q120336260 | 怪画谜案 | open-library | publisher-copyright | https://openlibrary.org/works/OL42424353W |
+| Q1206749 | 提毗薄伽瓦往世书 | wikimedia-commons | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Devi_bhagavata.jpg |
 | Q1207595 | 忏悔录 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Confessions_Rousseau_Aldus_P028.jpg |
 | Q1210353 | 地狱辞典 | open-library | publisher-copyright | https://openlibrary.org/books/OL5899848M |
 | Q1210734 | 索多玛一百二十天 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Sade_-_Les_120_Journ%C3%A9es_de_Sodome%2C_%C3%A9d._D%C3%BChren%2C_1904_%28page_6_crop%29.jpg |
@@ -207,6 +215,7 @@ Each entry links to its source page, where the licence is stated.
 | Q146866 | 复活 | open-library | publisher-copyright | https://openlibrary.org/works/OL457760W |
 | Q147787 | 安娜·卡列尼娜 | open-library | publisher-copyright | https://openlibrary.org/works/OL267096W |
 | Q1486412 | 法哲学原理 | open-library | publisher-copyright | https://openlibrary.org/works/OL678544W |
+| Q14911972 | 洪吉童传 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Honggildongjeon.jpg |
 | Q149441 | 撒马利亚五经 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Samaritan_Pentateuch_%28The_S.S._Teacher%27s_Edition-The_Holy_Bible_-_Plate_XII%2C_1%29.jpg |
 | Q1498315 | 互助论：进化的一个要素 | open-library | publisher-copyright | https://openlibrary.org/works/OL1105375W |
 | Q149993 | 神奇收费亭 | open-library | publisher-copyright | https://openlibrary.org/works/OL1636262W |
@@ -219,6 +228,7 @@ Each entry links to its source page, where the licence is stated.
 | Q151919 | 活着 | open-library | publisher-copyright | https://openlibrary.org/works/OL15861449W |
 | Q1519440 | 隐言经 | open-library | publisher-copyright | https://openlibrary.org/works/OL8554268W |
 | Q152267 | 白牙 | open-library | publisher-copyright | https://openlibrary.org/works/OL74504W |
+| Q15243274 | 王祯农书 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E6%B0%B4%E7%A3%A8.jpg |
 | Q1524969 | 银河铁道之夜 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Night_on_the_Galactic_Railroad%2C_cover.png |
 | Q1536034 | 士兵的报酬 | open-library | publisher-copyright | https://openlibrary.org/works/OL82927W |
 | Q154003 | 蒂蕾西亚的乳房 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Apollinaire_-_Les_Mamelles_de_Tir%C3%A9sias%2C_1918_%28page_2_crop%29.jpg |
@@ -230,6 +240,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1567505 | 觉醒 | open-library | publisher-copyright | https://openlibrary.org/works/OL65430W |
 | Q157150 | 布兰诗歌 | open-library | publisher-copyright | https://openlibrary.org/books/OL977227M |
 | Q15805843 | 风信鸡的优点 | open-library | publisher-copyright | https://openlibrary.org/books/OL32987920M |
+| Q15898384 | 璎珞本业经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E8%8F%A9%E6%8F%90%E7%92%8E%E7%8F%9E%E6%9C%AC%E4%B8%9A%E7%BB%8F_%E5%8D%B7%E4%B8%8A.jpg |
 | Q15932815 | 迦因小传 | open-library | publisher-copyright | https://openlibrary.org/books/OL7039193M |
 | Q15963772 | 梦幻花 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:Wdreamflower.jpg |
 | Q16050727 | 天堂的证据 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Proof_of_Heaven_A_Neurosurgeon%27s_Journey_into_the_Afterlife.jpg |
@@ -237,6 +248,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1613927 | 万物之主 | open-library | publisher-copyright | https://openlibrary.org/books/OL35357111M |
 | Q161531 | 战争与和平 | open-library | publisher-copyright | https://openlibrary.org/works/OL267171W |
 | Q161953 | 历代志 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Codex_Sinaiticus_Paralipomenon_9%2C27-10%2C11.JPG |
+| Q161985 | 马加比一书 | wikimedia-commons | CC0 | https://commons.wikimedia.org/wiki/File:Ende_1_Makkab%C3%A4er.jpg |
 | Q1623606 | 血夜颂歌 | open-library | publisher-copyright | https://openlibrary.org/books/OL3578902M |
 | Q16240999 | 克雷的桥 | open-library | publisher-copyright | https://openlibrary.org/works/OL19755561W |
 | Q16241627 | 霸王别姬 | open-library | publisher-copyright | https://openlibrary.org/works/OL277413W |
@@ -273,6 +285,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1735754 | 女巫前传 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:WickedBookCover.jpg |
 | Q174596 | 白鲸记 | open-library | publisher-copyright | https://openlibrary.org/books/OL35575952M |
 | Q174677 | 阿摩司书 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:UPennE3074.jpg |
+| Q174753 | 俄巴底亚书 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Abdias_adormecido_(Biblioteca_Nacional_de_Portugal_ALC.455,_fl.297).png |
 | Q1751870 | 权力的游戏 | open-library | publisher-copyright | https://openlibrary.org/books/OL58636603M |
 | Q1755351 | 跳房子 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Rayuela_JC.png |
 | Q17589186 | 为什么现在统治世界的是西方 | open-library | publisher-copyright | https://openlibrary.org/works/OL15118879W |
@@ -338,6 +351,7 @@ Each entry links to its source page, where the licence is stated.
 | Q1978467 | 国王的人马 | open-library | publisher-copyright | https://openlibrary.org/works/OL14858283W |
 | Q19786 | 旧约圣经 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Rembrandt_Harmensz._van_Rijn_079.jpg |
 | Q1979886 | 荣耀 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:GloryNabokov.jpg |
+| Q198052 | 周髀算经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Chinese_pythagoras.jpg |
 | Q19840510 | 电影艺术论 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:On_the_Art_of_the_Cinema_cover.jpg |
 | Q19843206 | 列车上的女孩 | open-library | publisher-copyright | https://openlibrary.org/works/OL17112428W |
 | Q1988700 | 低地 | open-library | publisher-copyright | https://openlibrary.org/works/OL1732445W |
@@ -366,6 +380,7 @@ Each entry links to its source page, where the licence is stated.
 | Q209748 | 马加比二书 | wikipedia-infobox | free | https://ru.wikipedia.org/wiki/File:151.The_Punishment_of_Antiochus.jpg |
 | Q209788 | 第二次世界大战回忆录 | open-library | publisher-copyright | https://openlibrary.org/works/OL134333W |
 | Q21005871 | 关于主体思想 | open-library | publisher-copyright | https://openlibrary.org/books/OL9699102M |
+| Q21055122 | 作为让-雅克的审判者的卢梭 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Rousseau_juge_de_Jean-Jacques_manuscript.png |
 | Q211006 | 失落的秘符 | open-library | publisher-copyright | https://openlibrary.org/works/OL14873315W |
 | Q21162257 | 同情者 | open-library | publisher-copyright | https://openlibrary.org/works/OL17345497W |
 | Q212340 | 杀死一只知更鸟 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:To_Kill_a_Mockingbird_%28first_edition_cover%29.jpg |
@@ -377,6 +392,7 @@ Each entry links to its source page, where the licence is stated.
 | Q215894 | 憨第德 | open-library | publisher-copyright | https://openlibrary.org/works/OL100672W |
 | Q215983 | 愤怒的葡萄 | open-library | publisher-copyright | https://openlibrary.org/works/OL23205W |
 | Q2164310 | 恐惧状态 | open-library | publisher-copyright | https://openlibrary.org/works/OL46914W |
+| Q2176806 | 楞严经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%C5%9A%C5%ABra%E1%B9%85gama_S%C5%ABtra.jpg |
 | Q2181982 | 押沙龙，押沙龙！ | open-library | publisher-copyright | https://openlibrary.org/works/OL82928W |
 | Q219552 | 远大前程 | open-library | publisher-copyright | https://openlibrary.org/works/OL8721462W |
 | Q220002 | 纯粹理性批判 | open-library | publisher-copyright | https://openlibrary.org/works/OL99844W |
@@ -422,6 +438,7 @@ Each entry links to its source page, where the licence is stated.
 | Q2494608 | 绝望 | open-library | publisher-copyright | https://openlibrary.org/works/OL627004W |
 | Q2518946 | 金阁寺 | open-library | publisher-copyright | https://openlibrary.org/books/OL12355552M |
 | Q2527101 | 特洛伊罗斯与克丽西达 | open-library | publisher-copyright | https://openlibrary.org/works/OL21312991W |
+| Q2531607 | 林伽往世书 | wikimedia-commons | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Linga_Purana,_Sanskrit,_Devanagari.jpg |
 | Q25338 | 小王子 | open-library | publisher-copyright | https://openlibrary.org/books/OL26033537M |
 | Q2543776 | 质量效应：启示 | open-library | publisher-copyright | https://openlibrary.org/works/OL5684854W |
 | Q2559737 | 白色城堡 | open-library | publisher-copyright | https://openlibrary.org/works/OL1019597W |
@@ -545,6 +562,7 @@ Each entry links to its source page, where the licence is stated.
 | Q401619 | 沙丘神帝 | open-library | publisher-copyright | https://openlibrary.org/works/OL893515W |
 | Q40309 | 使徒行传 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Berlin%2C_Staatliche_Museen_zu_Berlin_MS_Uncial_8683_verso_Acts_5%2C_12%E2%80%9321.jpg |
 | Q40591 | 共产党宣言 | open-library | publisher-copyright | https://openlibrary.org/works/OL629052W |
+| Q41064 | 诗篇 | wikimedia-commons | CC0 | https://commons.wikimedia.org/wiki/File:Psalms_scroll.PNG |
 | Q4127192 | 固有瑕疵 | open-library | publisher-copyright | https://openlibrary.org/works/OL2636648W |
 | Q4132785 | 把银禧带来 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Bring_the_Jubilee_%28Farrar%2C_Straus_%26_Young%29_dust_jacket_%28cropped%29.png |
 | Q41490 | 利未记 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Samaritan_Leviticus.jpg |
@@ -587,14 +605,17 @@ Each entry links to its source page, where the licence is stated.
 | Q472228 | 斯泰尔斯庄园奇案 | open-library | publisher-copyright | https://openlibrary.org/works/OL472715W |
 | Q472368 | 遥远地球之歌 | open-library | publisher-copyright | https://openlibrary.org/works/OL14931577W |
 | Q475589 | 火星公主 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Princess_of_Mars_large.jpg |
+| Q4764034 | 央掘魔罗经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:NLC892-ZHCH1274-201502_%E5%A4%AE%E6%8E%98%E9%AD%94%E7%BE%85%E7%B6%93.pdf |
 | Q476871 | 野性的呼唤 | open-library | publisher-copyright | https://openlibrary.org/works/OL14942956W |
 | Q477508 | 诺桑觉寺 | open-library | publisher-copyright | https://openlibrary.org/works/OL66534W |
 | Q478016 | 到灯塔去 | open-library | publisher-copyright | https://openlibrary.org/works/OL39396W |
+| Q479895 | 呼吸秋千 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Herta_M%C3%BCller,_Atemschaukel_2009.jpg |
 | Q480 | 堂吉诃德 | open-library | publisher-copyright | https://openlibrary.org/works/OL503666W |
 | Q4807765 | 爱的观点 | open-library | publisher-copyright | https://openlibrary.org/works/OL3042182W |
 | Q48203 | 罗马书 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Codex_claromontanus_latin_%28The_S.S._Teacher%27s_Edition-The_Holy_Bible_-_Plate_XXVIII%29.jpg |
 | Q482085 | 钢穴 | open-library | publisher-copyright | https://openlibrary.org/works/OL46401W |
 | Q48244 | 我的奋斗 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Mein_Kampf_dust_jacket.jpeg |
+| Q483034 | 鲁滨逊漂流记 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Robinson_Crusoe_1719_1st_edition.jpg |
 | Q485093 | 狮子·女巫·魔衣橱 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:TheLionWitchWardrobe%281stEd%29.jpg |
 | Q488337 | 宣传学 | open-library | publisher-copyright | https://openlibrary.org/works/OL2781905W |
 | Q4890860 | 从没喜欢过你 | open-library | publisher-copyright | https://openlibrary.org/works/OL5429009W |
@@ -602,6 +623,8 @@ Each entry links to its source page, where the licence is stated.
 | Q492207 | 星舰战将 | open-library | publisher-copyright | https://openlibrary.org/works/OL59740W |
 | Q4924904 | 犬神家一族 | open-library | publisher-copyright | https://openlibrary.org/works/OL10349615W |
 | Q493574 | 最后的摩根战士 | open-library | publisher-copyright | https://openlibrary.org/works/OL77958W |
+| Q494235 | 金刚经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Jingangjing.jpg |
+| Q494387 | 东医宝鉴 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:Dongibogam.jpg |
 | Q499396 | 霍乱时期的爱情 | open-library | publisher-copyright | https://openlibrary.org/books/OL12082261M |
 | Q4998526 | 伯格的女儿 | open-library | publisher-copyright | https://openlibrary.org/works/OL118275W |
 | Q500688 | 四签名 | open-library | publisher-copyright | https://openlibrary.org/works/OL262438W |
@@ -609,6 +632,7 @@ Each entry links to its source page, where the licence is stated.
 | Q50919 | 浮士德博士悲剧 | open-library | publisher-copyright | https://openlibrary.org/works/OL45757W |
 | Q509209 | 国家与革命 | open-library | publisher-copyright | https://openlibrary.org/works/OL301143W |
 | Q50948 | 叶甫盖尼·奥涅金 | open-library | publisher-copyright | https://openlibrary.org/works/OL623236W |
+| Q5100674 | 和合本圣经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:CUV_BIBLE.JPG |
 | Q511823 | 杜登辞典 | open-library | publisher-copyright | https://openlibrary.org/works/OL1417007W |
 | Q5123535 | 末日都市 | open-library | publisher-copyright | https://openlibrary.org/works/OL16491W |
 | Q5140024 | 代码大全 | open-library | publisher-copyright | https://openlibrary.org/works/OL2722063W |
@@ -623,6 +647,7 @@ Each entry links to its source page, where the licence is stated.
 | Q525738 | 海盗通史 | open-library | publisher-copyright | https://openlibrary.org/works/OL45293W |
 | Q5268161 | 图书馆里的猫 | open-library | publisher-copyright | https://openlibrary.org/works/OL11810398W |
 | Q5271634 | 戴尼提：现代心灵健康科学 | open-library | publisher-copyright | https://openlibrary.org/works/OL580869W |
+| Q5284095 | 太上洞渊神咒经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E3%80%8A%E5%A4%AA%E4%B8%8A%E6%B4%9E%E6%B7%B5%E7%A5%9E%E5%92%92%E7%B6%93%E3%80%8B%E5%94%90%E4%BB%A3%E5%AF%AB%E6%9C%AC.png |
 | Q5296635 | 忠奸人：我在黑手党的卧底生涯 | open-library | publisher-copyright | https://openlibrary.org/works/OL15138059W |
 | Q5333894 | 生态乌托邦之诞生 | open-library | publisher-copyright | https://openlibrary.org/works/OL1811929W |
 | Q534975 | 编码宝典 | open-library | publisher-copyright | https://openlibrary.org/works/OL38494W |
@@ -822,6 +847,7 @@ Each entry links to its source page, where the licence is stated.
 | Q7774542 | 白孔雀 | open-library | publisher-copyright | https://openlibrary.org/books/OL14048252M |
 | Q777574 | 薄雾集 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Manuscrito_de_Petrarca.jpg |
 | Q780961 | 无门关 | open-library | publisher-copyright | https://openlibrary.org/books/OL12505916M |
+| Q7812146 | 圣经现代中文译本 | wikimedia-commons | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Today%27s_Chinese_Version_Bible_Cover.jpg |
 | Q7836651 | 雍正王朝之大义觉迷 | wikipedia-infobox | non-free-fair-use | https://en.wikipedia.org/wiki/File:Treason_by_the_Book.jpg |
 | Q784710 | 公祷书 | wikimedia-commons | free | https://commons.wikimedia.org/wiki/File:Book_of_Common_Prayer_1760.jpg |
 | Q7847758 | 交易的艺术 | open-library | publisher-copyright | https://openlibrary.org/works/OL18170627W |
@@ -859,6 +885,7 @@ Each entry links to its source page, where the licence is stated.
 | Q841416 | 白色巨塔 | open-library | publisher-copyright | https://openlibrary.org/books/OL23015388M |
 | Q842074 | 奥勃洛莫夫 | open-library | publisher-copyright | https://openlibrary.org/works/OL8551795W |
 | Q842106 | 欲望号街车 | open-library | publisher-copyright | https://openlibrary.org/works/OL30294W |
+| Q842226 | 观无量寿佛经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:%E6%B8%85%E4%BA%BA%E4%B9%A6%E4%BD%9B%E8%AF%B4%E8%A7%82%E6%97%A0%E9%87%8F%E5%AF%BF%E7%BB%8F%E5%86%8C.png |
 | Q843234 | 卧虎藏龙 | open-library | publisher-copyright | https://openlibrary.org/books/OL22114508M |
 | Q844836 | 温莎的风流妇人 | open-library | publisher-copyright | https://openlibrary.org/works/OL361595W |
 | Q845167 | 祖国 | open-library | publisher-copyright | https://openlibrary.org/works/OL894071W |
@@ -875,6 +902,7 @@ Each entry links to its source page, where the licence is stated.
 | Q85985441 | 虽然想死，但还是想吃辣炒年糕 | wikipedia-infobox | non-free-fair-use | https://zh.wikipedia.org/wiki/File:%E9%9B%96%E7%84%B6%E6%83%B3%E6%AD%BB%EF%BC%8C%E4%BD%86%E9%82%84%E6%98%AF%E6%83%B3%E5%90%83%E8%BE%A3%E7%82%92%E5%B9%B4%E7%B3%95_%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87%E5%B0%81%E9%9D%A2.jpg |
 | Q860577 | 德米安 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:Demian_Erstausgabe.jpg |
 | Q861017 | 贵妇画像 | open-library | publisher-copyright | https://openlibrary.org/books/OL58080134M |
+| Q861212 | 妙法莲华经 | wikimedia-commons | Public domain | https://commons.wikimedia.org/wiki/File:A_Sanskrit_manuscript_of_Lotus_Sutra_in_South_Turkestan_Brahmi_script.jpg |
 | Q861461 | 梅塘夜谭 | open-library | publisher-copyright | https://openlibrary.org/works/OL22386423W |
 | Q861527 | 瞧！这个人 | open-library | publisher-copyright | https://openlibrary.org/works/OL28943621W |
 | Q862050 | 危险关系 | wikipedia-infobox | free | https://en.wikipedia.org/wiki/File:LiaisonsDangereuses_X.jpg |

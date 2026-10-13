@@ -5,9 +5,11 @@ Reads <data>/dist/books.json, converts each cover to a ~400px-wide WebP in
 public/covers/, and writes data/covers.json (id -> file + credit) plus
 public/covers/ATTRIBUTION.md. Remote-only covers are read from
 .cache/covers-remote/<id>.jpg (fetched once from cover.imageUrl).
+Books without a packaged cover may get a verified Wikimedia Commons image
+from data/covers-extra.json (cached in .cache/covers-extra/<id>.img).
 Also writes data/search-aliases.json (short alternate titles for search).
 """
-import argparse, json, pathlib, re
+import argparse, json, pathlib, re, urllib.request
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -24,6 +26,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     for old in out.glob('*.webp'):
         old.unlink()
+    extra = json.loads((ROOT / 'data/covers-extra.json').read_text(encoding='utf-8'))
     manifest, aliases, total, missing = {}, {}, 0, []
     for book in books:
         names = []
@@ -33,10 +36,19 @@ def main():
                 names.append(alias)
         if names:
             aliases[book['id']] = names[:8]
-        cover = book.get('cover')
+        cover, source = book.get('cover'), None
+        if not cover and book['id'] in extra:
+            item = extra[book['id']]
+            source = ROOT / '.cache/covers-extra' / f"{book['id']}.img"
+            if not source.exists():
+                source.parent.mkdir(parents=True, exist_ok=True)
+                request = urllib.request.Request(item['imageUrl'], headers={'User-Agent': 'BookGalaxyCovers/1.0 (https://github.com/VinceJan/Book-Galaxy)'})
+                source.write_bytes(urllib.request.urlopen(request, timeout=60).read())
+            cover = {'provider': 'wikimedia-commons', 'sourceUrl': item['sourceUrl'], 'licenseClass': item['license']}
         if not cover:
             continue
-        source = data / cover['file'] if cover.get('file') else ROOT / '.cache/covers-remote' / f"{book['id']}.jpg"
+        if source is None:
+            source = data / cover['file'] if cover.get('file') else ROOT / '.cache/covers-remote' / f"{book['id']}.jpg"
         if not source.exists():
             missing.append(book['id'])
             continue
