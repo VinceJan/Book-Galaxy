@@ -23,6 +23,7 @@ const REQUIRED_SOURCE_FILES = [
 ]
 const OPTIONAL_SOURCE_FILES = [
   'src/lib/starChart.ts',
+  'src/galaxy/GalaxyCanvas.tsx',
 ]
 const CURATED_LEGACY_SOURCE = 'src/data/curatedRelations.ts'
 const CURATED_THREAD_DIRECTORY = 'src/data/curatedThreads'
@@ -47,6 +48,10 @@ const FORBIDDEN_COPY = [
   ['可解释偏航', /可解释(?:的)?(?:偏航|关系|连接)?/gu],
 ]
 const PERCENT_TEMPLATE = /(?:\d+(?:\.\d+)?\s*[%％]|百分之\s*[\d一二三四五六七八九十百千万零点]+)/gu
+// Hard rule: the reading experience never shows counts.  Catch an interpolated
+// or literal number followed by a counter word ("{n} 条", "${n} 本", "1,000 颗"),
+// an "n/3" progress fraction, or a toLocaleString() number in UI source.
+const COUNT_TEMPLATE = /(?:\$\{[^{}]+\}|\{[^{}]+\}|\d[\d,，]*)\s*(?:颗|条|本(?!次)|段|站|座|部)|(?:\$\{[^{}]+\}|\{[^{}]+\})\s*\/\s*\d|\.toLocaleString\(/gu
 const MAX_IDENTICAL_RELATION_COPIES = 3
 const MAX_README_LINES = 140
 const README_FORBIDDEN_COPY = [
@@ -620,6 +625,20 @@ async function readText(filePath, label, errors) {
   }
 }
 
+function addCountFindings(source, path, errors) {
+  // Drop comments so explanatory notes do not trip the gate.
+  const code = source.replace(/\/\*[\s\S]*?\*\//gu, (block) => block.replace(/[^\n]/gu, ' '))
+    .replace(/(^|[^:'"`])\/\/.*$/gmu, '$1')
+  for (const match of code.matchAll(COUNT_TEMPLATE)) {
+    const location = lineLocation(code, match.index ?? 0)
+    errors.push({
+      path: `${path}:${location.line}:${location.column}`,
+      message: '界面不得显示数量（书数、书线数、站数、进度分数等）',
+      excerpt: code.split('\n')[location.line - 1]?.trim().slice(0, 200),
+    })
+  }
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2))
   const root = options.root ? resolve(String(options.root)) : ROOT
@@ -642,6 +661,7 @@ async function main() {
     stats.sourceFiles += 1
     sourceByPath.set(relativePath, source)
     addCopyFindings(source, displayPath(filePath, root), errors)
+    addCountFindings(source, displayPath(filePath, root), errors)
   }
   for (const relativePath of OPTIONAL_SOURCE_FILES) {
     const filePath = resolve(root, relativePath)
@@ -651,6 +671,7 @@ async function main() {
     stats.sourceFiles += 1
     sourceByPath.set(relativePath, source)
     addCopyFindings(source, displayPath(filePath, root), errors)
+    addCountFindings(source, displayPath(filePath, root), errors)
   }
 
   const readmeText = await readText(resolve(root, README_SOURCE), README_SOURCE, errors)

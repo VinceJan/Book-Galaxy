@@ -21,9 +21,6 @@ function Icon({ name }: { name: 'sound' | 'mute' | 'expand' | 'motion' | 'close'
 interface IntroProps {
   books: Book[]
   ready: boolean
-  bookCount: number
-  relationCount: number
-  curatedRelationCount: number
   loadingPhase?: string
   onStart: (book: Book) => void
   onWake?: () => void
@@ -144,7 +141,7 @@ function featuredBooks(books: Book[], limit = 5): Book[] {
     .slice(0, limit)
 }
 
-export function IntroScreen({ books, ready, bookCount, relationCount, curatedRelationCount, loadingPhase, onStart, onWake }: IntroProps) {
+export function IntroScreen({ books, ready, loadingPhase, onStart, onWake }: IntroProps) {
   const [query, setQuery] = useState('')
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
   const featured = useMemo(() => featuredBooks(books), [books])
@@ -267,9 +264,6 @@ export function IntroScreen({ books, ready, bookCount, relationCount, curatedRel
 }
 
 interface HeaderProps {
-  bookCount: number
-  relationCount: number
-  curatedRelationCount?: number
   soundEnabled: boolean
   reducedMotion: boolean
   onToggleSound: () => void
@@ -278,9 +272,6 @@ interface HeaderProps {
 }
 
 export function ObservatoryHeader({
-  bookCount,
-  relationCount,
-  curatedRelationCount,
   soundEnabled,
   reducedMotion,
   onToggleSound,
@@ -316,15 +307,9 @@ export function ObservatoryHeader({
         <span><strong>书架星系</strong><small>暗物质图书馆</small></span>
       </button>
       <div className="catalog-state">
-        <span>{bookCount.toLocaleString('zh-CN')} 颗书星</span>
-        <i />
-        <span>{relationCount.toLocaleString('zh-CN')} 条书海暗线</span>
-        {typeof curatedRelationCount === 'number' && curatedRelationCount > 0 && (
-          <>
-            <i aria-hidden="true" />
-            <span>{curatedRelationCount.toLocaleString('zh-CN')} 条引力书线</span>
-          </>
-        )}
+        <span>满天书星</span>
+        <i aria-hidden="true" />
+        <span>书海暗线</span>
       </div>
       <nav className="observatory-tools" aria-label="观测工具">
         <button type="button" onClick={onToggleMotion} aria-pressed={reducedMotion} title="稳定镜头">
@@ -662,7 +647,7 @@ export function BookObservatory({
 
   const imprintDisabled = !canImprint
   const imprintCopy = journeyLength < 3
-    ? `再走 ${3 - journeyLength} 本即可留下星图 · ${journeyLength}/3`
+    ? '走满三本即可留下星图'
     : !canDetour
       ? '回到航迹尽头即可留下星图'
       : '留下这次迷路'
@@ -1119,14 +1104,13 @@ export function JourneyRail({ books, onSelect, myGalaxy, onCopyRoute }: {
   if (books.length === 0) return null
   const visibleBooks = books.slice(-6)
   const omitted = books.length - visibleBooks.length
-  const progress = books.length >= 3 ? '可留星图' : `再走 ${3 - books.length} 本可留星图`
-  // Past three stops the rail counts stops instead of showing "4/3".
-  const count = books.length >= 3 ? `${books.length} 站` : `${books.length}/3`
+  // No visible counts: the rail only says whether a star chart can be kept.
+  const progress = books.length >= 3 ? '可留星图' : '走满三本可留星图'
   return (
     <aside className="journey-rail" aria-label="本次航迹">
-      <small>本次航迹 · {count} · {progress}</small>
+      <small>本次航迹 · {progress}</small>
       <ol ref={railRef}>
-        {omitted > 0 && <li className="omitted"><span>此前 {omitted} 站 ···</span></li>}
+        {omitted > 0 && <li className="omitted"><span>更早的航迹 ···</span></li>}
         {visibleBooks.map((book, index) => {
           const isCurrent = index === visibleBooks.length - 1
           // The current stop stays tappable: on phones it is the way back to a closed sheet.
@@ -1146,7 +1130,7 @@ export function JourneyRail({ books, onSelect, myGalaxy, onCopyRoute }: {
       {myGalaxy && (
         <button className="my-galaxy-toggle" type="button" aria-pressed={myGalaxy.visible} onClick={myGalaxy.onToggle}>
           <i aria-hidden="true" />
-          我的星系 · {myGalaxy.trails} 段航迹 · {myGalaxy.stars} 颗星
+          我的星系
           <small>{myGalaxy.visible ? '隐去旧航迹' : '显影旧航迹'}</small>
         </button>
       )}

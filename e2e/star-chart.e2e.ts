@@ -25,6 +25,6 @@ test('three stops develop a star chart that can be saved', async ({ page }) => {
 
   await chart.locator('button', { hasText: '返回星海' }).click()
   await expect(chart).toBeHidden()
-  await expect(page.locator('.journey-rail')).toContainText('3 站')
+  await expect(page.locator('.journey-rail ol > li:not(.omitted)')).toHaveCount(3)
   expect(errors).toEqual([])
 })

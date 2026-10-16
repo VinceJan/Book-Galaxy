@@ -290,8 +290,10 @@ describe('product depth - contract', () => {
     expect(ui).toContain('如何阅读这片星海')
     expect(ui).toContain('再偏航一次，馆员便能说说两本书为何相遇')
 
-    // plumbing: curated counts, journey rail conditional, aria-current, intro guard, aria-busy, imprint and chart personalization
-    expect(ui).toContain('curatedRelationCount')
+    // no visible counts in the header, rail or imprint copy
+    expect(ui).not.toContain('toLocaleString')
+    expect(ui).not.toMatch(/条书海暗线|颗书星<|段航迹 ·|\/3`/u)
+    // plumbing: journey rail conditional, aria-current, intro guard, aria-busy, imprint and chart personalization
     expect(app).toContain("state.status === 'exploring' ? selectBook : undefined")
     expect(ui).toContain("aria-current={isCurrent ? 'step' : undefined}")
     expect(ui).toContain('aria-busy={!ready}')

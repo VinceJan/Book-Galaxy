@@ -33,7 +33,7 @@ test('golden path reaches a far star with no page errors', async ({ page }) => {
   const far = page.locator('.detour-compass button', { hasText: '一颗未名远星' })
   await expect(far).toBeVisible()
   await far.click()
-  await expect(page.locator('.journey-rail')).toContainText('2/3')
+  await expect(page.locator('.journey-rail ol > li:not(.omitted)')).toHaveCount(2)
   await expect(panel.locator('#observed-book-title')).not.toContainText('三体')
 
   expect(errors).toEqual([])

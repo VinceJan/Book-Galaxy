@@ -18,7 +18,7 @@ test('copying a voyage route reconstitutes the rail and last book', async ({ pag
 
   await page.goto(shared)
   await expect(page.locator('.intro')).toHaveCount(0, { timeout: 60_000 })
-  await expect(page.locator('.journey-rail')).toContainText('3 站')
+  await expect(page.locator('.journey-rail ol > li:not(.omitted)')).toHaveCount(3)
   await expect(page.locator('.book-observatory #observed-book-title')).toBeVisible({ timeout: 60_000 })
   // Shared view must not surface mechanical labels.
   await expect(page.locator('body')).not.toContainText('Share URL')

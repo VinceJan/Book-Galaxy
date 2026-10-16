@@ -139,7 +139,7 @@ function drawJourneyHops(
 
   context.fillStyle = '#776d49'
   context.font = '500 20px "Noto Sans SC", "Microsoft YaHei", sans-serif'
-  context.fillText(`引力书线 · ${hops.length.toString().padStart(2, '0')} 段航迹`, x + 4, 1_370)
+  context.fillText('引力书线', x + 4, 1_370)
 
   hops.forEach((_, index) => {
     const column = index % columns
@@ -259,7 +259,7 @@ export function renderStarChart(input: StarChartInput): string {
   context.textAlign = 'right'
   context.font = '400 22px "IBM Plex Mono", Consolas, monospace'
   context.fillStyle = 'rgba(36, 40, 39, 0.58)'
-  context.fillText(`航迹 ${input.books.length.toString().padStart(2, '0')}  /  ${dateText}`, WIDTH - 150, 1640)
+  context.fillText(`航迹  /  ${dateText}`, WIDTH - 150, 1640)
 
   roundedRect(context, WIDTH - 350, 1320, 170, 170, 10)
   context.fillStyle = '#8e4032'
