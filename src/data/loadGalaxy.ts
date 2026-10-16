@@ -275,7 +275,7 @@ export async function loadGalaxyData(signal?: AbortSignal, core?: GalaxyData): P
   }
   let v2 = false
   try {
-    const relationResponse = await fetch(`${import.meta.env.BASE_URL}data/relations.v2.json`, { signal })
+    const relationResponse = await fetch(`${import.meta.env.BASE_URL}data/relations.v3.json`, { signal })
     if (!relationResponse.ok) throw new Error('关系库载入失败')
     catalogEdges = mapRelationsV2(await relationResponse.json(), new Set(catalogBooks.map((book) => book.id)))
     v2 = true
