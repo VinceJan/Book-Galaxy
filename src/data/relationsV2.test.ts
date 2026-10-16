@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import runtime from '../../public/data/catalog.runtime.json'
-import library from '../../public/data/relations.v3.json'
+import library from '../../public/data/relations.v4.json'
 import { loadGalaxyData, mapRelationsV2, makeRelationResolver } from './loadGalaxy'
 
 const ids = new Set(runtime.books.map((book) => book.id))
@@ -9,7 +9,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe('v2 relation library', () => {
   it('maps every shipped record without losing prose, labels or evidence', () => {
     const edges = mapRelationsV2(library, ids)
-    expect(edges).toHaveLength(1673)
+    expect(edges).toHaveLength(1647)
     library.relations.forEach((record, index) => {
       expect(edges[index]).toMatchObject({
         source: record.s, target: record.t, sentence: record.text,
@@ -29,18 +29,29 @@ describe('v2 relation library', () => {
   })
   it('loads v2 as both the list library and navigable edges, in both directions', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
-      url.endsWith('relations.v3.json') ? library : runtime,
+      url.endsWith('relations.v4.json') ? library : runtime,
     ))))
     const data = await loadGalaxyData()
-    expect(data.relationCount).toBe(1673)
-    expect(data.curatedRelations).toHaveLength(1673)
+    expect(data.relationCount).toBe(1647)
+    expect(data.curatedRelations).toHaveLength(1647)
     const first = library.relations[0]
     const reverse = makeRelationResolver(data).relationFor(first.t, first.s)
     expect(reverse).toMatchObject({ source: first.t, target: first.s, sentence: first.text, strength: first.strength, relationType: first.type })
   })
+  it('leaves books without any shipped thread quietly unlinked', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
+      url.endsWith('relations.v4.json') ? library : runtime,
+    ))))
+    const data = await loadGalaxyData()
+    const linked = new Set(library.relations.flatMap((record) => [record.s, record.t]))
+    const unlinked = runtime.books.filter((book) => !linked.has(book.id))
+    expect(unlinked.length).toBeGreaterThan(0)
+    const resolver = makeRelationResolver(data)
+    unlinked.forEach((book) => expect(resolver.optionsFor(book.id, new Set([book.id]))).toEqual([]))
+  })
   it.each(['http', 'json', 'invalid'])('falls back to legacy relations after %s failure', async (failure) => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (!url.endsWith('relations.v3.json')) return new Response(JSON.stringify(runtime))
+      if (!url.endsWith('relations.v4.json')) return new Response(JSON.stringify(runtime))
       return failure === 'http' ? new Response('', { status: 404 })
         : new Response(failure === 'json' ? '{' : JSON.stringify({ schemaVersion: 'wrong' }))
     }))
