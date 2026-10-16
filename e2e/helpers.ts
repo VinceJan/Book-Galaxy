@@ -23,6 +23,6 @@ export async function driftOnce(page: Page, nextStop: number): Promise<void> {
   const option = page.locator('.detour-compass .direction-list button').first()
   await expect(option).toBeVisible()
   await option.click()
-  // The rail counts "n/3" until the third stop, which reads "3 站 · 可留星图".
-  await expect(page.locator('.journey-rail')).toContainText(nextStop < 3 ? `${nextStop}/3` : `${nextStop} 站`)
+  // The rail shows no counts; wait for the new stop to appear in it (it keeps the last six).
+  await expect(page.locator('.journey-rail ol > li:not(.omitted)')).toHaveCount(Math.min(nextStop, 6))
 }

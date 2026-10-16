@@ -144,7 +144,7 @@ export const GalaxyCanvas = forwardRef<GalaxyCanvasHandle, GalaxyCanvasProps>(fu
       role="group"
       tabIndex={keyboardEnabled ? 0 : -1}
       aria-hidden={keyboardEnabled ? undefined : true}
-      aria-label={`书架星系，${books.length}颗书星。聚焦后使用方向键选择书星，按 Enter 观测。`}
+      aria-label="书架星系。聚焦后使用方向键选择书星，按 Enter 观测。"
       aria-describedby="galaxy-keyboard-hint"
       onKeyDown={handleKeyDown}
     >

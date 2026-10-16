@@ -297,7 +297,6 @@ export default function App() {
     if (first) galaxyRef.current?.revealRelation(first.source, first.target)
     else galaxyRef.current?.clearRelation()
   }, [selected?.id, curatedThreads, engineReady, state.status])
-  const curatedRelationCount = data.curatedRelationStats?.relationCount ?? 0
   const nearbyBooks = useMemo(() => {
     if (!selected) return []
     const candidateIds = [
@@ -441,7 +440,7 @@ export default function App() {
     const first = journeyBooks[0]
     const last = journeyBooks.at(-1)
     const title = demo?.title ?? (first && last ? `《${first.title}》到《${last.title}》的迷路` : '一次有意义的偏航')
-    const subtitle = demo?.closingLine ?? `共 ${journeyBooks.length} 本书，${journeyBooks.length - 1} 段航迹`
+    const subtitle = demo?.closingLine
     const dataUrl = renderStarChart({
       books: journeyBooks,
       relations: state.journeyRelations,
@@ -568,9 +567,6 @@ export default function App() {
         <IntroScreen
           books={data.books}
           ready={ready}
-          bookCount={data.books.length}
-          relationCount={data.relationCount}
-          curatedRelationCount={curatedRelationCount}
           loadingPhase={loadingPhase}
           onStart={requestStart}
           onWake={requestWake}
@@ -578,9 +574,6 @@ export default function App() {
       ) : (
         <>
           <ObservatoryHeader
-            bookCount={data.books.length}
-            relationCount={data.relationCount}
-            curatedRelationCount={curatedRelationCount}
             soundEnabled={soundEnabled}
             reducedMotion={reducedMotion}
             onToggleSound={toggleSound}
