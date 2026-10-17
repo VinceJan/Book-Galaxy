@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import runtime from '../../public/data/catalog.runtime.json'
-import library from '../../public/data/relations.v4.json'
+import library from '../../public/data/relations.v5.json'
 import { loadGalaxyData, mapRelationsV2, makeRelationResolver } from './loadGalaxy'
 
 const ids = new Set(runtime.books.map((book) => book.id))
@@ -29,7 +29,7 @@ describe('v2 relation library', () => {
   })
   it('loads v2 as both the list library and navigable edges, in both directions', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
-      url.endsWith('relations.v4.json') ? library : runtime,
+      url.endsWith('relations.v5.json') ? library : runtime,
     ))))
     const data = await loadGalaxyData()
     expect(data.relationCount).toBe(1647)
@@ -40,7 +40,7 @@ describe('v2 relation library', () => {
   })
   it('leaves books without any shipped thread quietly unlinked', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(
-      url.endsWith('relations.v4.json') ? library : runtime,
+      url.endsWith('relations.v5.json') ? library : runtime,
     ))))
     const data = await loadGalaxyData()
     const linked = new Set(library.relations.flatMap((record) => [record.s, record.t]))
@@ -51,7 +51,7 @@ describe('v2 relation library', () => {
   })
   it.each(['http', 'json', 'invalid'])('falls back to legacy relations after %s failure', async (failure) => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (!url.endsWith('relations.v4.json')) return new Response(JSON.stringify(runtime))
+      if (!url.endsWith('relations.v5.json')) return new Response(JSON.stringify(runtime))
       return failure === 'http' ? new Response('', { status: 404 })
         : new Response(failure === 'json' ? '{' : JSON.stringify({ schemaVersion: 'wrong' }))
     }))
