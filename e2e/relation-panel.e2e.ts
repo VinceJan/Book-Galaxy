@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
-const library = JSON.parse(readFileSync('public/data/relations.v4.json', 'utf8')) as {
+const library = JSON.parse(readFileSync('public/data/relations.v5.json', 'utf8')) as {
   relations: Array<{ s: string; t: string; text: string; strength: number; type: string; wd?: string }>
 }
 const runtime = JSON.parse(readFileSync('public/data/catalog.runtime.json', 'utf8')) as {
